@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys
 import time
 
@@ -14,14 +15,19 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 
 '''
 
+
+SAVE_VIDEO_TIME = 10 # 0 per non salvare
+
+
 def search_device(ctx):
     enable_D435i = False
     enable_T265 = False
     device_aviable = {}
 
-
+    print("ctx.devices  = ",ctx.devices)
     if len(ctx.devices) > 0:
         for d in ctx.devices:
+            print(d)
             device = d.get_info(rs.camera_info.name)
             serial = d.get_info(rs.camera_info.serial_number)
             model = str(device.split(' ')[-1])
@@ -94,7 +100,7 @@ if enable_T265:
     configT265 = rs.config()
     serialt265 = str(device_aviable['T265'][0])
     print(serialt265)
-    config.enable_device(serialt265)
+    configT265.enable_device(serialt265)
     configT265.enable_stream(rs.stream.pose)
 
 
@@ -105,6 +111,14 @@ if enable_T265:
     except Exception as e:
         print("error pipeline T265 starting:||||:: %s", str(e))
     #_______________________________________________________
+
+if SAVE_VIDEO_TIME != 0:
+
+    result = cv2.VideoWriter('filename.avi',
+                             cv2.VideoWriter_fourcc(*'MJPG'),
+                             20.0, (1080, 720),1)
+
+
 
 while True:
 
@@ -125,19 +139,29 @@ while True:
         #frames.as_motion_frame().get_motion_data()
         aligned_frames = align.process(frames)
         depth_frame = aligned_frames.get_depth_frame()
+
+
         color_frame = aligned_frames.get_color_frame()
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
-        depth_converted = cv2.convertScaleAbs(depth_image, alpha=0.03)
-        depth_colormap = cv2.applyColorMap(depth_converted, cv2.COLORMAP_JET)
-        print("size", depth_image.shape,  color_image.shape)
+        #print(depth_image.shape) 720*1080
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+        if SAVE_VIDEO_TIME != 0:
+            cv2.imwrite('im.jpg', color_image)
 
-        cv2.imshow('Color Stream', color_image)
-        cv2.imshow('depth Stream', depth_image)
+            result.write(color_image)
+        #print("size", depth_image.shape,  color_image.shape)
+        images = np.hstack((color_image, depth_colormap))
+        cv2.imshow('Color Stream', images)
+
+
+       #cv2.imshow('depth Stream', depth_image)
         key = cv2.waitKey(1)
         if key == 27:
-            cv2.destroyAllWindows()
+            #result.release()
+            #cv2.destroyAllWindows()
             break
+
     if enable_T265 == False and enable_D435i == False:
         print("no device, termination...")
         sys.exit()
@@ -146,6 +170,8 @@ while True:
 
 if enable_D435i:
     pipeline.stop()
+    result.release()
+    cv2.destroyAllWindows()
 if enable_T265:
     pipelineT265.stop()
 

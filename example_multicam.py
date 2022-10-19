@@ -2,6 +2,7 @@
 import pyrealsense2 as rs
 import numpy as np
 import cv2 as cv
+import time
 
 
 def findDevices():
@@ -68,8 +69,9 @@ def Visualize(pipelines):
 
         # Save images and depth maps from both cameras by pressing 's'
         if key == 115:
-            cv.imwrite(str(device) + '_aligned_depth.png', depth_image)
-            cv.imwrite(str(device) + '_aligned_color.png', color_image)
+            stamp = time.strftime("%m-%d-%Y_%H:%M:%S")
+            cv.imwrite(str(device) + '_' + stamp + '_depth_.png', depth_image)
+            cv.imwrite(str(device) + '_' + stamp + '_color_.png', color_image)
             print('Save')
 
 
