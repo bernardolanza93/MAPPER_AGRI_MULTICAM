@@ -172,15 +172,17 @@ while True:
 
     if enable_D435i:
         # Wait for a coherent pair of frames: depth and color
+        start = time.time()
         frames = pipeline.wait_for_frames()
         #frames.as_motion_frame().get_motion_data()
-        start = time.time()
-        aligned_frames = align.process(frames)
         if FPS_DISPLAY:
             end = time.time()
             seconds = end - start
             fps = 1 / seconds
             print(fps)
+
+        aligned_frames = align.process(frames)
+
         depth_frame = aligned_frames.get_depth_frame()
 
 
