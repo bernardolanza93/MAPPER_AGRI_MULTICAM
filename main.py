@@ -180,14 +180,15 @@ while True:
         aligned_frames = align.process(frames)
 
         depth_frame = aligned_frames.get_depth_frame()
+
+
+
+        color_frame = aligned_frames.get_color_frame()
         if FPS_DISPLAY:
             end = time.time()
             seconds = end - start
             fps = 1 / seconds
             print(fps)
-
-
-        color_frame = aligned_frames.get_color_frame()
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
         #print(depth_image.shape) 720*1080
