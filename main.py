@@ -48,6 +48,7 @@ check_folder("/data/")
 
 path_here = os.getcwd()
 SAVE_VIDEO_TIME = 10 # 0 per non salvare
+FPS_DISPLAY = True
 
 
 def search_device(ctx):
@@ -156,6 +157,8 @@ if SAVE_VIDEO_TIME != 0:
 while True:
 
     # T265
+    start = time.time()
+
     if enable_T265:
         tframes = pipelineT265.wait_for_frames()
         pose = tframes.get_pose_frame()
@@ -200,6 +203,12 @@ while True:
             #cv2.destroyAllWindows()
             break
 
+        if FPS_DISPLAY:
+            end = time.time()
+            seconds = end - start
+
+            fps = 1 / seconds
+            print(fps)
     if enable_T265 == False and enable_D435i == False:
         print("no device, termination...")
         sys.exit()
