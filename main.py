@@ -191,11 +191,7 @@ while True:
         #print(depth_image.shape) 720*1080
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 
-        if FPS_DISPLAY:
-            end = time.time()
-            seconds = end - start
-            fps = 1 / seconds
-            print(fps)
+
 
         if SAVE_VIDEO_TIME != 0:
             try:
@@ -205,6 +201,12 @@ while True:
             #cv2.imwrite('im.jpg', color_image)
 
             result.write(color_image)
+
+        if FPS_DISPLAY:
+            end = time.time()
+            seconds = end - start
+            fps = 1 / seconds
+            print(fps)
         #print("size", depth_image.shape,  color_image.shape)
         images = np.hstack((color_image, depth_colormap))
         #cv2.imshow('Color Stream', images)
