@@ -149,7 +149,7 @@ if SAVE_VIDEO_TIME != 0:
 
     result = cv2.VideoWriter(path_here + '/data/RGB_' + hourstr +'.avi',
                              cv2.VideoWriter_fourcc(*'MJPG'),
-                             30.0, (1280, 720),1)
+                             10.0, (1280, 720),1)
 
 
 
