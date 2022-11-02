@@ -190,7 +190,7 @@ while True:
             result.write(color_image)
         #print("size", depth_image.shape,  color_image.shape)
         images = np.hstack((color_image, depth_colormap))
-        cv2.imshow('Color Stream', images)
+        #cv2.imshow('Color Stream', images)
 
 
        #cv2.imshow('depth Stream', depth_image)
