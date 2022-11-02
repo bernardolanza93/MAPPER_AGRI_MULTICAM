@@ -47,7 +47,7 @@ def check_folder(relative_path):
 check_folder("/data/")
 
 path_here = os.getcwd()
-SAVE_VIDEO_TIME = 10 # 0 per non salvare
+SAVE_VIDEO_TIME = 0 # 0 per non salvare
 FPS_DISPLAY = True
 
 
@@ -202,17 +202,19 @@ while True:
 
             result.write(color_image)
 
+
+        #print("size", depth_image.shape,  color_image.shape)
+        images = np.hstack((color_image, depth_colormap))
+        cv2.imshow('Color Stream', images)
+
+
+       #cv2.imshow('depth Stream', depth_image)
+
         if FPS_DISPLAY:
             end = time.time()
             seconds = end - start
             fps = 1 / seconds
             print(fps)
-        #print("size", depth_image.shape,  color_image.shape)
-        images = np.hstack((color_image, depth_colormap))
-        #cv2.imshow('Color Stream', images)
-
-
-       #cv2.imshow('depth Stream', depth_image)
         key = cv2.waitKey(1)
         if key == 27:
             #result.release()
