@@ -6,6 +6,8 @@ import pyrealsense2 as rs
 import cv2
 import numpy as np
 import os
+from datetime import datetime
+
 
 
 '''
@@ -142,8 +144,10 @@ if enable_T265:
     #_______________________________________________________
 
 if SAVE_VIDEO_TIME != 0:
+    now = datetime.now()
+    hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 
-    result = cv2.VideoWriter(path_here + '/data/aquisition.avi',
+    result = cv2.VideoWriter(path_here + '/data/RGB_' + hourstr +'.avi',
                              cv2.VideoWriter_fourcc(*'MJPG'),
                              20.0, (1280, 720),1)
 
