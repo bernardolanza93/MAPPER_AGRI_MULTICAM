@@ -47,7 +47,7 @@ def check_folder(relative_path):
 check_folder("/data/")
 
 path_here = os.getcwd()
-SAVE_VIDEO_TIME = 0 # 0 per non salvare
+SAVE_VIDEO_TIME = 10 # 0 per non salvare
 FPS_DISPLAY = True
 
 
@@ -195,7 +195,10 @@ while True:
 
         if SAVE_VIDEO_TIME != 0:
             try:
-                result.write(color_image)
+                #result.write(color_image)
+                cv2.imwrite('im.jpg', color_image)
+
+
             except Exception as e:
                 print("error save video:||||:: %s", str(e))
             #cv2.imwrite('im.jpg', color_image)
