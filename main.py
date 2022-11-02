@@ -175,15 +175,16 @@ while True:
         start = time.time()
         frames = pipeline.wait_for_frames()
         #frames.as_motion_frame().get_motion_data()
+
+
+        aligned_frames = align.process(frames)
+
+        depth_frame = aligned_frames.get_depth_frame()
         if FPS_DISPLAY:
             end = time.time()
             seconds = end - start
             fps = 1 / seconds
             print(fps)
-
-        aligned_frames = align.process(frames)
-
-        depth_frame = aligned_frames.get_depth_frame()
 
 
         color_frame = aligned_frames.get_color_frame()
