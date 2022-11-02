@@ -157,10 +157,11 @@ while True:
         pose = tframes.get_pose_frame()
         if pose:
             data = pose.get_pose_data()
-            print("Frame #{}".format(pose.frame_number))
-            print("Position: {}".format(data.translation))
-            print("Velocity: {}".format(data.velocity))
-            print("Acceleration: {}\n".format(data.acceleration))
+
+            #print("Frame #{}".format(pose.frame_number))
+            #print("Position: {}".format(data.translation))
+            #print("Velocity: {}".format(data.velocity))
+            #print("Acceleration: {}\n".format(data.acceleration))
 
     if enable_D435i:
         # Wait for a coherent pair of frames: depth and color
