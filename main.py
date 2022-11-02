@@ -197,7 +197,7 @@ while True:
 
 
        #cv2.imshow('depth Stream', depth_image)
-        key = cv2.waitKey(1)
+        key = cv2.waitKey(0)
         if key == 27:
             #result.release()
             #cv2.destroyAllWindows()
@@ -206,7 +206,6 @@ while True:
         if FPS_DISPLAY:
             end = time.time()
             seconds = end - start
-
             fps = 1 / seconds
             print(fps)
     if enable_T265 == False and enable_D435i == False:
