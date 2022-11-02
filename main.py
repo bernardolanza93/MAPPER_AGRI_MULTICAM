@@ -194,7 +194,7 @@ while True:
         depth_image = np.asanyarray(depth_frame.get_data())
 
         #print(depth_image.shape) 720*1080
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+        #depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 
 
 
@@ -215,8 +215,8 @@ while True:
 
 
         #print("size", depth_image.shape,  color_image.shape)
-        images = np.hstack((color_image, depth_colormap))
-        cv2.imshow('Color Stream', images)
+        #images = np.hstack((color_image, depth_colormap))
+        cv2.imshow('Color Stream', depth_image)
 
 
        #cv2.imshow('depth Stream', depth_image)
