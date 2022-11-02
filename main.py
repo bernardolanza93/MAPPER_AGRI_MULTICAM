@@ -157,7 +157,7 @@ if SAVE_VIDEO_TIME != 0:
 while True:
 
     # T265
-    start = time.time()
+
 
     if enable_T265:
         tframes = pipelineT265.wait_for_frames()
@@ -174,7 +174,13 @@ while True:
         # Wait for a coherent pair of frames: depth and color
         frames = pipeline.wait_for_frames()
         #frames.as_motion_frame().get_motion_data()
+        start = time.time()
         aligned_frames = align.process(frames)
+        if FPS_DISPLAY:
+            end = time.time()
+            seconds = end - start
+            fps = 1 / seconds
+            print(fps)
         depth_frame = aligned_frames.get_depth_frame()
 
 
@@ -197,17 +203,13 @@ while True:
 
 
        #cv2.imshow('depth Stream', depth_image)
-        key = cv2.waitKey(0)
+        key = cv2.waitKey(1)
         if key == 27:
             #result.release()
             #cv2.destroyAllWindows()
             break
 
-        if FPS_DISPLAY:
-            end = time.time()
-            seconds = end - start
-            fps = 1 / seconds
-            print(fps)
+
     if enable_T265 == False and enable_D435i == False:
         print("no device, termination...")
         sys.exit()
