@@ -217,7 +217,7 @@ while True:
 
         #print("size", depth_image.shape,  color_image.shape)
         #images = np.hstack((color_image, depth_colormap))
-        cv2.imshow('Color Stream', depth_image)
+        #cv2.imshow('Color Stream', depth_image)
 
 
        #cv2.imshow('depth Stream', depth_image)
@@ -242,7 +242,7 @@ while True:
 
 if enable_D435i:
     pipeline.stop()
-    result.release()
+    out.release()
     cv2.destroyAllWindows()
 if enable_T265:
     pipelineT265.stop()
