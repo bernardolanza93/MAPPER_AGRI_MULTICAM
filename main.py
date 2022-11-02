@@ -175,8 +175,10 @@ while True:
     if enable_D435i:
         # Wait for a coherent pair of frames: depth and color
         start = time.time()
-        frames = pipeline.wait_for_frames()
-
+        try:
+            frames = pipeline.wait_for_frames()
+        except Exception as e:
+            print("PIPELINE error:||||:: %s", str(e))
         #frames.as_motion_frame().get_motion_data()
 
 
