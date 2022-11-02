@@ -44,7 +44,7 @@ def check_folder(relative_path):
 
 check_folder("/data/")
 
-
+path_here = os.getcwd()
 SAVE_VIDEO_TIME = 10 # 0 per non salvare
 
 
@@ -143,7 +143,7 @@ if enable_T265:
 
 if SAVE_VIDEO_TIME != 0:
 
-    result = cv2.VideoWriter('/data/aquisition.avi',
+    result = cv2.VideoWriter(path_here + '/data/aquisition.avi',
                              cv2.VideoWriter_fourcc(*'MJPG'),
                              20.0, (1080, 720),1)
 
