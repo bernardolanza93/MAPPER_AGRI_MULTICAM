@@ -198,8 +198,8 @@ while True:
         depth_image = np.asanyarray(depth_frame.get_data())
 
 
-        width = int(depth_image.shape[1] *  (1920/1280))
-        height = int(depth_image.shape[0] * (1080/720))
+        width = int(1920)
+        height = int(1080)
         dim = (width, height)
 
         # resize image
