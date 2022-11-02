@@ -135,6 +135,7 @@ if enable_T265:
     configT265.enable_device(serialt265)
     configT265.enable_stream(rs.stream.pose)
     saver = rs.save_single_frameset()
+    saver.set_option()
 
 
     try:
@@ -191,15 +192,15 @@ while True:
         depth_image = np.asanyarray(depth_frame.get_data())
 
         #print(depth_image.shape) 720*1080
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+        depth_colormap = c v2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 
 
 
         if SAVE_VIDEO_TIME != 0:
             try:
                 #result.write(color_image)
-                cv2.imwrite('im.jpg', color_image)
-                frames = pipeline.wait_for_frames()
+                #cv2.imwrite('im.jpg', color_image)
+                #frames = pipeline.wait_for_frames()
                 saver.process(frames)
 
 
