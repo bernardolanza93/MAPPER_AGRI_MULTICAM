@@ -135,7 +135,7 @@ if enable_T265:
     configT265.enable_device(serialt265)
     configT265.enable_stream(rs.stream.pose)
     saver = rs.save_single_frameset()
-    saver.set_option()
+    #saver.set_option()
 
 
     try:
