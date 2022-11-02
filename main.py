@@ -134,6 +134,7 @@ if enable_T265:
     print(serialt265)
     configT265.enable_device(serialt265)
     configT265.enable_stream(rs.stream.pose)
+    saver = rs.save_single_frameset()
 
 
     try:
@@ -174,6 +175,7 @@ while True:
         # Wait for a coherent pair of frames: depth and color
         start = time.time()
         frames = pipeline.wait_for_frames()
+
         #frames.as_motion_frame().get_motion_data()
 
 
@@ -197,6 +199,8 @@ while True:
             try:
                 #result.write(color_image)
                 cv2.imwrite('im.jpg', color_image)
+                frames = pipeline.wait_for_frames()
+                saver.process(frames)
 
 
             except Exception as e:
