@@ -200,7 +200,7 @@ while True:
 
         if SAVE_VIDEO_TIME != 0:
             try:
-                #result.write(color_image)
+                result.write(color_image)
                 #cv2.imwrite('im.jpg', color_image)
                 #frames = pipeline.wait_for_frames()
                 #saver.process(frames)
