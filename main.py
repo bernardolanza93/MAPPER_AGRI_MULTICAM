@@ -145,7 +145,7 @@ if SAVE_VIDEO_TIME != 0:
 
     result = cv2.VideoWriter(path_here + '/data/aquisition.avi',
                              cv2.VideoWriter_fourcc(*'MJPG'),
-                             20.0, (1080, 720),1)
+                             20.0, (1280, 720),1)
 
 
 
