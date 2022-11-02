@@ -150,10 +150,10 @@ if SAVE_VIDEO_TIME != 0:
     now = datetime.now()
     hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 
-    gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=/data/RGB" + hourstr+".mkv "
+    gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=/data/RGB.mkv "
     out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, 20.0, (1920, 1080))
 
-    gst_out_depth = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=/data/DEPTH" + hourstr+".mkv "
+    gst_out_depth = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=/data/DEPTH.mkv "
     out_depth = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, 20.0, (1920, 1080))
 
 
@@ -204,7 +204,7 @@ while True:
 
         # resize image
         resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
-        print(resized.shape)
+
 
 
         #print(depth_image.shape) 720*1080
@@ -215,6 +215,7 @@ while True:
         if SAVE_VIDEO_TIME != 0:
             try:
                 out.write(color_image)
+                out_depth.write(resized)
                 #cv2.imwrite('im.jpg', color_image)
                 #frames = pipeline.wait_for_frames()
                 #saver.process(frames)
@@ -256,6 +257,7 @@ while True:
 if enable_D435i:
     pipeline.stop()
     out.release()
+    out_depth.release()
     cv2.destroyAllWindows()
 if enable_T265:
     pipelineT265.stop()
