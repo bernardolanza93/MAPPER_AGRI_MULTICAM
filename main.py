@@ -115,7 +115,7 @@ if enable_D435i:
 
     #config.enable_stream(rs.stream.accel,rs.format.motion_xyz32f,200)
     #config.enable_stream(rs.stream.gyro,rs.format.motion_xyz32f,200)
-
+    saver = rs.save_single_frameset()
     align_to = rs.stream.color
     align = rs.align(align_to)
     try:
@@ -134,7 +134,7 @@ if enable_T265:
     print(serialt265)
     configT265.enable_device(serialt265)
     configT265.enable_stream(rs.stream.pose)
-    saver = rs.save_single_frameset()
+
     #saver.set_option()
 
 
