@@ -203,7 +203,8 @@ while True:
                 #result.write(color_image)
                 #cv2.imwrite('im.jpg', color_image)
                 #frames = pipeline.wait_for_frames()
-                saver.process(frames)
+                #saver.process(frames)
+                pass
 
 
             except Exception as e:
