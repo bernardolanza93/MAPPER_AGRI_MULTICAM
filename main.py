@@ -143,7 +143,7 @@ if enable_T265:
 
 if SAVE_VIDEO_TIME != 0:
 
-    result = cv2.VideoWriter('/data/filename.avi',
+    result = cv2.VideoWriter('/data/filename.mp4',
                              cv2.VideoWriter_fourcc(*'MJPG'),
                              20.0, (1080, 720),1)
 
