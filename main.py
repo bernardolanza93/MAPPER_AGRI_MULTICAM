@@ -150,8 +150,11 @@ if SAVE_VIDEO_TIME != 0:
     now = datetime.now()
     hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 
-    gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=test.mkv "
+    gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=/data/RGB" + hourstr+".mkv "
     out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, 20.0, (1920, 1080))
+
+    gst_out_depth = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=/data/DEPTH" + hourstr+".mkv "
+    out_depth = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, 20.0, (1920, 1080))
 
 
 
@@ -193,6 +196,16 @@ while True:
 
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
+
+
+        width = int(depth_image.shape[1] *  (1920/1280))
+        height = int(depth_image.shape[0] * (1080/720))
+        dim = (width, height)
+
+        # resize image
+        resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+        print(resized.shape)
+
 
         #print(depth_image.shape) 720*1080
         #depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
