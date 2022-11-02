@@ -5,6 +5,7 @@ import time
 import pyrealsense2 as rs
 import cv2
 import numpy as np
+import os
 
 
 '''
@@ -14,6 +15,34 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 
 
 '''
+
+
+def check_folder(relative_path):
+    """
+    check_folder : check  the existence and if not, create the path for the results folder
+
+    :param relative_path:path to be checked
+
+
+    :return nothing:
+    """
+
+    workingDir = os.getcwd()
+    path = workingDir + relative_path
+
+    # Check whether the specified path exists or not
+    isExist = os.path.exists(path)
+
+    if not isExist:
+        # Create a new directory because it does not exist
+        os.makedirs(path)
+
+        print("The new directory is created!", path)
+    else:
+        print('directory ok:', path)
+
+
+check_folder("/data/")
 
 
 SAVE_VIDEO_TIME = 10 # 0 per non salvare
@@ -114,7 +143,7 @@ if enable_T265:
 
 if SAVE_VIDEO_TIME != 0:
 
-    result = cv2.VideoWriter('filename.avi',
+    result = cv2.VideoWriter('/data/filename.avi',
                              cv2.VideoWriter_fourcc(*'MJPG'),
                              20.0, (1080, 720),1)
 
@@ -147,7 +176,8 @@ while True:
         #print(depth_image.shape) 720*1080
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
         if SAVE_VIDEO_TIME != 0:
-            cv2.imwrite('im.jpg', color_image)
+            result.write(color_image)
+            #cv2.imwrite('im.jpg', color_image)
 
             result.write(color_image)
         #print("size", depth_image.shape,  color_image.shape)
