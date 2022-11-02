@@ -210,7 +210,7 @@ while True:
                 print("error save video:||||:: %s", str(e))
             #cv2.imwrite('im.jpg', color_image)
 
-            result.write(color_image)
+            #result.write(color_image)
 
 
         #print("size", depth_image.shape,  color_image.shape)
