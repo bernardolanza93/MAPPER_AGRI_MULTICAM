@@ -187,13 +187,16 @@ while True:
 
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
+
+        #print(depth_image.shape) 720*1080
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+
         if FPS_DISPLAY:
             end = time.time()
             seconds = end - start
             fps = 1 / seconds
             print(fps)
-        #print(depth_image.shape) 720*1080
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+
         if SAVE_VIDEO_TIME != 0:
             try:
                 result.write(color_image)
