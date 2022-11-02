@@ -110,7 +110,7 @@ if enable_D435i:
     seriald435 = str(device_aviable['D435I'][0])
     print("serial : ", type(seriald435))
     config.enable_device(seriald435)
-    config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
+    config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
     config.enable_stream(rs.stream.depth, 1280 , 720 , rs.format.z16, 30)
 
     #config.enable_stream(rs.stream.accel,rs.format.motion_xyz32f,200)
@@ -152,7 +152,7 @@ if SAVE_VIDEO_TIME != 0:
 
     result = cv2.VideoWriter(path_here + '/data/RGB_' + hourstr +'.avi',
                              cv2.VideoWriter_fourcc(*'MJPG'),
-                             10.0, (1920, 1080),1)
+                             10.0, (1280, 720),1)
 
 
 
