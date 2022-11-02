@@ -177,7 +177,10 @@ while True:
         #print(depth_image.shape) 720*1080
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
         if SAVE_VIDEO_TIME != 0:
-            result.write(color_image)
+            try:
+                result.write(color_image)
+            except Exception as e:
+                print("error save video:||||:: %s", str(e))
             #cv2.imwrite('im.jpg', color_image)
 
             result.write(color_image)
