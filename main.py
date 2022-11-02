@@ -150,6 +150,9 @@ if SAVE_VIDEO_TIME != 0:
     now = datetime.now()
     hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 
+    gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=test.mkv "
+    out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, 20.0, (1280, 720))
+
     result = cv2.VideoWriter(path_here + '/data/RGB_' + hourstr +'.avi',
                              cv2.VideoWriter_fourcc(*'MJPG'),
                              10.0, (1280, 720),1)
@@ -200,7 +203,7 @@ while True:
 
         if SAVE_VIDEO_TIME != 0:
             try:
-                result.write(color_image)
+                out.write(color_image)
                 #cv2.imwrite('im.jpg', color_image)
                 #frames = pipeline.wait_for_frames()
                 #saver.process(frames)
