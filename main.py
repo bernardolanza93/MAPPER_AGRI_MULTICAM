@@ -144,7 +144,7 @@ if enable_T265:
 if SAVE_VIDEO_TIME != 0:
 
     result = cv2.VideoWriter(path_here + '/data/aquisition.avi',
-                             cv2.VideoWriter_fourcc(*'XVID'),
+                             cv2.VideoWriter_fourcc(*'MJPG'),
                              20.0, (1080, 720),1)
 
 
