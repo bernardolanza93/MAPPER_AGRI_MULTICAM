@@ -152,13 +152,13 @@ if SAVE_VIDEO_TIME != 0:
 
     gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
     out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
+    print(out.shape)
     try:
 
         #gst_out_depth = "appsrc ! video/x-raw, format=(string)IPL_DEPTH_8U ! queue ! videoconvert ! video/x-raw,format=(string)IPL_DEPTH_8U ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
-        gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '
-                   'videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! '
-                   'h265parse ! filesink location=test.h265 ')
+        gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! ''videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
         out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), False)
+        print(out_depth.shape)
     except Exception as e:
         print("error save 1ch depth:||||:: %s", str(e))
 
