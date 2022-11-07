@@ -16,14 +16,26 @@ import sys
 import cv2
 
 
+
+
+
+
+
 PATH_HERE = os.getcwd()
 PATH_2_FILE = "/data/"
 PATH_2_AQUIS = "/aquisition/"
 SAVE_VIDEO = False
+TRACKBAR = False
+THRESHOLD = True
+OPENING = True
+PIXEL_COUNTING = True
+THRES_VALUE = 75
 
 
 BOT = (0, 8, 11)
 TOP = (180, 218, 126)
+
+print("thres_value = ",THRES_VALUE)
 
 
 
@@ -95,74 +107,6 @@ def undesired_objects (image):
     img2 = np.zeros(output.shape)
     img2[output == max_label] = 255
     return img2
-
-
-
-def make_hinstogram_base_plt():
-
-    bins = 16
-    resizeWidth = 0
-
-    # Initialize plot.
-    fig, ax = plt.subplots()
-
-    ax.set_title('Histogram (HSV)')
-
-    ax.set_xlabel('Bin')
-    ax.set_ylabel('Frequency')
-
-    # Initialize plot line object(s). Turn on interactive plotting and show plot.
-    lw = 3
-    alpha = 0.5
-
-    lineR, = ax.plot(np.arange(bins), np.zeros((bins,)), c='r', lw=lw, alpha=alpha, label='h')
-    lineG, = ax.plot(np.arange(bins), np.zeros((bins,)), c='g', lw=lw, alpha=alpha, label='s')
-    lineB, = ax.plot(np.arange(bins), np.zeros((bins,)), c='b', lw=lw, alpha=alpha, label='v')
-
-    ax.set_xlim(0, bins - 1)
-    ax.set_ylim(0, 0.08)
-    ax.legend()
-    plt.ion()
-    plt.show()
-
-    return fig,lineR,lineG,lineB
-
-    # Grab, process, and display video frames. Update plot line object(s).
-
-
-
-
-
-
-def animate_plot_data(frame, fig,lineR,lineG,lineB):
-    bins = 16
-    resizeWidth = 0
-
-    #result.write(frame)
-
-    numPixels = np.prod(frame.shape[:2])
-
-
-    (b, g, r) = cv2.split(frame)
-    histogramR = cv2.calcHist([r], [0], None, [bins], [0, 255]) / numPixels
-    histogramG = cv2.calcHist([g], [0], None, [bins], [0, 255]) / numPixels
-    histogramB = cv2.calcHist([b], [0], None, [bins], [0, 255]) / numPixels
-    lineR.set_ydata(histogramR)
-    lineG.set_ydata(histogramG)
-    lineB.set_ydata(histogramB)
-
-    fig.canvas.draw()
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -374,25 +318,53 @@ for file in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                ret, mask = cv2.threshold(gray, 90, 255, cv2.THRESH_BINARY)
+
                 #th2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
                 #th3 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
                 #frame_HSV = frame
-                #mask = cv2.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
+
+                #sistemi di mask generation
+                if TRACKBAR:
+                    mask = cv2.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
+                elif THRESHOLD:
+                    ret, mask = cv2.threshold(gray, THRES_VALUE, 255, cv2.THRESH_BINARY)
                 #frame_HSV = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
                 #mask = cv2.inRange(frame_HSV, BOT, TOP)
+
+                if OPENING:
+                    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+                    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+
+
+
+
 
 
 
                 imask = mask < 255
                 imagem = (255 - mask)
-
-                # blob_detector(imagem)
-
                 green = 255 * np.ones_like(frame, np.uint8)
                 green[imask] = frame[imask]  # dentro i mask metto frame
+
+
+                if PIXEL_COUNTING:
+                    org = (100, 100)
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+
+                    # fontScale
+                    fontScale = 1
+
+                    # Blue color in BGR
+                    color = (255, 0, 0)
+
+                    # Line thickness of 2 px
+                    thickness = 2
+                    number_of_black_pix = np.sum(mask == 0)
+                    image = cv2.putText(green, 'pix : ' + str(number_of_black_pix), org, font,
+                                        fontScale, color, thickness, cv2.LINE_AA)
                 #Green,Imagen = mask_generation(frame,BOT,TOP)
                 #Imagen = cv2.bitwise_not(Imagen)
                 #Imagen = undesired_objects(Imagen)
@@ -402,9 +374,11 @@ for file in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 #maskedcolor = resize_image(Green,50)
                 #mask = resize_image(Imagen,50)
                 #cv2.imshow('Frame', maskedcolor)
-                dimension = 100
+                dimension = 50
                 frame = resize_image(frame,dimension)
                 green = resize_image(green, dimension)
+                mask = resize_image(mask, dimension)
+
 
                 #cv2.imshow('fff', frame)
                 #cv2.imshow('ff', mask)
@@ -416,7 +390,7 @@ for file in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 #                                         time.sleep(0.1)
                 #if cv2.waitKey(1) & 0xFF == ord('s'):
                     #break
-                cv2.imshow(window_capture_name, frame)
+                cv2.imshow(window_capture_name, mask)
                 cv2.imshow(window_detection_name, green)
 
                 key = cv2.waitKey(0)
