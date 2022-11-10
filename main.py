@@ -201,6 +201,7 @@ while True:
 
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
+        print(depth_image)
 
 
         width = int(1920)
