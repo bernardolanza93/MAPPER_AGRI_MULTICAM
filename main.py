@@ -251,7 +251,7 @@ while True:
         #cv2.imshow('Color Stream', depth_image)
 
 
-       cv2.imshow('depth Stream', depth_colormap)
+        cv2.imshow('depth Stream', depth_colormap)
 
         if FPS_DISPLAY:
             end = time.time()
