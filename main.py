@@ -161,7 +161,8 @@ if SAVE_VIDEO_TIME != 0:
 
     try:
 
-        gst_out_depth = "appsrc ! video/x-raw, format=(string)GRAY16_LE ! queue ! videoconvert ! video/x-raw,format=(string)GRAY16_LE ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
+        gst_out_depth = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
+
         #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! ''videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
         out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), False)
 
@@ -221,7 +222,7 @@ while True:
 
 
         #print(depth_image.shape) 720*1080
-        #depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(resized, alpha=0.03), cv2.COLORMAP_JET)
 
 
 
@@ -229,7 +230,7 @@ while True:
             try:
                 out.write(color_image)
                 try:
-                    out_depth.write(resized)
+                    out_depth.write(depth_colormap)
                 except Exception as e:
                     print("error saving depth 1 ch:||||:: %s", str(e))
                 #cv2.imwrite('im.jpg', color_image)
