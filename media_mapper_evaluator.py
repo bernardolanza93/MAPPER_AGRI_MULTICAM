@@ -39,6 +39,21 @@ print("thres_value = ",THRES_VALUE)
 
 
 
+def RGBtoD(r, g, b):
+    if r + g + b < 255:
+        return 0
+    if r >= g and r >= b:
+        if g >= b:
+            return g - b
+        else:
+            return (g - b) + 1529
+
+    elif g >= r and g >= b:
+        return b - r + 510
+    elif b >= g and b >= r:
+        return r - g + 1020
+
+
 
 def on_low_H_thresh_trackbar(val):
     global low_H
