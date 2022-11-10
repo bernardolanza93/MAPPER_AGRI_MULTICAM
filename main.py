@@ -8,7 +8,7 @@ import numpy as np
 import os
 from datetime import datetime
 
-
+#png uint 16
 
 '''
 pip install pyrealsense2
@@ -45,6 +45,11 @@ def check_folder(relative_path):
 
 
 check_folder("/data/")
+now = datetime.now()
+hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
+acquisition_today =  "aquisition_" + now
+
+check_folder("/data/"+acquisition_today)
 
 path_here = os.getcwd()
 SAVE_VIDEO_TIME = 10 # 0 per non salvare
