@@ -48,8 +48,8 @@ check_folder("/data/")
 now = datetime.now()
 hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 acquisition_today =  "aquisition_" + now
-
-check_folder("/data/"+acquisition_today)
+save_location = "/data/"+acquisition_today
+check_folder(save_location)
 
 path_here = os.getcwd()
 SAVE_VIDEO_TIME = 10 # 0 per non salvare
