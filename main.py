@@ -47,7 +47,7 @@ def check_folder(relative_path):
 check_folder("/data/")
 now = datetime.now()
 hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
-acquisition_today =  "aquisition_" + now
+acquisition_today =  "aquisition_" + str(now)
 save_location = "/data/"+acquisition_today
 check_folder(save_location)
 
