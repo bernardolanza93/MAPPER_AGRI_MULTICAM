@@ -56,6 +56,7 @@ SAVE_VIDEO_TIME = 10 # 0 per non salvare
 FPS_DISPLAY = True
 
 
+
 def search_device(ctx):
     enable_D435i = False
     enable_T265 = False
