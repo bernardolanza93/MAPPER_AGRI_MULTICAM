@@ -190,7 +190,10 @@ def brightness(img):
 
 def blob_detector(im,frame):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (6, 6))
+
     im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
+    im = cv2.erode(im, kernel, iterations=1)
+
     start_time3 = time.time()
 
 
@@ -203,8 +206,11 @@ def blob_detector(im,frame):
     # Find the index of the largest contour
     valid = []
     color = 0
-
+    i = 0
+    print("|||||||||||||||||||||||||||||||||||||||||||")
     for cnt in contours:
+        i += 1
+        print("_________________________")
         #area
         area = cv2.contourArea(cnt)
         #perimeter
@@ -214,21 +220,22 @@ def blob_detector(im,frame):
         if perimeter != 0 and area != 0:
             circularity = (4 * math.pi * area ) / (pow(perimeter,2))
 
+            print("area and perim and circularity", i, int(area), int(perimeter), circularity)
+
+
             if perimeter > 1000:
-                if circularity < 0.01:
-                    if area > 15:
+                if circularity < 0.1:
+                    if area > 50  :
 
 
-                        print("_____________")
-                        print(circularity)
 
-                        print("area and perim", int(area), int(perimeter))
-                        cv2.drawContours(frame, [cnt], 0, (0 + 3*color, 255 - 3*color, 0+ 3*color), 3)
+
+
+                        cv2.drawContours(frame, [cnt], 0, (0 , 255 , 0), 3)
 
                         rows, cols = frame.shape[:2]
                         [vx, vy, x, y] = cv2.fitLine(cnt, cv2.DIST_L2, 0, 0.01, 0.01)
                         lef = int((-x * vy / vx) + y)
-
                         ri = int(((cols - x) * vy / vx) + y)
                         cv2.line(frame, (cols - 1, ri), (0, lef), (0, 255, 0), 2)
                         #x, y, w, h = cv2.boundingRect(cnt)
@@ -240,8 +247,17 @@ def blob_detector(im,frame):
                         box = cv2.boxPoints(rect)
                         box = np.int0(box)
                         cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
-                        print(box)
-                        color += 10
+                        #print(box)
+
+                        org = (100, 100)
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        fontScale = 1
+                        color = (255, 0, 0)
+                        thickness = 2
+                        frame = cv2.putText(frame, str(i), (box[0][0], box[0][1] - 100), font,
+                                            fontScale, color, thickness, cv2.LINE_AA)
+
+
                         if False:
                             up = 0 + 50
                             down = frame_height - 50
