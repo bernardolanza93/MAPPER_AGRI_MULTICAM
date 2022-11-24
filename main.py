@@ -218,6 +218,8 @@ while True:
 
         # resize image
         resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+        print(depth_image, type(depth_image))
+
 
 
 
