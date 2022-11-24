@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import os
 from datetime import datetime
-from media_mapper_evaluator import *
+from evaluator_utils import *
 
 #png uint 16
 
