@@ -233,6 +233,7 @@ while True:
                     content = str(depth_image)
                     file.write(content)
                     file.close()
+
                 except Exception as e:
                     print("error saving depth 1 ch:||||:: %s", str(e))
                 #cv2.imwrite('im.jpg', color_image)
@@ -261,7 +262,7 @@ while True:
             seconds = end - start
             fps = 1 / seconds
             print(fps)
-        key = cv2.waitKey(1)
+        key = cv2.waitKey(0)
         if key == 27:
             #result.release()
             #cv2.destroyAllWindows()
