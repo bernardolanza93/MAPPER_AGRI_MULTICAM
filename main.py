@@ -230,10 +230,7 @@ while True:
                 out.write(color_image)
                 try:
                     #save here depth map
-                    file = open("file1.txt", "w+")
-                    content = str(depth_image)
-                    file.write(content)
-                    file.close()
+                    np.savetxt("image.txt", depth_image,fmt='%i')
 
                 except Exception as e:
                     print("error saving depth 1 ch:||||:: %s", str(e))
