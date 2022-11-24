@@ -208,7 +208,7 @@ while True:
 
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
-        #print(depth_image)
+
 
 
         width = int(1920)
@@ -221,8 +221,6 @@ while True:
 
 
 
-        #print(depth_image.shape) 720*1080
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(resized, alpha=0.03), cv2.COLORMAP_JET)
 
 
 
@@ -230,7 +228,11 @@ while True:
             try:
                 out.write(color_image)
                 try:
-                    out_depth.write(depth_colormap)
+                    #save here depth map
+                    file = open("file1.txt", "w+")
+                    content = str(depth_image)
+                    file.write(content)
+                    file.close()
                 except Exception as e:
                     print("error saving depth 1 ch:||||:: %s", str(e))
                 #cv2.imwrite('im.jpg', color_image)
@@ -252,6 +254,7 @@ while True:
 
 
         cv2.imshow('depth Stream', color_image)
+        cv2.imshow('dept!!!h Stream', depth_image)
 
         if FPS_DISPLAY:
             end = time.time()

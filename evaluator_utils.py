@@ -69,12 +69,14 @@ def skeletonize_mask(mask_bu):
 def volume_from_lenght_and_diam_med(box, frame, mask_bu):
 
     lenght_shoot = distanceCalculate(box[3], box[1])
+
     pixel = count_and_display_pixel(frame, mask_bu)
     diam_med = pixel / lenght_shoot
+    cv2.line(frame, box[3], box[1], (255, 255, 0), 4) #int(diam_med)
 
     volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
     print("volume: ", volume)
-    return volume
+    return volume,frame
 
 
 def distanceCalculate(p1, p2):
@@ -108,7 +110,19 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
                         #centroids
                         cx = int(M['m10'] / M['m00'])
                         cy = int(M['m01'] / M['m00'])
-                        frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
+                        Ix = M['m20']
+                        Iy = M['m02']
+                        b = int(pow((Iy * pow(area1,2))/Ix, 1/4))
+                        h = int(pow((Ix * pow(area1,2))/Iy, 1/4))
+                        x1 = cx - b/2
+                        x2 = cx + b/2
+                        y1 = cy - h / 2
+                        y2 = cy + h / 2
+                        print("dim", b,h)
+                        print("c", cx, cy)
+
+
+                        #frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
 
                         return cnt1
     print("advanced shoots not detected")
@@ -120,10 +134,11 @@ def crop_with_box_one_shoot(box, mask_bu, frame):
     P2 = box[1]
     P3 = box[2]
     P4 = box[3]
-    xmax = max(P1[0], P2[0], P3[0], P4[0]) + 20
-    xmin = min(P1[0], P2[0], P3[0], P4[0]) - 20
-    ymax = max(P1[1], P2[1], P3[1], P4[1]) + 20
-    ymin = min(P1[1], P2[1], P3[1], P4[1]) - 20
+    margine = 50
+    xmax = max(P1[0], P2[0], P3[0], P4[0]) + 50
+    xmin = min(P1[0], P2[0], P3[0], P4[0]) - 50
+    ymax = max(P1[1], P2[1], P3[1], P4[1]) + 50
+    ymin = min(P1[1], P2[1], P3[1], P4[1]) - 50
     print(box)
 
     h, w, c = frame.shape
@@ -397,7 +412,7 @@ def blob_detector(im,frame,green):
         cnt1 = second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame)
 
 
-        volume = volume_from_lenght_and_diam_med(box,frame,mask_bu)
+        volume,frame = volume_from_lenght_and_diam_med(box,frame,mask_bu)
 
 
         skel = skeletonize_mask(mask_bu)

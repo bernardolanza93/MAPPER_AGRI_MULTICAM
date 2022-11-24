@@ -170,7 +170,6 @@ while (True):
 
 
 
-
         if CONVERT_DEPTH_TO_1CH:
             if MEDIUM_DEPTH_DISPLAY:
                 print(frame22)
