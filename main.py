@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import os
 from datetime import datetime
+from media_mapper_evaluator import *
 
 #png uint 16
 
@@ -253,7 +254,8 @@ while True:
         #images = np.hstack((color_image, depth_colormap))
         #cv2.imshow('Color Stream', depth_image)
 
-
+        color_image = resize_image(color_image,50)
+        depth_image = resize_image(depth_image, 50)
         cv2.imshow('depth Stream', color_image)
         cv2.imshow('dept!!!h Stream', depth_image)
 
