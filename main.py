@@ -20,6 +20,9 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 '''
 
 
+offset = np.tile(30, (1920, 1080))
+
+
 def check_folder(relative_path):
     """
     check_folder : check  the existence and if not, create the path for the results folder
@@ -219,18 +222,16 @@ while True:
         # resize image
         resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
         resized =resized[50:55, 50:55]
-        print("1_______________________________________-:")
-        print(resized)
-        print("2_______________________________________-:")
-        cm = resized/10
-        print(cm)
-        print("3_______________________________________-:")
-        maxi = np.where(cm > 255, 0, cm)
-        print(maxi)
 
-        print("4_______________________________________-:")
+        resized = resized/10
+        resized = resized - offset
+        #tolgo tutto sotto i 30 cm
+
+
+
+        maxi = np.clip(resized,0,255)
+
         intcm = maxi.astype('uint8')
-        print(intcm)
 
 
 
@@ -242,14 +243,15 @@ while True:
 
 
 
-        print(intcm)
+
+
 
 
         #x2  = 10 * np.zeros(depth_image.shape, np.uint16)
         #print(depth_image,x2)
 
         #depth_image = int(depth_image/x2)
-        img8 = depth_image.astype('uint8')
+
 
 
 
@@ -264,7 +266,7 @@ while True:
                 out.write(color_image)
                 try:
                     #save here depth mapù
-                    out_depth.write(img8)
+                    out_depth.write(intcm)
                     #np.savetxt("image.txt", depth_image,fmt='%i')
 
                 except Exception as e:
