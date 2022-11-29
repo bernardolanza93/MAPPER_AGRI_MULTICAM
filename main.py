@@ -226,6 +226,18 @@ while True:
         print(cm)
         print("3_______________________________________-:")
         intcm = cm.astype('uint8')
+        print(intcm)
+        print("4_______________________________________-:")
+
+
+        maxi = np.where(intcm > 255, 0, intcm)
+        print(maxi)
+
+
+
+
+
+
 
 
         print(intcm)
