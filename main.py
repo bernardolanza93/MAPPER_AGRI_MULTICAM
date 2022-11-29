@@ -218,8 +218,16 @@ while True:
 
         # resize image
         resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+        print("1_______________________________________-:")
         print(resized)
-        print(resized/10)
+        print("2_______________________________________-:")
+        cm = resized/10
+        print(cm)
+        print("3_______________________________________-:")
+        intcm = cm.astype('uint8')
+
+
+        print(intcm)
 
 
         #x2  = 10 * np.zeros(depth_image.shape, np.uint16)
