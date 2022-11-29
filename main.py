@@ -218,6 +218,7 @@ while True:
 
         # resize image
         resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+        resized =resized[50:55, 50:55]
         print("1_______________________________________-:")
         print(resized)
         print("2_______________________________________-:")
