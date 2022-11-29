@@ -20,7 +20,7 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 '''
 
 
-offset = np.tile(30, (1920, 1080))
+offset = np.tile(30, (1080,1920))
 
 
 def check_folder(relative_path):
