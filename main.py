@@ -221,7 +221,7 @@ while True:
 
         # resize image
         resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
-        resized =resized[50:55, 50:55]
+
 
         resized = resized/10
         resized = resized - offset
@@ -291,7 +291,7 @@ while True:
         color_image = resize_image(color_image,50)
         depth_image = resize_image(depth_image, 50)
         cv2.imshow('depth Stream', color_image)
-        cv2.imshow('dept!!!h Stream', depth_image)
+        cv2.imshow('dept!!!h Stream', intcm)
 
         if FPS_DISPLAY:
             end = time.time()
