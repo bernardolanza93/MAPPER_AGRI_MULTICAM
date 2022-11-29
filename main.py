@@ -225,13 +225,15 @@ while True:
         cm = resized/10
         print(cm)
         print("3_______________________________________-:")
-        intcm = cm.astype('uint8')
-        print(intcm)
-        print("4_______________________________________-:")
-
-
-        maxi = np.where(intcm > 255, 0, intcm)
+        maxi = np.where(cm > 255, 0, cm)
         print(maxi)
+
+        print("4_______________________________________-:")
+        intcm = maxi.astype('uint8')
+        print(intcm)
+
+
+
 
 
 
