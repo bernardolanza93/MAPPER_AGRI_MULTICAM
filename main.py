@@ -59,7 +59,19 @@ path_here = os.getcwd()
 SAVE_VIDEO_TIME = 10 # 0 per non salvare
 FPS_DISPLAY = True
 
+def writeCSVdata(time,data):
+    """
+    write data 2 CSV
+    :param data: write to a csv file input data (append to the end)
+    :return: nothing
+    """
+    # scrive su un file csv i dati estratti dalla rete Neurale
+    name = "localization"
 
+    file = open('./data/' + name + '_'+ time +'.csv', 'a')
+    writer = csv.writer(file)
+    writer.writerow(data)
+    file.close()
 
 def search_device(ctx):
     enable_D435i = False
@@ -164,7 +176,7 @@ if SAVE_VIDEO_TIME != 0:
     out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
 
     try:
-        gst_out_depth   = "appsrc ! video/x-raw, format=GRAY8 ! queue ! videoconvert ! video/x-raw,format=GRAY8 ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.avi "
+        gst_out_depth   = "appsrc ! video/x-raw, format=GRAY8 ! queue ! videoconvert ! video/x-raw,format=GRAY8 ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv  "
 
         #gst_out_depth = "appsrc ! video/x-raw, format=GRAY8 ! filesink location=DEPTH.mkv "
         #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
@@ -175,9 +187,12 @@ if SAVE_VIDEO_TIME != 0:
         print("error save 1ch depth:||||:: %s", str(e))
 
 
-
+frame = 0
+now = datetime.now()
+time = now.strftime("%d-%m-%Y|%H:%M:%S")
 
 while True:
+    frame += 1
 
     # T265
 
@@ -192,12 +207,14 @@ while True:
             #print("Position: {}".format(data.translation))
             #print("Velocity: {}".format(data.velocity))
             #print("Acceleration: {}\n".format(data.acceleration))
+            writeCSVdata(time,[frame,data.translation,data.velocity])
 
     if enable_D435i:
         # Wait for a coherent pair of frames: depth and color
         start = time.time()
         try:
             frames = pipeline.wait_for_frames()
+
         except Exception as e:
             print("PIPELINE error:||||:: %s", str(e))
         #frames.as_motion_frame().get_motion_data()
