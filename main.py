@@ -195,7 +195,7 @@ while True:
     frame += 1
 
     # T265
-
+    start = time.time()
 
     if enable_T265:
         tframes = pipelineT265.wait_for_frames()
