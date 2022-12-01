@@ -211,7 +211,7 @@ while True:
 
     if enable_D435i:
         # Wait for a coherent pair of frames: depth and color
-        start = time.time()
+
         try:
             frames = pipeline.wait_for_frames()
 
