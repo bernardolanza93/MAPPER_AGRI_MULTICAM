@@ -176,7 +176,7 @@ if SAVE_VIDEO_TIME != 0:
     out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
 
     try:
-        gst_out_depth   = "appsrc ! video/x-raw, format=GRAY8 ! queue ! videoconvert ! video/x-raw,format=GRAY8 ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv  "
+        gst_out_depth   = "appsrc ! caps=video/x-raw,format=GRAY8! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv  "
 
         #gst_out_depth = "appsrc ! video/x-raw, format=GRAY8 ! filesink location=DEPTH.mkv "
         #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
@@ -284,7 +284,7 @@ while True:
 
         color_image = resize_image(color_image,50)
         depth_image = resize_image(depth_image, 50)
-        cv2.imshow('depth Stream', color_image)
+        #cv2.imshow('depth Stream', color_image)
         cv2.imshow('dept!!!h Stream', intcm)
 
         if FPS_DISPLAY:
