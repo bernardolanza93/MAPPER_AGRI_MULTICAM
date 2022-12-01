@@ -217,6 +217,8 @@ while True:
 
         except Exception as e:
             print("PIPELINE error:||||:: %s", str(e))
+            sys.exit()
+
         #frames.as_motion_frame().get_motion_data()
 
 
