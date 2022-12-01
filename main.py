@@ -189,7 +189,7 @@ if SAVE_VIDEO_TIME != 0:
 
 frame = 0
 now = datetime.now()
-time = now.strftime("%d-%m-%Y|%H:%M:%S")
+time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
 
 while True:
     frame += 1
@@ -207,7 +207,7 @@ while True:
             #print("Position: {}".format(data.translation))
             #print("Velocity: {}".format(data.velocity))
             #print("Acceleration: {}\n".format(data.acceleration))
-            writeCSVdata(time,[frame,data.translation,data.velocity])
+            writeCSVdata(time1,[frame,data.translation,data.velocity])
 
     if enable_D435i:
         # Wait for a coherent pair of frames: depth and color
@@ -252,32 +252,6 @@ while True:
         maxi = np.clip(resized,0,255)
 
         intcm = maxi.astype('uint8')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        #x2  = 10 * np.zeros(depth_image.shape, np.uint16)
-        #print(depth_image,x2)
-
-        #depth_image = int(depth_image/x2)
-
-
-
-
-
-
-
 
 
 
