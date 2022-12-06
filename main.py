@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 from evaluator_utils import *
 
-#png uint 16
+#png uint 16#
 
 '''
 pip install pyrealsense2
