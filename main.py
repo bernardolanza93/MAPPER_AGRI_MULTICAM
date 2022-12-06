@@ -285,7 +285,7 @@ while True:
         color_image = resize_image(color_image,50)
         depth_image = resize_image(depth_image, 50)
         #cv2.imshow('depth Stream', color_image)
-        cv2.imshow('dept!!!h Stream', intcm)
+        #cv2.imshow('dept!!!h Stream', intcm)
 
         if FPS_DISPLAY:
             end = time.time()
