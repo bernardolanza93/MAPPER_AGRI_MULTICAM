@@ -31,12 +31,15 @@ SAVE_VIDEO = False
 TRACKBAR = False
 THRESHOLD = True
 OPENING = True
-PIXEL_COUNTING = True
-MASK_DEPTH = False
+PIXEL_COUNTING = False
+MASK_DEPTH = True
 CONVERT_DEPTH_TO_1CH = False
 CROPPING = False
 MEDIUM_DEPTH_DISPLAY = True
 BLOB_DETECTOR = True
+FILTER_DEPTH = True
+
+
 now = datetime.now()
 time = now.strftime("%d-%m-%Y|%H:%M:%S")
 
@@ -48,7 +51,7 @@ print("thres_value = ",THRES_VALUE)
 
 
 check_folder("/aquisition/")
-
+dimension = 50
 max_value = 255
 max_value_H = 360//2
 low_H = 0
@@ -125,10 +128,11 @@ nrfr = 0
 while (True):
     ret, frame = video1.read()
     ret2, frame2 = video2.read()
+    frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
 
     if ret == True and ret2 == True:
 
-        # Write the frame into the
+        # Writ ethe frame into the
         # file 'filename.avi'
         if SAVE_VIDEO:
 
@@ -158,44 +162,49 @@ while (True):
         imagem = (255 - mask)
         green = 255 * np.ones_like(frame, np.uint8)
         green[imask] = frame[imask]  # dentro i mask metto frame
+
+
+
+
+
+        if FILTER_DEPTH:
+            max_depth = 280
+            min_depth = 70
+            frame = set_white_extreme_depth_area (frame, frame2 ,max_depth, min_depth)
+
+
+
+        if BLOB_DETECTOR:
+            mask,frame,edge,frame2 = blob_detector(mask, frame,green,frame2)
+
         if MASK_DEPTH:
+            imask = mask < 255
             frame22 = 255 * np.ones_like(frame2, np.uint8)
             frame22[imask] = frame2[imask]
-
-        else:
-            frame22 = frame2
-        if CONVERT_DEPTH_TO_1CH:
-            frame22 = ColorToD(frame22)
-
-
-
-
-        if CONVERT_DEPTH_TO_1CH:
-            if MEDIUM_DEPTH_DISPLAY:
-                print(frame22)
-                #medium = frame22()
-        if BLOB_DETECTOR:
-            mask,frame,edge,skel = blob_detector(mask, frame,green)
+            #frame22 = resize_image(frame22, dimension)
+            frame2 = frame22
         if PIXEL_COUNTING:
             pixel = count_and_display_pixel(frame,mask)
             writeCSVdata(time,[nrfr,pixel])
             print([nrfr,pixel])
         nrfr += 1
 
-        dimension = 50
+
         edge = resize_image(edge,dimension)
         #frame = resize_image(frame,dimension)
         green = resize_image(green, dimension)
         #mask = resize_image(mask, dimension)
-        frame22 = resize_image(frame22, dimension)
+
+        #frame2 = resize_image(frame2, dimension)
+
 
 
         cv2.imshow("or", frame)
         cv2.imshow("mask", mask)
-        cv2.imshow("green", green)
-        cv2.imshow("bella", frame22)
-        cv2.imshow("belhla", edge)
-        cv2.imshow("skel", skel)
+        #cv2.imshow("green", green)
+        cv2.imshow("frame2", frame2)
+        #cv2.imshow("edge", edge)
+        #cv2.imshow("skel", skel)
 
 
 

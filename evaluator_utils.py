@@ -36,6 +36,22 @@ low_V_name = 'Low V'
 high_H_name = 'High H'
 high_S_name = 'High S'
 high_V_name = 'High V'
+OFFSET_CM_COMPRESSION = 50
+
+def set_white_extreme_depth_area(frame, depth, max_depth, min_depth):
+    #print("depth = ", depth.shape)
+    depth = cv2.inRange(depth, min_depth-50, max_depth-50)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (33, 33))
+    depth = cv2.morphologyEx(depth, cv2.MORPH_OPEN, kernel)
+    depth = cv2.morphologyEx(depth, cv2.MORPH_CLOSE, kernel)
+
+    result = cv2.bitwise_and(frame, frame, mask=depth)
+    result[depth == 0] = [255, 255, 255]  # Turn background white
+
+    #depth = cv2.inRange(depth, 60, 200)
+    return result
+
+
 
 def skeletonize_mask(mask_bu):
 
@@ -67,10 +83,15 @@ def skeletonize_mask(mask_bu):
 
 
 def volume_from_lenght_and_diam_med(box, frame, mask_bu):
-
+    #lenght of the box, aka minimum rectangular distance
+    # |__->   L2
+    #area : pixel
+    # L1(diam_med) = A / L2
     lenght_shoot = distanceCalculate(box[3], box[1])
 
+
     pixel = count_and_display_pixel(frame, mask_bu)
+
     diam_med = pixel / lenght_shoot
     cv2.line(frame, box[3], box[1], (255, 255, 0), 4) #int(diam_med)
 
@@ -92,17 +113,19 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
                                              cv2.CHAIN_APPROX_NONE)
     i = 0
     for cnt1 in contours1:
+        #calcolo area e perimetro
         area1 = cv2.contourArea(cnt1)
         # perimeter
         perimeter1 = cv2.arcLength(cnt1, True)
         i += 1
 
         if perimeter1 != 0 and area1 != 0:
+            #calcolo circolarità
             circularity1 = (4 * math.pi * area1) / (pow(perimeter1, 2))
-            print("2nd LAYER DETECTED", i, int(area1), int(perimeter1), circularity1)
-            if perimeter1 > 800:
-                if circularity1 < 0.1:
-                    if area1 > 300:
+            #print("2nd LAYER DETECTED", i, int(area1), int(perimeter1), circularity1)
+            if perimeter1 > 500 and perimeter1 < 7000: #1200
+                if circularity1 > 0.005 and circularity1 < 0.08: #0.05 / 0.1, 0.02
+                    if area1 > 300 and area1 < 4000: #2200
                         print("2nd LAYER CHOSEN", i, int(area1), int(perimeter1), circularity1)
                         cv2.drawContours(frame, [cnt1], 0, (0, 200, 50), 1)
                         #moments
@@ -122,13 +145,13 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
                         print("c", cx, cy)
 
 
-                        #frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
+                        frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
 
-                        return cnt1
+                        return cnt1,frame
     print("advanced shoots not detected")
-    return 0
+    return 0,frame
 
-def crop_with_box_one_shoot(box, mask_bu, frame):
+def crop_with_box_one_shoot(box, mask_bu, frame,depth):
 
     P1 = box[0]
     P2 = box[1]
@@ -148,9 +171,10 @@ def crop_with_box_one_shoot(box, mask_bu, frame):
             print("cropped")
             mask_bu = mask_bu[ymin:ymax, xmin:xmax]
             frame = frame[ymin:ymax, xmin:xmax]
-            return mask_bu, frame
+            depth_c = depth[ymin:ymax, xmin:xmax]
+            return mask_bu, frame, depth_c
     print("impossible crop entire image")
-    return mask_bu, frame
+    return mask_bu, frame, depth
 
 
 def draw_and_identify_current_cnt(frame, i,box):
@@ -219,12 +243,17 @@ def first_layer_detect_raw_shoots(im,frame):
             circularity = (4 * math.pi * area) / (pow(perimeter, 2))
 
             print("AVIABLE:  i A,P,C | ", i," | ", int(area)," | ", int(perimeter), " | ",circularity)
-
-            if area > 10000:
+            '''
+            if perimeter > 100 and perimeter < 100000:  # 1200  
+                if circularity > 0.0005 and circularity < 0.9:  # 0.05 / 0.1, 0.02
+                    if area > 300 and area < 120000:  # 2200
+            '''
+            if area > 5000:
 
                 if circularity < 0.13:
-                    if perimeter > 1000:
+                    if perimeter > 500:
                         print("CHOSEN!!!!!! i A,P,C", i, int(area), int(perimeter), circularity)
+
 
                         return cnt,i,edge
     print("no one aviable")
@@ -233,11 +262,13 @@ def first_layer_detect_raw_shoots(im,frame):
 
 
 def count_and_display_pixel(green,mask):
-    org = (100, 100)
+    height = green.shape[0]
+    width = green.shape[1]
+    org = (int(height/2), int(width/2))
     font = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 1
+    fontScale = 0.6
     color = (255, 0, 0)
-    thickness = 2
+    thickness = 1
     number_of_black_pix = np.sum(mask == 0)
     image = cv2.putText(green, 'pix : ' + str(number_of_black_pix), org, font,
                         fontScale, color, thickness, cv2.LINE_AA)
@@ -390,32 +421,15 @@ def brightness(img):
         return np.average(img)
 
 
-def blob_detector(im,frame,green):
+def blob_detector(im,frame,green,depth):
     frame_BU = frame.copy()
     gray_bu = cv2.cvtColor(frame_BU, cv2.COLOR_BGR2GRAY)
     ret, mask_bu = cv2.threshold(gray_bu, THRES_VALUE, 255, cv2.THRESH_BINARY)
 
 
     cnt,i,edge  = first_layer_detect_raw_shoots(mask_bu,frame)
+
     if i != 0:
-        fit_and_draw_line_cnt(cnt,frame)
-
-        box = draw_and_calculate_rotated_box(cnt,frame)
-
-        draw_and_calculate_poligonal_max_diameter(cnt,frame)
-
-        draw_and_identify_current_cnt(frame, i, box)
-
-
-        mask_bu,frame = crop_with_box_one_shoot(box,mask_bu,frame)
-
-        cnt1 = second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame)
-
-
-        volume,frame = volume_from_lenght_and_diam_med(box,frame,mask_bu)
-
-
-        skel = skeletonize_mask(mask_bu)
 
 
 
@@ -423,8 +437,30 @@ def blob_detector(im,frame,green):
 
 
 
+        try:
+            cnt1, frame = second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame)
+            fit_and_draw_line_cnt(cnt1, frame)
+            #draw_and_calculate_poligonal_max_diameter(cnt1, frame)
+            box1 = draw_and_calculate_rotated_box(cnt1, frame)
+            mask_bu, frame,depth = crop_with_box_one_shoot( box1, mask_bu, frame,depth)
 
-    return mask_bu,frame,edge,skel
+
+
+            volume, frame = volume_from_lenght_and_diam_med(box1, frame, mask_bu)
+
+            skel = skeletonize_mask(mask_bu)
+
+        except Exception as e:
+            print("error second lalyer detection: %s", str(e))
+
+
+
+
+
+
+
+
+    return mask_bu,frame,edge,depth
 
 
 
