@@ -31,23 +31,24 @@ SAVE_VIDEO = False
 TRACKBAR = False
 THRESHOLD = True
 OPENING = True
-PIXEL_COUNTING = False
+PIXEL_COUNTING = True
 MASK_DEPTH = True
 CONVERT_DEPTH_TO_1CH = False
 CROPPING = False
 MEDIUM_DEPTH_DISPLAY = True
 BLOB_DETECTOR = True
-FILTER_DEPTH = True
+FILTER_DEPTH = False
 
 
 now = datetime.now()
 time = now.strftime("%d-%m-%Y|%H:%M:%S")
+writeCSVdata(time,["frame","pixel","volume","distance_med"])
 
 
 BOT = (0, 8, 11)
 TOP = (180, 218, 126)
 
-print("thres_value = ",THRES_VALUE)
+#print("thres_value = ",THRES_VALUE)
 
 
 check_folder("/aquisition/")
@@ -168,25 +169,29 @@ while (True):
 
 
         if FILTER_DEPTH:
-            max_depth = 280
-            min_depth = 70
+            max_depth = 260
+            min_depth = 50
             frame = set_white_extreme_depth_area (frame, frame2 ,max_depth, min_depth)
 
 
 
         if BLOB_DETECTOR:
-            mask,frame,edge,frame2 = blob_detector(mask, frame,green,frame2)
+            mask,frame,edge,frame2, pixel,volume = blob_detector(mask, frame,green,frame2)
 
         if MASK_DEPTH:
             imask = mask < 255
-            frame22 = 255 * np.ones_like(frame2, np.uint8)
+            frame22 = 255 * np.ones_like(frame2, np.uint8) #all white
             frame22[imask] = frame2[imask]
-            #frame22 = resize_image(frame22, dimension)
+            distance_med = extract_medium_from_depth_segmented(frame2[imask])
+            print("dist ", distance_med)
+
+
+
             frame2 = frame22
         if PIXEL_COUNTING:
-            pixel = count_and_display_pixel(frame,mask)
-            writeCSVdata(time,[nrfr,pixel])
-            print([nrfr,pixel])
+
+            writeCSVdata(time,[nrfr,pixel,int(volume),int(distance_med)])
+            #print([nrfr,pixel])
         nrfr += 1
 
 

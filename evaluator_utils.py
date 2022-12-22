@@ -18,7 +18,7 @@ import csv
 from datetime import datetime
 
 
-THRES_VALUE = 85
+THRES_VALUE = 110
 CROPPING_ADVANCED = True
 max_value = 255
 max_value_H = 360//2
@@ -38,6 +38,42 @@ high_S_name = 'High S'
 high_V_name = 'High V'
 OFFSET_CM_COMPRESSION = 50
 
+
+
+
+def sub_box_iteration_cylindrificator(iteration, box,frame, mask):
+
+    #mask bu  = [mask bu i ]
+    for i in range(iteration):
+        #for images in mask bu ( firs iteration is only one)
+
+
+            #crop image on the box
+            #cut in half image in max lenght direction
+            #calculate volume in these image separatly using area of black and major leght of the image to retrive volume and radius
+            #clear mask bu and the images in the list and put the resulting images of the iteration (images = 2^iteration)
+    #print number of total images
+    total_volume = 0
+    frame = frame
+
+
+    return total_volume,frame
+
+def optional_closing(frame):
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (41, 41))
+
+    #frame = cv2.erode(frame, kernel, iterations=1)
+    frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, kernel)
+    print("opened")
+
+
+    return frame
+
+def extract_medium_from_depth_segmented(depth):
+    distance_medium = np.mean(depth) + OFFSET_CM_COMPRESSION
+
+    return distance_medium
 def set_white_extreme_depth_area(frame, depth, max_depth, min_depth):
     #print("depth = ", depth.shape)
     depth = cv2.inRange(depth, min_depth-50, max_depth-50)
@@ -119,35 +155,51 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
         perimeter1 = cv2.arcLength(cnt1, True)
         i += 1
 
-        if perimeter1 != 0 and area1 != 0:
+        if perimeter1 > 100  and area1 > 100:
             #calcolo circolarità
             circularity1 = (4 * math.pi * area1) / (pow(perimeter1, 2))
-            #print("2nd LAYER DETECTED", i, int(area1), int(perimeter1), circularity1)
-            if perimeter1 > 500 and perimeter1 < 7000: #1200
-                if circularity1 > 0.005 and circularity1 < 0.08: #0.05 / 0.1, 0.02
-                    if area1 > 300 and area1 < 4000: #2200
-                        print("2nd LAYER CHOSEN", i, int(area1), int(perimeter1), circularity1)
-                        cv2.drawContours(frame, [cnt1], 0, (0, 200, 50), 1)
-                        #moments
-                        M = cv2.moments(cnt1)
-                        #centroids
-                        cx = int(M['m10'] / M['m00'])
-                        cy = int(M['m01'] / M['m00'])
-                        Ix = M['m20']
-                        Iy = M['m02']
-                        b = int(pow((Iy * pow(area1,2))/Ix, 1/4))
-                        h = int(pow((Ix * pow(area1,2))/Iy, 1/4))
-                        x1 = cx - b/2
-                        x2 = cx + b/2
-                        y1 = cy - h / 2
-                        y2 = cy + h / 2
-                        print("dim", b,h)
-                        print("c", cx, cy)
+            M = cv2.moments(cnt1)
+            # centroids
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
+            M0 = M['m00'] / 1000
+            M01 = M['m01'] / 1000000
+            M10 = M['m10'] / 1000000
+            M02 = M['m02'] / 1000000000
+            M20 = M['m20'] / 1000000000
+            print("2nd LAYER DETECTED", i, int(area1), int(perimeter1), circularity1)
+            print("moments", M0, M01, M10, M02,M20)
+
+            if perimeter1 > 800 and perimeter1 < 5000: #1200
+                if circularity1 > 0.001 and circularity1 < 0.1: #0.05 / 0.1, 0.02
+                    if area1 > 1000 and area1 < 15000: #2200
+                        if M0 > 1.5 and M0 < 16:  # 2200
+                            if M01 > 0.5 and  M01 < 11:  # 2200
+                                if M10 > 0.7 and M10  < 12:  # 220
+
+                                    print("|____________________________________|")
+                                    print("2nd LAYER CHOSEN", i, int(area1), int(perimeter1), circularity1)
+                                    print("moments", M0, M01, M10, M02, M20)
+                                    cv2.drawContours(frame, [cnt1], 0, (0, 200, 50), 1)
+
+                                    #moments
 
 
-                        frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
+                                    Ix = M['m20']
+                                    Iy = M['m02']
+                                    b = int(pow((Iy * pow(area1,2))/Ix, 1/4))
+                                    h = int(pow((Ix * pow(area1,2))/Iy, 1/4))
+                                    x1 = cx - b/2
+                                    x2 = cx + b/2
+                                    y1 = cy - h / 2
+                                    y2 = cy + h / 2
+                                    print("dim", b,h)
+                                    print("c", cx, cy)
 
-                        return cnt1,frame
+
+                                    frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
+
+                                    return cnt1,frame
     print("advanced shoots not detected")
     return 0,frame
 
@@ -157,23 +209,24 @@ def crop_with_box_one_shoot(box, mask_bu, frame,depth):
     P2 = box[1]
     P3 = box[2]
     P4 = box[3]
-    margine = 50
-    xmax = max(P1[0], P2[0], P3[0], P4[0]) + 50
-    xmin = min(P1[0], P2[0], P3[0], P4[0]) - 50
-    ymax = max(P1[1], P2[1], P3[1], P4[1]) + 50
-    ymin = min(P1[1], P2[1], P3[1], P4[1]) - 50
-    print(box)
+    margine = 10
+    xmax = max(P1[0], P2[0], P3[0], P4[0]) + margine
+    xmin = min(P1[0], P2[0], P3[0], P4[0]) - margine
+    ymax = max(P1[1], P2[1], P3[1], P4[1]) + margine
+    ymin = min(P1[1], P2[1], P3[1], P4[1]) - margine
+    #print(box)
 
     h, w, c = frame.shape
 
     if xmin > 0 and ymin > 0:
-        if xmax < h and ymax < w:
+        if xmax <= w and ymax <= h:
             print("cropped")
             mask_bu = mask_bu[ymin:ymax, xmin:xmax]
             frame = frame[ymin:ymax, xmin:xmax]
             depth_c = depth[ymin:ymax, xmin:xmax]
             return mask_bu, frame, depth_c
-    print("impossible crop entire image")
+
+    print("impossible crop entire image",w, xmin, xmax, h,ymin,ymax)
     return mask_bu, frame, depth
 
 
@@ -242,7 +295,7 @@ def first_layer_detect_raw_shoots(im,frame):
         if perimeter != 0 and area != 0:
             circularity = (4 * math.pi * area) / (pow(perimeter, 2))
 
-            print("AVIABLE:  i A,P,C | ", i," | ", int(area)," | ", int(perimeter), " | ",circularity)
+            #print("AVIABLE:  i A,P,C | ", i," | ", int(area)," | ", int(perimeter), " | ",circularity)
             '''
             if perimeter > 100 and perimeter < 100000:  # 1200  
                 if circularity > 0.0005 and circularity < 0.9:  # 0.05 / 0.1, 0.02
@@ -250,7 +303,7 @@ def first_layer_detect_raw_shoots(im,frame):
             '''
             if area > 5000:
 
-                if circularity < 0.13:
+                if circularity < 0.4:
                     if perimeter > 500:
                         print("CHOSEN!!!!!! i A,P,C", i, int(area), int(perimeter), circularity)
 
@@ -264,13 +317,14 @@ def first_layer_detect_raw_shoots(im,frame):
 def count_and_display_pixel(green,mask):
     height = green.shape[0]
     width = green.shape[1]
-    org = (int(height/2), int(width/2))
+    #org = (int(height/2), int(width/2))
+    org = (50, 50)
     font = cv2.FONT_HERSHEY_SIMPLEX
     fontScale = 0.6
     color = (255, 0, 0)
     thickness = 1
     number_of_black_pix = np.sum(mask == 0)
-    image = cv2.putText(green, 'pix : ' + str(number_of_black_pix), org, font,
+    green = cv2.putText(green, 'pix : ' + str(number_of_black_pix), org, font,
                         fontScale, color, thickness, cv2.LINE_AA)
     return number_of_black_pix
 
@@ -422,6 +476,8 @@ def brightness(img):
 
 
 def blob_detector(im,frame,green,depth):
+    pixel  = 0
+    volume = 0
     frame_BU = frame.copy()
     gray_bu = cv2.cvtColor(frame_BU, cv2.COLOR_BGR2GRAY)
     ret, mask_bu = cv2.threshold(gray_bu, THRES_VALUE, 255, cv2.THRESH_BINARY)
@@ -438,11 +494,22 @@ def blob_detector(im,frame,green,depth):
 
 
         try:
+
+
             cnt1, frame = second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame)
             fit_and_draw_line_cnt(cnt1, frame)
             #draw_and_calculate_poligonal_max_diameter(cnt1, frame)
             box1 = draw_and_calculate_rotated_box(cnt1, frame)
-            mask_bu, frame,depth = crop_with_box_one_shoot( box1, mask_bu, frame,depth)
+            print("box: ",box1)
+            mask_bu, frame, depth = crop_with_box_one_shoot(box1, mask_bu, frame, depth)
+            #mask_bu = optional_closing(mask_bu)
+
+            iteration = 3
+            #total_volume,frame = sub_box_iteration_cylindrificator(iteration, box1,frame, mask_bu)
+
+
+            pixel = count_and_display_pixel(frame,mask_bu)
+
 
 
 
@@ -460,7 +527,7 @@ def blob_detector(im,frame,green,depth):
 
 
 
-    return mask_bu,frame,edge,depth
+    return mask_bu,frame,edge,depth,pixel,volume
 
 
 
