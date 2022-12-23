@@ -15,6 +15,13 @@ import sys
 import math
 import cv2
 import csv
+from scipy.spatial import distance as dist
+from imutils import perspective
+from imutils import contours
+import numpy as np
+import argparse
+import imutils
+import cv2
 from datetime import datetime
 
 
@@ -40,19 +47,66 @@ OFFSET_CM_COMPRESSION = 50
 
 
 
+def midpoint(ptA, ptB):
+	return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+def calc_box_legth(box,frame):
+    orig = frame.copy()
+    # unpack the ordered bounding box, then compute the midpoint
+    # between the top-left and top-right coordinates, followed by
+    # the midpoint bet ween bottom-left and bottom-right coordinates
+    (tl, tr, br, bl) = box
+    (tltrX, tltrY) = midpoint(tl, tr)
+    (blbrX, blbrY) = midpoint(bl, br)
+    # compute the midpoint between the top-left and top-right points,
+    # followed by the midpoint between the top-righ and bottom-right
+    (tlblX, tlblY) = midpoint(tl, bl)
+    (trbrX, trbrY) = midpoint(tr, br)
+    # draw the midpoints on the image
+    cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
+    cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
+    cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
+    cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
+    # draw lines between the midpoints
+    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
+             (255, 0, 255), 2)
+    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
+             (255, 0, 255), 2)
+    # draw the object sizes on the image
+
+    # compute the Euclidean distance between the midpoints
+    dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+    dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    cv2.putText(orig, "{:.1f}in".format(dA),
+                (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
+                0.65, (255, 255, 255), 2)
+    cv2.putText(orig, "{:.1f}in".format(dB),
+                (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
+                0.65, (255, 255, 255), 2)
+
+    return dA,dB
+
 
 def sub_box_iteration_cylindrificator(iteration, box,frame, mask):
-
+    dA,dB = calc_box_legth(box,frame)
+    #area = calc area of black in image
+    #approx diameter = wood area  / lenght of box=max(dA,dB=
+    #iteration needed = maxL of box / approximate diameter
     #mask bu  = [mask bu i ]
-    for i in range(iteration):
+    #volumes = [volum i]
+    #for i in range(iteration):
         #for images in mask bu ( firs iteration is only one)
 
 
             #crop image on the box
             #cut in half image in max lenght direction
-            #calculate volume in these image separatly using area of black and major leght of the image to retrive volume and radius
-            #clear mask bu and the images in the list and put the resulting images of the iteration (images = 2^iteration)
-    #print number of total images
+            #box identification of the new image
+            #estimate max lenght and medium diameter of the box from pixel area
+            #calculate volume in these image separatly using area of black and major leght of the new box to retrive volume and radius
+            #clear mask bu and the images in the list, and put the resulting images of the iteration (images = 2^iteration) clear also volume
+            #print the boxes found in origina frame, use portion of frame (not cutted to perform box and detection)
+            #use always frame[start:end] to perform pixel identification and box estimation to preserve pixels location to draw on original cropped frame
+    # sum the mini volume to obtain the maxi volume
+    #print number of total images, number of iteration
     total_volume = 0
     frame = frame
 
@@ -486,7 +540,11 @@ def blob_detector(im,frame,green,depth):
     cnt,i,edge  = first_layer_detect_raw_shoots(mask_bu,frame)
 
     if i != 0:
-
+        #every video should be analized from folder with specific names: A_1 ramo A condizione 1
+        #save csv all in same folder in same method  A_1
+    #need to implement a continous imges analyzer, to do so, use all the momentum and area perim and circularity
+        # if those data are not enought use also color differenziation hsv
+        #if this system is not enough use pixel
 
 
 
