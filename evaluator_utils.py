@@ -86,32 +86,134 @@ def calc_box_legth(box,frame):
     return dA,dB
 
 
-def sub_box_iteration_cylindrificator(iteration, box,frame, mask):
+def crop_image_with_box_and_margin(frame, box):
+
+    h, w, c = frame.shape
+
+    P1 = box[0]
+    P2 = box[1]
+    P3 = box[2]
+    P4 = box[3]
+    margine = int(h/10)
+    xmax = max(P1[0], P2[0], P3[0], P4[0]) + margine
+    xmin = min(P1[0], P2[0], P3[0], P4[0]) - margine
+    ymax = max(P1[1], P2[1], P3[1], P4[1]) + margine
+    ymin = min(P1[1], P2[1], P3[1], P4[1]) - margine
+    #print(box)
+
+
+    if xmin > 0 and ymin > 0:
+        if xmax <= w and ymax <= h:
+            print("cropped")
+
+            frame = frame[ymin:ymax, xmin:xmax]
+
+            return  frame
+
+    print("impossible crop entire image",w, xmin, xmax, h,ymin,ymax)
+    return frame
+
+def rotated_box_cropper(mask):
+    #margin augmented
+    mask = cv2.copyMakeBorder(src=mask, top=15, bottom=15, left=15, right=15,borderType=cv2.BORDER_CONSTANT, value=(255))
+
+    #calc cnt
+    imagem1 = (255 - mask)
+
+    contours, hierarchy = cv2.findContours(imagem1, cv2.RETR_EXTERNAL,
+                                             cv2.CHAIN_APPROX_NONE)
+    #if multiple cnt take only the bigger
+    if len(contours) > 1:
+        cnt = contours[-1]
+        print("too many contours", len(contours))
+
+    else:
+        cnt = contours[-1]
+
+    #calc box
+    rect = cv2.minAreaRect(cnt)
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+
+
+
+    #crop rot box + margin white
+    width = int(rect[1][0])
+    height = int(rect[1][1])
+
+    src_pts = box.astype("float32")
+    dst_pts = np.array([[0, height - 1],
+                        [0, 0],
+                        [width - 1, 0],
+                        [width - 1, height - 1]], dtype="float32")
+    M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+    warped = cv2.warpPerspective(mask, M, (width, height))
+
+
+
+    return warped
+def image_splitter(frame):
+
+    h = frame.shape[0]
+    w = frame.shape[1]
+    #channels = frame.shape[2]
+
+    # decido se tagliare in altezza o larghezza
+    if h > w:
+        #top bottom
+        half2 = h // 2
+
+        img1 = frame[:half2, :]
+        img2 = frame[half2:, :]
+
+    else:
+        #left right
+        half = w // 2
+
+        img1 = frame[:, :half]
+        img2 = frame[:, half:]
+
+
+    return img1, img2
+
+
+def sub_box_iteration_cylindrificator(box,frame, mask):
+
     dA,dB = calc_box_legth(box,frame)
-    #area = calc area of black in image
-    #approx diameter = wood area  / lenght of box=max(dA,dB=
-    #iteration needed = maxL of box / approximate diameter
-    #mask bu  = [mask bu i ]
-    #volumes = [volum i]
-    #for i in range(iteration):
-        #for images in mask bu ( firs iteration is only one)
+    # area = calc area of black in image
+    number_of_black_pix = np.sum(mask == 0)
+    # approx diameter = wood area  / lenght of box=max(dA,dB=
+    diameter_medium = number_of_black_pix / (max(dA,dB))
+    # iteration needed = maxL of box / approximate diameter
+    iteration_needed = int(((max(dA,dB)) / diameter_medium) /2)
+    iteration = 2
 
 
-            #crop image on the box
-            #cut in half image in max lenght direction
-            #box identification of the new image
-            #estimate max lenght and medium diameter of the box from pixel area
-            #calculate volume in these image separatly using area of black and major leght of the new box to retrive volume and radius
-            #clear mask bu and the images in the list, and put the resulting images of the iteration (images = 2^iteration) clear also volume
-            #print the boxes found in origina frame, use portion of frame (not cutted to perform box and detection)
-            #use always frame[start:end] to perform pixel identification and box estimation to preserve pixels location to draw on original cropped frame
-    # sum the mini volume to obtain the maxi volume
-    #print number of total images, number of iteration
-    total_volume = 0
-    frame = frame
+    images_collector = []
+    images_collector.append(mask)
+
+    for it in range(iteration):
+        #prima ruoto e taglio
+        new_collector_images = []
+        for im_num in range(len(images_collector)):
+
+            rot_mask = rotated_box_cropper(images_collector[im_num])
+            cv2.imshow("im" + str(im_num), rot_mask)
 
 
-    return total_volume,frame
+            #poi splitto
+            img1,img2 = image_splitter(rot_mask)
+
+            new_collector_images.append(img1)
+            new_collector_images.append(img2)
+        images_collector = new_collector_images
+
+    print("images : ",len(images_collector))
+    #for x in range(len(images_collector)):
+        #cv2.imshow("im"+str(x),images_collector[x])
+
+
+    return images_collector[0]
 
 def optional_closing(frame):
 
@@ -186,7 +288,7 @@ def volume_from_lenght_and_diam_med(box, frame, mask_bu):
     cv2.line(frame, box[3], box[1], (255, 255, 0), 4) #int(diam_med)
 
     volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
-    print("volume: ", volume)
+    #print("volume: ", volume)
     return volume,frame
 
 
@@ -247,8 +349,8 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
                                     x2 = cx + b/2
                                     y1 = cy - h / 2
                                     y2 = cy + h / 2
-                                    print("dim", b,h)
-                                    print("c", cx, cy)
+                                    #print("dim", b,h)
+                                    #print("c", cx, cy)
 
 
                                     frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
@@ -304,7 +406,7 @@ def draw_and_calculate_rotated_box(cnt, frame):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
-    cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+    #cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
     return box
 
 def fit_and_draw_line_cnt(cnt, frame):
@@ -390,9 +492,9 @@ def writeCSVdata(time,data):
     :return: nothing
     """
     # scrive su un file csv i dati estratti dalla rete Neurale
-    name = "A_normal"
+    name = ""
 
-    file = open('./data/' + name + '_'+ time +'.csv', 'a')
+    file = open('./data/' + time +'.csv', 'a')
     writer = csv.writer(file)
     writer.writerow(data)
     file.close()
@@ -558,7 +660,7 @@ def blob_detector(im,frame,green,depth):
             fit_and_draw_line_cnt(cnt1, frame)
             #draw_and_calculate_poligonal_max_diameter(cnt1, frame)
             box1 = draw_and_calculate_rotated_box(cnt1, frame)
-            print("box: ",box1)
+            #print("box: ",box1)
             mask_bu, frame, depth = crop_with_box_one_shoot(box1, mask_bu, frame, depth)
             #mask_bu = optional_closing(mask_bu)
 
@@ -572,8 +674,11 @@ def blob_detector(im,frame,green,depth):
 
 
             volume, frame = volume_from_lenght_and_diam_med(box1, frame, mask_bu)
+            crop_mask_rot = sub_box_iteration_cylindrificator(box1, frame, mask_bu)
+            cv2.imshow("ROTATED", crop_mask_rot)
 
-            skel = skeletonize_mask(mask_bu)
+
+            #skel = skeletonize_mask(mask_bu)
 
         except Exception as e:
             print("error second lalyer detection: %s", str(e))

@@ -21,6 +21,7 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 
 
 offset = np.tile(50, (1080,1920))
+T265_MANDATORY = False
 
 
 def check_folder(relative_path):
@@ -239,18 +240,19 @@ while True:
         height = int(1080)
         dim = (width, height)
 
-        # resize image
+        # resize image depth to fit rgb
         resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
 
-
+        #convert u16 mm bw image to u16 cm bw
         resized = resized/10
+        #rescale without first 50 cm of offset unwanted
         resized = resized - offset
         #tolgo tutto sotto i 30 cm
 
 
-
+        #stretchin all in the 0-255 cm interval
         maxi = np.clip(resized,0,255)
-
+        #convert to 8 bit
         intcm = maxi.astype('uint8')
 
 
