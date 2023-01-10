@@ -134,11 +134,14 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
         cv2.createTrackbar(high_V_name, window_detection_name, high_V, max_value, on_high_V_thresh_trackbar)
 
     nrfr = 0
+    total1 = int(video1.get(cv2.CAP_PROP_FRAME_COUNT))
+    total2 = int(video2.get(cv2.CAP_PROP_FRAME_COUNT))
+    print("frames", total1)
+    print("frames", total2)
 
     while(video1.isOpened() and video2.isOpened()):
         ret, frame = video1.read()
         ret2, frame2 = video2.read()
-
 
 
         if ret == True and ret2 == True:
@@ -184,21 +187,21 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 min_depth = 50
                 frame = set_white_extreme_depth_area (frame, frame2 ,max_depth, min_depth)
 
-
-
-            if BLOB_DETECTOR:
-                mask,frame,edge,frame2, pixel,volume = blob_detector(mask, frame,green,frame2)
-
             if MASK_DEPTH:
                 imask = mask < 255
                 frame22 = 255 * np.ones_like(frame2, np.uint8) #all white
                 frame22[imask] = frame2[imask]
-                distance_med = extract_medium_from_depth_segmented(frame2[imask])
-                #print("dist ", distance_med)
 
+                distance_med = extract_medium_from_depth_segmented(frame2[imask])
+                print("dist ", distance_med)
 
 
                 frame2 = frame22
+
+            if BLOB_DETECTOR:
+                mask,frame,edge,frame2, pixel,volume = blob_detector(mask, frame,green,frame2)
+
+
             if PIXEL_COUNTING:
 
                 writeCSVdata(folder_name,[nrfr,pixel,int(volume),int(distance_med)])

@@ -44,6 +44,7 @@ high_H_name = 'High H'
 high_S_name = 'High S'
 high_V_name = 'High V'
 OFFSET_CM_COMPRESSION = 50
+CYLINDER_SHOW = False
 
 
 
@@ -113,9 +114,10 @@ def crop_image_with_box_and_margin(frame, box):
     print("impossible crop entire image",w, xmin, xmax, h,ymin,ymax)
     return frame
 
-def rotated_box_cropper(mask):
+def rotated_box_cropper(mask, depth):
     #margin augmented
     mask = cv2.copyMakeBorder(src=mask, top=15, bottom=15, left=15, right=15,borderType=cv2.BORDER_CONSTANT, value=(255))
+    depth = cv2.copyMakeBorder(src=depth, top=15, bottom=15, left=15, right=15,borderType=cv2.BORDER_CONSTANT, value=(255))
 
     #calc cnt
     imagem1 = (255 - mask)
@@ -123,11 +125,19 @@ def rotated_box_cropper(mask):
     contours, hierarchy = cv2.findContours(imagem1, cv2.RETR_EXTERNAL,
                                              cv2.CHAIN_APPROX_NONE)
     #if multiple cnt take only the bigger
-    if len(contours) > 1:
-        cnt = contours[-1]
-        print("too many contours", len(contours))
+    #print("cnt ")
 
-    else:
+    h = mask.shape[0]
+    w = mask.shape[1]
+    cnt = ""
+    for cnt_i in contours:
+        area = cv2.contourArea(cnt_i)
+        area_box = h*w
+        ratio = area/area_box
+        #print("ratio", ratio)
+        if ratio > 0.03:
+            cnt = cnt_i
+    if cnt == "":
         cnt = contours[-1]
 
     #calc box
@@ -135,8 +145,9 @@ def rotated_box_cropper(mask):
     box = cv2.boxPoints(rect)
     box = np.int0(box)
 
+    mask = (255 - mask)
 
-
+    depth = cv2.bitwise_not(depth)
     #crop rot box + margin white
     width = int(rect[1][0])
     height = int(rect[1][1])
@@ -148,10 +159,13 @@ def rotated_box_cropper(mask):
                         [width - 1, height - 1]], dtype="float32")
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     warped = cv2.warpPerspective(mask, M, (width, height))
+    warped_depth = cv2.warpPerspective(depth, M, (width, height))
+
+    warped = (255 - warped)
+    warped_depth = cv2.bitwise_not(warped_depth)
 
 
-
-    return warped
+    return warped, warped_depth, box
 def image_splitter(frame):
 
     h = frame.shape[0]
@@ -177,7 +191,8 @@ def image_splitter(frame):
     return img1, img2
 
 
-def sub_box_iteration_cylindrificator(box,frame, mask):
+def sub_box_iteration_cylindrificator(box,frame, mask, depth):
+    cv2.imshow("dddddd",depth)
 
     dA,dB = calc_box_legth(box,frame)
     # area = calc area of black in image
@@ -186,31 +201,71 @@ def sub_box_iteration_cylindrificator(box,frame, mask):
     diameter_medium = number_of_black_pix / (max(dA,dB))
     # iteration needed = maxL of box / approximate diameter
     iteration_needed = int(((max(dA,dB)) / diameter_medium) /2)
-    iteration = 2
+    iteration = 4
+    cv2.imshow("DD",depth)
 
 
     images_collector = []
+    depth_images_collector = []
     images_collector.append(mask)
+    depth_images_collector.append(depth)
 
     for it in range(iteration):
         #prima ruoto e taglio
         new_collector_images = []
+        new_collector_depth_images = []
         for im_num in range(len(images_collector)):
 
-            rot_mask = rotated_box_cropper(images_collector[im_num])
-            cv2.imshow("im" + str(im_num), rot_mask)
+            rot_mask, rot_mask_depth, box = rotated_box_cropper(images_collector[im_num],depth_images_collector[im_num])
+
+            #volume
+            h = rot_mask.shape[0]
+            w = rot_mask.shape[1]
+            lenght_shoot = max(w,h)
+            number_of_black_pix = np.sum(rot_mask == 0)
+            diam_med = number_of_black_pix / lenght_shoot
+            volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
+
+
+
+            #distance_med
+            imask = rot_mask < 255
+            frame22 = 255 * np.ones_like(rot_mask_depth, np.uint8)  # all white
+            frame22[imask] = rot_mask_depth[imask]
+
+            distance_med = extract_medium_from_depth_segmented(rot_mask_depth[imask])
+            print("DISTCYL",distance_med)
+
+            # count number of white pixels
+            #l'area bianca della mesh, sul
+
+
+
+            #mean = np.mean(img)
+
+
+
 
 
             #poi splitto
             img1,img2 = image_splitter(rot_mask)
+            img_d1, img_d2 =  image_splitter(rot_mask_depth)
 
             new_collector_images.append(img1)
             new_collector_images.append(img2)
+            new_collector_depth_images.append(img_d1)
+            new_collector_depth_images.append(img_d2)
         images_collector = new_collector_images
+        depth_images_collector = new_collector_depth_images
 
     print("images : ",len(images_collector))
-    #for x in range(len(images_collector)):
-        #cv2.imshow("im"+str(x),images_collector[x])
+    if CYLINDER_SHOW:
+        for x in range(len(images_collector)):
+            cv2.imshow("im"+str(x),depth_images_collector[x])
+    volumes = []
+    #for image_in in images_collector:
+
+
 
 
     return images_collector[0]
@@ -227,6 +282,7 @@ def optional_closing(frame):
     return frame
 
 def extract_medium_from_depth_segmented(depth):
+    cv2.imshow("fram2[imask]",depth)
     distance_medium = np.mean(depth) + OFFSET_CM_COMPRESSION
 
     return distance_medium
@@ -244,7 +300,7 @@ def set_white_extreme_depth_area(frame, depth, max_depth, min_depth):
     return result
 
 
-
+"""
 def skeletonize_mask(mask_bu):
 
     # skeleton
@@ -272,7 +328,7 @@ def skeletonize_mask(mask_bu):
 
 
     return skel
-
+"""
 
 def volume_from_lenght_and_diam_med(box, frame, mask_bu):
     #lenght of the box, aka minimum rectangular distance
@@ -376,11 +432,11 @@ def crop_with_box_one_shoot(box, mask_bu, frame,depth):
 
     if xmin > 0 and ymin > 0:
         if xmax <= w and ymax <= h:
-            print("cropped")
+
             mask_bu = mask_bu[ymin:ymax, xmin:xmax]
             frame = frame[ymin:ymax, xmin:xmax]
-            depth_c = depth[ymin:ymax, xmin:xmax]
-            return mask_bu, frame, depth_c
+            depth = depth[ymin:ymax, xmin:xmax]
+            return mask_bu, frame, depth
 
     print("impossible crop entire image",w, xmin, xmax, h,ymin,ymax)
     return mask_bu, frame, depth
@@ -406,7 +462,7 @@ def draw_and_calculate_rotated_box(cnt, frame):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
-    #cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+    cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
     return box
 
 def fit_and_draw_line_cnt(cnt, frame):
@@ -500,7 +556,7 @@ def writeCSVdata(time,data):
     file.close()
 
 
-
+"""
 def RGBtoD(r, g, b):
 
     if r >= g and r >= b:
@@ -531,8 +587,6 @@ def ColorToD(frame):
             #print(z_value/10)
 
     return depth_frame
-
-
 
 def on_low_H_thresh_trackbar(val):
     global low_H
@@ -570,7 +624,7 @@ def on_high_V_thresh_trackbar(val):
     high_V = val
     high_V = max(high_V, low_V+1)
     cv2.setTrackbarPos(high_V_name, window_detection_name, high_V)
-
+"""
 
 
 def resize_image(img, percentage):
@@ -674,8 +728,8 @@ def blob_detector(im,frame,green,depth):
 
 
             volume, frame = volume_from_lenght_and_diam_med(box1, frame, mask_bu)
-            crop_mask_rot = sub_box_iteration_cylindrificator(box1, frame, mask_bu)
-            cv2.imshow("ROTATED", crop_mask_rot)
+            crop_mask_rot = sub_box_iteration_cylindrificator(box1, frame, mask_bu,depth)
+
 
 
             #skel = skeletonize_mask(mask_bu)
