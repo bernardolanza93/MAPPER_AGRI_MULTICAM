@@ -18,6 +18,11 @@ import csv
 from datetime import datetime
 from evaluator_utils import *
 
+"""
+D435's FOV is 91.2 x 65.5 x 100.6. 
+
+"""
+
 
 
 
@@ -187,6 +192,9 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 min_depth = 50
                 frame = set_white_extreme_depth_area (frame, frame2 ,max_depth, min_depth)
 
+            if BLOB_DETECTOR:
+                mask, frame, edge, frame2, pixel, volume = blob_detector(mask, frame, green, frame2)
+
             if MASK_DEPTH:
                 imask = mask < 255
                 frame22 = 255 * np.ones_like(frame2, np.uint8) #all white
@@ -198,8 +206,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
                 frame2 = frame22
 
-            if BLOB_DETECTOR:
-                mask,frame,edge,frame2, pixel,volume = blob_detector(mask, frame,green,frame2)
+
 
 
             if PIXEL_COUNTING:

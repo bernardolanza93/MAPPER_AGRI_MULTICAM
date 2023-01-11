@@ -44,7 +44,7 @@ high_H_name = 'High H'
 high_S_name = 'High S'
 high_V_name = 'High V'
 OFFSET_CM_COMPRESSION = 50
-CYLINDER_SHOW = False
+CYLINDER_SHOW = True
 
 
 
@@ -129,7 +129,7 @@ def rotated_box_cropper(mask, depth):
 
     h = mask.shape[0]
     w = mask.shape[1]
-    cnt = ""
+    cnt = []
     for cnt_i in contours:
         area = cv2.contourArea(cnt_i)
         area_box = h*w
@@ -137,7 +137,7 @@ def rotated_box_cropper(mask, depth):
         #print("ratio", ratio)
         if ratio > 0.03:
             cnt = cnt_i
-    if cnt == "":
+    if cnt == []:
         cnt = contours[-1]
 
     #calc box
@@ -157,9 +157,13 @@ def rotated_box_cropper(mask, depth):
                         [0, 0],
                         [width - 1, 0],
                         [width - 1, height - 1]], dtype="float32")
+
+
+
+
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-    warped = cv2.warpPerspective(mask, M, (width, height))
-    warped_depth = cv2.warpPerspective(depth, M, (width, height))
+    warped = cv2.warpPerspective(mask, M, (width, height),borderMode=cv2.BORDER_TRANSPARENT)
+    warped_depth = cv2.warpPerspective(depth, M, (width, height),borderMode=cv2.BORDER_TRANSPARENT)
 
     warped = (255 - warped)
     warped_depth = cv2.bitwise_not(warped_depth)
@@ -192,7 +196,6 @@ def image_splitter(frame):
 
 
 def sub_box_iteration_cylindrificator(box,frame, mask, depth):
-    cv2.imshow("dddddd",depth)
 
     dA,dB = calc_box_legth(box,frame)
     # area = calc area of black in image
@@ -201,9 +204,7 @@ def sub_box_iteration_cylindrificator(box,frame, mask, depth):
     diameter_medium = number_of_black_pix / (max(dA,dB))
     # iteration needed = maxL of box / approximate diameter
     iteration_needed = int(((max(dA,dB)) / diameter_medium) /2)
-    iteration = 4
-    cv2.imshow("DD",depth)
-
+    iteration = 5
 
     images_collector = []
     depth_images_collector = []
@@ -216,40 +217,11 @@ def sub_box_iteration_cylindrificator(box,frame, mask, depth):
         new_collector_depth_images = []
         for im_num in range(len(images_collector)):
 
-            rot_mask, rot_mask_depth, box = rotated_box_cropper(images_collector[im_num],depth_images_collector[im_num])
-
-            #volume
-            h = rot_mask.shape[0]
-            w = rot_mask.shape[1]
-            lenght_shoot = max(w,h)
-            number_of_black_pix = np.sum(rot_mask == 0)
-            diam_med = number_of_black_pix / lenght_shoot
-            volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
-
-
-
-            #distance_med
-            imask = rot_mask < 255
-            frame22 = 255 * np.ones_like(rot_mask_depth, np.uint8)  # all white
-            frame22[imask] = rot_mask_depth[imask]
-
-            distance_med = extract_medium_from_depth_segmented(rot_mask_depth[imask])
-            print("DISTCYL",distance_med)
-
-            # count number of white pixels
-            #l'area bianca della mesh, sul
-
-
-
-            #mean = np.mean(img)
-
-
-
-
+            rot_mask, rot_mask_depth, box = rotated_box_cropper(images_collector[im_num], depth_images_collector[im_num])
 
             #poi splitto
             img1,img2 = image_splitter(rot_mask)
-            img_d1, img_d2 =  image_splitter(rot_mask_depth)
+            img_d1, img_d2 = image_splitter(rot_mask_depth)
 
             new_collector_images.append(img1)
             new_collector_images.append(img2)
@@ -261,7 +233,27 @@ def sub_box_iteration_cylindrificator(box,frame, mask, depth):
     print("images : ",len(images_collector))
     if CYLINDER_SHOW:
         for x in range(len(images_collector)):
-            cv2.imshow("im"+str(x),depth_images_collector[x])
+            # volume
+            #implementa questo con la box e non con tutta l immagine
+            h = images_collector[x].shape[0]
+            w = images_collector[x].shape[1]
+            lenght_shoot = max(w, h)
+            number_of_black_pix = np.sum(images_collector[x] == 0)
+            diam_med = number_of_black_pix / lenght_shoot
+            volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
+
+            #diam
+            imask = images_collector[x] < 255
+            frame22 = 255 * np.ones_like(depth_images_collector[x], np.uint8)  # all white
+            frame22[imask] = depth_images_collector[x][imask]
+            distance_med = extract_medium_from_depth_segmented((depth_images_collector[x])[imask])
+            print("ala", (depth_images_collector[x])[imask])
+            # rot_mask_depth = frame22
+            print("DISTCYL", distance_med)
+
+            vis = np.concatenate((depth_images_collector[x], images_collector[x]), axis=1)
+            cv2.imshow("im"+str(x),vis)
+
     volumes = []
     #for image_in in images_collector:
 
@@ -282,7 +274,7 @@ def optional_closing(frame):
     return frame
 
 def extract_medium_from_depth_segmented(depth):
-    cv2.imshow("fram2[imask]",depth)
+
     distance_medium = np.mean(depth) + OFFSET_CM_COMPRESSION
 
     return distance_medium
