@@ -47,11 +47,54 @@ OFFSET_CM_COMPRESSION = 50
 CYLINDER_SHOW = True
 
 
+def distance_med_from_masked_depth(mask,depth):
+    #diam
+    imask = mask < 255
+    frame22 = 255 * np.ones_like(depth, np.uint8)  # all white
+    frame22[imask] = depth[imask]
+    distance_med = extract_medium_from_depth_segmented((depth)[imask])
+    #print("ala", (depth)[imask])
+    #print("DISTCYL", distance_med)
+
+    return distance_med, frame22
+
+def volume_from_mask_cylinder(mask):
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    # if multiple cnt take only the bigger
+    # print("cnt ")
+    h = mask.shape[0]
+    w = mask.shape[1]
+    cnt = []
+    for cnt_i in contours:
+        area = cv2.contourArea(cnt_i)
+        area_image = h * w
+        ratio = area / area_image
+        # print("ratio", ratio)
+        if ratio > 0.03:
+            cnt = cnt_i
+    if cnt == []:
+        cnt = contours[-1]
+
+    rect = cv2.minAreaRect(cnt)
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+
+    dA, dB = calc_box_legth(box)
+    # volume
+    # implementa questo con la box e non con tutta l immagine
+    h = mask.shape[0]
+    w = mask.shape[1]
+    lenght_shoot = max(dA, dB)
+    number_of_black_pix = np.sum(mask == 0)
+    diam_med = number_of_black_pix / lenght_shoot
+    volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
+    #print("vol",lenght_shoot)
+    return volume
 
 def midpoint(ptA, ptB):
-	return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
-def calc_box_legth(box,frame):
-    orig = frame.copy()
+    return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+def calc_box_legth(box):
+
     # unpack the ordered bounding box, then compute the midpoint
     # between the top-left and top-right coordinates, followed by
     # the midpoint bet ween bottom-left and bottom-right coordinates
@@ -62,7 +105,8 @@ def calc_box_legth(box,frame):
     # followed by the midpoint between the top-righ and bottom-right
     (tlblX, tlblY) = midpoint(tl, bl)
     (trbrX, trbrY) = midpoint(tr, br)
-    # draw the midpoints on the image
+    # draw the midpoints on the imageà
+    """
     cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
     cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
     cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
@@ -73,16 +117,19 @@ def calc_box_legth(box,frame):
     cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
              (255, 0, 255), 2)
     # draw the object sizes on the image
+    """
 
     # compute the Euclidean distance between the midpoints
     dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
     dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    """
     cv2.putText(orig, "{:.1f}in".format(dA),
                 (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
                 0.65, (255, 255, 255), 2)
     cv2.putText(orig, "{:.1f}in".format(dB),
                 (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
                 0.65, (255, 255, 255), 2)
+    """
 
     return dA,dB
 
@@ -162,8 +209,8 @@ def rotated_box_cropper(mask, depth):
 
 
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-    warped = cv2.warpPerspective(mask, M, (width, height),borderMode=cv2.BORDER_TRANSPARENT)
-    warped_depth = cv2.warpPerspective(depth, M, (width, height),borderMode=cv2.BORDER_TRANSPARENT)
+    warped = cv2.warpPerspective(mask, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
+    warped_depth = cv2.warpPerspective(depth, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
 
     warped = (255 - warped)
     warped_depth = cv2.bitwise_not(warped_depth)
@@ -197,14 +244,14 @@ def image_splitter(frame):
 
 def sub_box_iteration_cylindrificator(box,frame, mask, depth):
 
-    dA,dB = calc_box_legth(box,frame)
+    dA,dB = calc_box_legth(box)
     # area = calc area of black in image
     number_of_black_pix = np.sum(mask == 0)
     # approx diameter = wood area  / lenght of box=max(dA,dB=
     diameter_medium = number_of_black_pix / (max(dA,dB))
     # iteration needed = maxL of box / approximate diameter
     iteration_needed = int(((max(dA,dB)) / diameter_medium) /2)
-    iteration = 5
+    iteration = 2
 
     images_collector = []
     depth_images_collector = []
@@ -230,37 +277,28 @@ def sub_box_iteration_cylindrificator(box,frame, mask, depth):
         images_collector = new_collector_images
         depth_images_collector = new_collector_depth_images
 
+
     print("images : ",len(images_collector))
     if CYLINDER_SHOW:
+        volumes = []
+        distances = []
         for x in range(len(images_collector)):
-            # volume
-            #implementa questo con la box e non con tutta l immagine
-            h = images_collector[x].shape[0]
-            w = images_collector[x].shape[1]
-            lenght_shoot = max(w, h)
-            number_of_black_pix = np.sum(images_collector[x] == 0)
-            diam_med = number_of_black_pix / lenght_shoot
-            volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
 
-            #diam
-            imask = images_collector[x] < 255
-            frame22 = 255 * np.ones_like(depth_images_collector[x], np.uint8)  # all white
-            frame22[imask] = depth_images_collector[x][imask]
-            distance_med = extract_medium_from_depth_segmented((depth_images_collector[x])[imask])
-            print("ala", (depth_images_collector[x])[imask])
-            # rot_mask_depth = frame22
-            print("DISTCYL", distance_med)
-
-            vis = np.concatenate((depth_images_collector[x], images_collector[x]), axis=1)
+            volume = volume_from_mask_cylinder(images_collector[x])
+            distance_cylinder,masked_depth = distance_med_from_masked_depth(images_collector[x],depth_images_collector[x])
+            volumes.append(volume)
+            distances.append(distance_cylinder)
+            vis = np.concatenate((depth_images_collector[x], images_collector[x],masked_depth), axis=1)
             cv2.imshow("im"+str(x),vis)
 
-    volumes = []
+
+
     #for image_in in images_collector:
 
 
 
 
-    return images_collector[0]
+    return volumes,distances
 
 def optional_closing(frame):
 
@@ -371,8 +409,8 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
             M10 = M['m10'] / 1000000
             M02 = M['m02'] / 1000000000
             M20 = M['m20'] / 1000000000
-            print("2nd LAYER DETECTED", i, int(area1), int(perimeter1), circularity1)
-            print("moments", M0, M01, M10, M02,M20)
+            #print("2nd LAYER CANDITATE", i, int(area1), int(perimeter1), circularity1)
+            #print("moments", M0, M01, M10, M02,M20)
 
             if perimeter1 > 800 and perimeter1 < 5000: #1200
                 if circularity1 > 0.001 and circularity1 < 0.1: #0.05 / 0.1, 0.02
@@ -485,7 +523,7 @@ def first_layer_detect_raw_shoots(im,frame):
     valid = []
     color = 0
     i = 0
-    print("|||||||||||||||||||||||||||||||||||||||||||")
+    #print("|||||||||||||||||||||||||||||||||||||||||||")
 
     for cnt in contours:
         i += 1
@@ -509,7 +547,7 @@ def first_layer_detect_raw_shoots(im,frame):
 
                 if circularity < 0.4:
                     if perimeter > 500:
-                        print("CHOSEN!!!!!! i A,P,C", i, int(area), int(perimeter), circularity)
+                        print("first layer CHOSEN! i A,P,C", i, int(area), int(perimeter), circularity)
 
 
                         return cnt,i,edge
@@ -720,7 +758,9 @@ def blob_detector(im,frame,green,depth):
 
 
             volume, frame = volume_from_lenght_and_diam_med(box1, frame, mask_bu)
-            crop_mask_rot = sub_box_iteration_cylindrificator(box1, frame, mask_bu,depth)
+            volumes, distances = sub_box_iteration_cylindrificator(box1, frame, mask_bu,depth)
+            cylindrification_results = [volumes, distances]
+            return mask_bu, frame, edge, depth, pixel, volume, cylindrification_results
 
 
 
@@ -728,6 +768,7 @@ def blob_detector(im,frame,green,depth):
 
         except Exception as e:
             print("error second lalyer detection: %s", str(e))
+            return 0
 
 
 
@@ -736,7 +777,7 @@ def blob_detector(im,frame,green,depth):
 
 
 
-    return mask_bu,frame,edge,depth,pixel,volume
+
 
 
 

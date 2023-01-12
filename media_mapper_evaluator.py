@@ -191,9 +191,14 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 max_depth = 260
                 min_depth = 50
                 frame = set_white_extreme_depth_area (frame, frame2 ,max_depth, min_depth)
-
+            SAVE = False
             if BLOB_DETECTOR:
-                mask, frame, edge, frame2, pixel, volume = blob_detector(mask, frame, green, frame2)
+                try:
+                    mask, frame, edge, frame2, pixel, volume, cylindrification_results = blob_detector(mask, frame, green, frame2)
+                    SAVE = True
+                except Exception as e:
+                    print("error BLOB: %s", str(e))
+                    SAVE = False
 
             if MASK_DEPTH:
                 imask = mask < 255
@@ -210,13 +215,13 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
             if PIXEL_COUNTING:
-
-                writeCSVdata(folder_name,[nrfr,pixel,int(volume),int(distance_med)])
+                if SAVE:
+                    writeCSVdata(folder_name,[nrfr,pixel,int(volume),int(distance_med), cylindrification_results[0], cylindrification_results[1]])
                 #print([nrfr,pixel])
             nrfr += 1
 
 
-            edge = resize_image(edge,dimension)
+
             #frame = resize_image(frame,dimension)
             green = resize_image(green, dimension)
             #mask = resize_image(mask, dimension)
@@ -234,7 +239,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            key = cv2.waitKey(0)
+            key = cv2.waitKey(1)
             if key == ord('q') or key == 27:
                 sys.exit()
                 break
