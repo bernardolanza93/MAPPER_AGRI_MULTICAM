@@ -77,7 +77,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
     print("files:", os.listdir(PATH_HERE + PATH_2_AQUIS))
     folder_name = folders
     #videos = os.listdir(PATH_HERE + PATH_2_AQUIS+ "/" + folder_name)
-    writeCSVdata(folder_name, ["frame", "pixel", "volume", "distance_med"])
+    writeCSVdata(folder_name, ["frame", "pixel", "volume", "distance_med", "volumes", "distances"])
 
     for videos in os.listdir(PATH_HERE + PATH_2_AQUIS+ "/" + folder_name):
 
@@ -143,7 +143,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
     total2 = int(video2.get(cv2.CAP_PROP_FRAME_COUNT))
     print("frames", total1)
     print("frames", total2)
-
+    time.sleep(1)
     while(video1.isOpened() and video2.isOpened()):
         ret, frame = video1.read()
         ret2, frame2 = video2.read()
@@ -193,12 +193,20 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 frame = set_white_extreme_depth_area (frame, frame2 ,max_depth, min_depth)
             SAVE = False
             if BLOB_DETECTOR:
+                #print("___1___",mask,"____2__", frame,"___3___", green ,"___4___",frame2)
+                #print("frames shapes", mask.shape, frame.shape, green .shape, frame2.shape)
+                frame,mask,frame2, pixel, volume, cylindrification_results, completation , dA, dB = blob_detector(frame ,frame2)
+                if completation:
+                    SAVE = True
+
+                """
                 try:
                     mask, frame, edge, frame2, pixel, volume, cylindrification_results = blob_detector(mask, frame, green, frame2)
                     SAVE = True
                 except Exception as e:
                     print("error BLOB: %s", str(e))
                     SAVE = False
+                """
 
             if MASK_DEPTH:
                 imask = mask < 255
@@ -206,7 +214,8 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 frame22[imask] = frame2[imask]
 
                 distance_med = extract_medium_from_depth_segmented(frame2[imask])
-                print("dist ", distance_med)
+                print("distance", distance_med)
+                #print("dist ", distance_med)
 
 
                 frame2 = frame22
@@ -217,6 +226,8 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
             if PIXEL_COUNTING:
                 if SAVE:
                     writeCSVdata(folder_name,[nrfr,pixel,int(volume),int(distance_med), cylindrification_results[0], cylindrification_results[1]])
+                    writeCSVdata(folder_name + "geometrical", [int(dA), int(dB) , int(distance_med)])
+                    #print(len(cylindrification_results[1]))
                 #print([nrfr,pixel])
             nrfr += 1
 

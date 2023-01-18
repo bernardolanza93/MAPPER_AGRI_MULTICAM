@@ -58,7 +58,7 @@ def distance_med_from_masked_depth(mask,depth):
 
     return distance_med, frame22
 
-def volume_from_mask_cylinder(mask):
+def volume_from_mask_cylinder(mask, frame):
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     # if multiple cnt take only the bigger
     # print("cnt ")
@@ -69,31 +69,53 @@ def volume_from_mask_cylinder(mask):
         area = cv2.contourArea(cnt_i)
         area_image = h * w
         ratio = area / area_image
+        print("ratio", ratio)
         # print("ratio", ratio)
-        if ratio > 0.03:
+        if ratio > 0.001:
             cnt = cnt_i
-    if cnt == []:
+    if cnt == [] and len(contours) != 0:
+
+        #print("contours", contours)
+        print("contours l", len(contours))
+
         cnt = contours[-1]
 
+
+
     rect = cv2.minAreaRect(cnt)
+    """
+    except:
+        cv2.imshow("error rect",mask)
+        print(mask)
+        print("contour",cnt)
+        print(mask.shape)
+        cv2.waitKey(0)
+        time.sleep(100)
+    """
+
+
     box = cv2.boxPoints(rect)
     box = np.int0(box)
-
-    dA, dB = calc_box_legth(box)
+    draw = False
+    dA, dB, mask = calc_box_legth(box, mask, draw)
     # volume
     # implementa questo con la box e non con tutta l immagine
     h = mask.shape[0]
     w = mask.shape[1]
     lenght_shoot = max(dA, dB)
     number_of_black_pix = np.sum(mask == 0)
-    diam_med = number_of_black_pix / lenght_shoot
-    volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
+    if lenght_shoot != 0:
+        diam_med = number_of_black_pix / lenght_shoot
+        volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
+
+    else :
+        volume = 0
     #print("vol",lenght_shoot)
-    return volume
+    return volume, (dA,dB), frame
 
 def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
-def calc_box_legth(box):
+def calc_box_legth(box, orig, draw):
 
     # unpack the ordered bounding box, then compute the midpoint
     # between the top-left and top-right coordinates, followed by
@@ -105,23 +127,27 @@ def calc_box_legth(box):
     # followed by the midpoint between the top-righ and bottom-right
     (tlblX, tlblY) = midpoint(tl, bl)
     (trbrX, trbrY) = midpoint(tr, br)
-    # draw the midpoints on the imageà
-    """
-    cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
-    # draw lines between the midpoints
-    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
-             (255, 0, 255), 2)
-    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
-             (255, 0, 255), 2)
-    # draw the object sizes on the image
-    """
-
     # compute the Euclidean distance between the midpoints
+
     dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
     dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    # draw the midpoints on the imageà
+    if draw:
+        cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
+        cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
+        cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
+        cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
+        # draw lines between the midpoints
+        cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
+                 (255, 0, 255), 2)
+        cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
+                 (255, 0, 255), 2)
+        #print("drawd :", (tlblX, tlblY) )
+        print("dimensions", dB, dA)
+    # draw the object sizes on the image
+
+
+
     """
     cv2.putText(orig, "{:.1f}in".format(dA),
                 (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
@@ -129,9 +155,10 @@ def calc_box_legth(box):
     cv2.putText(orig, "{:.1f}in".format(dB),
                 (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
                 0.65, (255, 255, 255), 2)
+
     """
 
-    return dA,dB
+    return dA,dB , orig
 
 
 def crop_image_with_box_and_margin(frame, box):
@@ -171,52 +198,80 @@ def rotated_box_cropper(mask, depth):
 
     contours, hierarchy = cv2.findContours(imagem1, cv2.RETR_EXTERNAL,
                                              cv2.CHAIN_APPROX_NONE)
-    #if multiple cnt take only the bigger
-    #print("cnt ")
-
-    h = mask.shape[0]
-    w = mask.shape[1]
-    cnt = []
-    for cnt_i in contours:
-        area = cv2.contourArea(cnt_i)
-        area_box = h*w
-        ratio = area/area_box
-        #print("ratio", ratio)
-        if ratio > 0.03:
-            cnt = cnt_i
-    if cnt == []:
-        cnt = contours[-1]
-
-    #calc box
-    rect = cv2.minAreaRect(cnt)
-    box = cv2.boxPoints(rect)
-    box = np.int0(box)
-
-    mask = (255 - mask)
-
-    depth = cv2.bitwise_not(depth)
-    #crop rot box + margin white
-    width = int(rect[1][0])
-    height = int(rect[1][1])
-
-    src_pts = box.astype("float32")
-    dst_pts = np.array([[0, height - 1],
-                        [0, 0],
-                        [width - 1, 0],
-                        [width - 1, height - 1]], dtype="float32")
+    if len(contours) != 0 :
+        #if multiple cnt take only the bigger
+        #print("cnt ")
 
 
+        h = mask.shape[0]
+        w = mask.shape[1]
+        cnt = []
+        for cnt_i in contours:
+            area = cv2.contourArea(cnt_i)
+            area_box = h*w
+            ratio = area/area_box
+            if ratio > 0.001 and area > 10:
+                #print("ratio, area", ratio, area)
+
+                if ratio > 0.027 :
+                    cnt = cnt_i
+                elif ratio > 0.015 and ratio < 0.027:
+                    if area > 400:
+                        cnt = cnt_i
+
+        if cnt == []:
+            print("not found a good ")
+            print("len cont", len(contours))
+            print("image dimension:",mask.shape)
+
+            for cnt_i in contours:
+                area = cv2.contourArea(cnt_i)
+                area_box = h * w
+                ratio = area / area_box
+                print("ratio, area", ratio, area)
+
+            cnt = contours[-1]
+        #calc box
+
+        rect = cv2.minAreaRect(cnt)
 
 
-    M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-    warped = cv2.warpPerspective(mask, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
-    warped_depth = cv2.warpPerspective(depth, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
-
-    warped = (255 - warped)
-    warped_depth = cv2.bitwise_not(warped_depth)
 
 
-    return warped, warped_depth, box
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+
+        mask = (255 - mask)
+
+        depth = cv2.bitwise_not(depth)
+        #crop rot box + margin white
+        width = int(rect[1][0])
+        height = int(rect[1][1])
+
+        src_pts = box.astype("float32")
+        dst_pts = np.array([[0, height - 1],
+                            [0, 0],
+                            [width - 1, 0],
+                            [width - 1, height - 1]], dtype="float32")
+
+
+
+
+        M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+        warped = cv2.warpPerspective(mask, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
+        warped_depth = cv2.warpPerspective(depth, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
+
+        warped = (255 - warped)
+        warped_depth = cv2.bitwise_not(warped_depth)
+        succesful = True
+        return warped, warped_depth, box, succesful
+    else:
+        succesful = False
+        return mask, depth, [], succesful
+
+
+
+
 def image_splitter(frame):
 
     h = frame.shape[0]
@@ -242,54 +297,137 @@ def image_splitter(frame):
     return img1, img2
 
 
-def sub_box_iteration_cylindrificator(box,frame, mask, depth):
+def sub_box_iteration_cylindrificator(box1,frame, mask, depth):
+    imagem1 = (255 - mask)
+    contours, hierarchy = cv2.findContours(imagem1, cv2.RETR_EXTERNAL,
+                                           cv2.CHAIN_APPROX_NONE)
+    if len(contours) != 0:
+        # if multiple cnt take only the bigger
+        # print("cnt ")
 
-    dA,dB = calc_box_legth(box)
+        h = mask.shape[0]
+        w = mask.shape[1]
+        cnt = []
+        for cnt_i in contours:
+            area = cv2.contourArea(cnt_i)
+            area_box = h * w
+            ratio = area / area_box
+            if ratio > 0.001 and area > 10:
+                # print("ratio, area", ratio, area)
+
+                if ratio > 0.027:
+                    cnt = cnt_i
+                elif ratio > 0.015 and ratio < 0.027:
+                    if area > 400:
+                        cnt = cnt_i
+
+        if cnt == []:
+            print("not found a good ")
+
+            for cnt_i in contours:
+                area = cv2.contourArea(cnt_i)
+                area_box = h * w
+                ratio = area / area_box
+                print("ratio, area", ratio, area)
+
+            cnt = contours[-1]
+        # calc box
+
+        rect = cv2.minAreaRect(cnt)
+        box = cv2.boxPoints(rect)
+        box = np.array(box, dtype="int")
+        box = perspective.order_points(box)
+        cv2.drawContours(frame, [box.astype("int")], -1, (0, 255, 0), 2)
+
+    draw = True
+    dA,dB, frame = calc_box_legth(box, frame, draw)
+    print("dim : ", frame.shape, box)
     # area = calc area of black in image
     number_of_black_pix = np.sum(mask == 0)
     # approx diameter = wood area  / lenght of box=max(dA,dB=
     diameter_medium = number_of_black_pix / (max(dA,dB))
     # iteration needed = maxL of box / approximate diameter
     iteration_needed = int(((max(dA,dB)) / diameter_medium) /2)
-    iteration = 2
+    iteration = 1
 
     images_collector = []
     depth_images_collector = []
     images_collector.append(mask)
     depth_images_collector.append(depth)
+    all_images_in_loop = []
+    all_images_in_loop.append(images_collector)
+
+
 
     for it in range(iteration):
-        #prima ruoto e taglio
-        new_collector_images = []
-        new_collector_depth_images = []
-        for im_num in range(len(images_collector)):
+        try:
 
-            rot_mask, rot_mask_depth, box = rotated_box_cropper(images_collector[im_num], depth_images_collector[im_num])
+            #prima ruoto e taglio
+            new_collector_images = []
+            new_collector_depth_images = []
+            for im_num in range(len(images_collector)):
 
-            #poi splitto
-            img1,img2 = image_splitter(rot_mask)
-            img_d1, img_d2 = image_splitter(rot_mask_depth)
+                rot_mask, rot_mask_depth, box, succesful = rotated_box_cropper(images_collector[im_num], depth_images_collector[im_num])
+                if succesful != False:
 
-            new_collector_images.append(img1)
-            new_collector_images.append(img2)
-            new_collector_depth_images.append(img_d1)
-            new_collector_depth_images.append(img_d2)
-        images_collector = new_collector_images
-        depth_images_collector = new_collector_depth_images
+                    #poi splitto
+                    img1,img2 = image_splitter(rot_mask)
+                    img_d1, img_d2 = image_splitter(rot_mask_depth)
+
+                    new_collector_images.append(img1)
+                    new_collector_images.append(img2)
+                    new_collector_depth_images.append(img_d1)
+                    new_collector_depth_images.append(img_d2)
+                else:
+                    breaking_point = True
+                    print(" not succesful cylkindricization, termiate frame")
+                    return 0,0
+            images_collector = new_collector_images
+            depth_images_collector = new_collector_depth_images
+            all_images_in_loop.append(images_collector)
 
 
-    print("images : ",len(images_collector))
-    if CYLINDER_SHOW:
-        volumes = []
-        distances = []
-        for x in range(len(images_collector)):
+        #print("images : ",len(images_collector))
+            if CYLINDER_SHOW:
+                volumes = []
+                distances = []
+                for x in range(len(images_collector)):
 
-            volume = volume_from_mask_cylinder(images_collector[x])
-            distance_cylinder,masked_depth = distance_med_from_masked_depth(images_collector[x],depth_images_collector[x])
-            volumes.append(volume)
-            distances.append(distance_cylinder)
-            vis = np.concatenate((depth_images_collector[x], images_collector[x],masked_depth), axis=1)
-            cv2.imshow("im"+str(x),vis)
+
+                    distance_cylinder,masked_depth = distance_med_from_masked_depth(images_collector[x],depth_images_collector[x])
+                    print("distancce")
+
+                    distances.append(distance_cylinder)
+                    #vis = np.concatenate((depth_images_collector[x], images_collector[x],masked_depth), axis=1)
+                    #cv2.imshow("im"+str(x),vis)
+                    #cv2.moveWindow("im"+str(x), 150*x, 150*x);
+
+                    volume, dimensions, frame = volume_from_mask_cylinder(images_collector[x], frame)
+                    print("volu")
+
+
+
+
+
+
+                    volumes.append(volume)
+
+
+        except Exception as e:
+            print("error volume, %s", str(e))
+            cv2.imshow("MASK!!", mask)
+            cv2.imshow("FRAME!!", frame)
+
+            #for y in range(len(images_collector)):
+                #cv2.imshow("error" + str(y), images_collector[y])
+            for k in range(len(all_images_in_loop)):
+
+                for j in range (len(all_images_in_loop[k])):
+
+                    cv2.imshow("iteration_" + str(k)  + "_image_"+str(j), all_images_in_loop[k][j])
+            cv2.imshow("ERROR specific" + str(x), images_collector[x])
+            cv2.waitKey(0)
+            time.sleep(1000)
 
 
 
@@ -298,11 +436,11 @@ def sub_box_iteration_cylindrificator(box,frame, mask, depth):
 
 
 
-    return volumes,distances
+    return volumes,distances, dA, dB
 
 def optional_closing(frame):
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (41, 41))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
 
     #frame = cv2.erode(frame, kernel, iterations=1)
     frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, kernel)
@@ -393,11 +531,17 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
     for cnt1 in contours1:
         #calcolo area e perimetro
         area1 = cv2.contourArea(cnt1)
+        h = mask_bu.shape[0]
+        w = mask_bu.shape[1]
+
+        area_box = h * w
+        ratio = area1 / area_box
+
         # perimeter
         perimeter1 = cv2.arcLength(cnt1, True)
         i += 1
 
-        if perimeter1 > 100  and area1 > 100:
+        if perimeter1 > 200  and area1 > 200:
             #calcolo circolarità
             circularity1 = (4 * math.pi * area1) / (pow(perimeter1, 2))
             M = cv2.moments(cnt1)
@@ -409,41 +553,81 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
             M10 = M['m10'] / 1000000
             M02 = M['m02'] / 1000000000
             M20 = M['m20'] / 1000000000
-            #print("2nd LAYER CANDITATE", i, int(area1), int(perimeter1), circularity1)
-            #print("moments", M0, M01, M10, M02,M20)
 
-            if perimeter1 > 800 and perimeter1 < 5000: #1200
-                if circularity1 > 0.001 and circularity1 < 0.1: #0.05 / 0.1, 0.02
-                    if area1 > 1000 and area1 < 15000: #2200
-                        if M0 > 1.5 and M0 < 16:  # 2200
-                            if M01 > 0.5 and  M01 < 11:  # 2200
-                                if M10 > 0.7 and M10  < 12:  # 220
-
-                                    print("|____________________________________|")
-                                    print("2nd LAYER CHOSEN", i, int(area1), int(perimeter1), circularity1)
-                                    print("moments", M0, M01, M10, M02, M20)
-                                    cv2.drawContours(frame, [cnt1], 0, (0, 200, 50), 1)
-
-                                    #moments
+            hull = cv2.convexHull(cnt1)
+            hull_area = cv2.contourArea(hull)
+            solidity = float(area1) / hull_area
 
 
-                                    Ix = M['m20']
-                                    Iy = M['m02']
-                                    b = int(pow((Iy * pow(area1,2))/Ix, 1/4))
-                                    h = int(pow((Ix * pow(area1,2))/Iy, 1/4))
-                                    x1 = cx - b/2
-                                    x2 = cx + b/2
-                                    y1 = cy - h / 2
-                                    y2 = cy + h / 2
-                                    #print("dim", b,h)
-                                    #print("c", cx, cy)
+            if perimeter1 > 800 and perimeter1 < 7000: #1200
+                if circularity1 > 0.001 and circularity1 < 0.2: #0.05 / 0.1, 0.02
+                    if area1 > 800 and area1 < 150000: #2200
+                        if M0 > 1.15 and M0 < 160:  # 2200
+                            if M01 > 0.40 and  M01 < 110:  # 2200
+                                if M10 > 0.5 and M10  < 120:            # 220
+                                    if M02 > 0.25 and M02 < 80:
+                                        if M20 > 0.002 and M20 <140:
+                                            if solidity > 0.005 and solidity < 1:
+                                                if ratio > 0.0005 and ratio < 0.8:
 
 
-                                    frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
+                                                    #print("|____________________________________|")
+                                                    #print("__|RATIO-CORRECT|__:", ratio)
+                                                    print("|____________________|2nd LAYER CHOSEN", i," area:" ,int(area1)," perim:" , int(perimeter1)," circul:" , round(circularity1,5))
+                                                    print(" M0:", round(M0,3)," M01:",round(M01,3)," M10:", round(M10,3), " M02:", round(M02,3)," M20:",  round(M20,5), "ratio", round(ratio,5), " solidity", round(solidity, 4))
+                                                    #cv2.drawContours(frame, [cnt1], 0, (0, 200, 50), 1)
 
-                                    return cnt1,frame
-    print("advanced shoots not detected")
-    return 0,frame
+                                                    #moments
+
+
+                                                    Ix = M['m20']
+                                                    Iy = M['m02']
+                                                    b = int(pow((Iy * pow(area1,2))/Ix, 1/4))
+                                                    h = int(pow((Ix * pow(area1,2))/Iy, 1/4))
+                                                    x1 = cx - b/2
+                                                    x2 = cx + b/2
+                                                    y1 = cy - h / 2
+                                                    y2 = cy + h / 2
+                                                    #print("dim", b,h)
+                                                    #print("c", cx, cy)
+
+
+                                                    frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
+
+                                                    return cnt1,frame, True
+    print("________!!!!____________advanced shoots not detected")
+    print("len contours", len(contours1))
+    for cnt1 in contours1:
+        #calcolo area e perimetro
+        area1 = cv2.contourArea(cnt1)
+        # perimeter
+        perimeter1 = cv2.arcLength(cnt1, True)
+        if perimeter1 > 200  and area1 > 200:
+            #calcolo circolarità
+            circularity1 = (4 * math.pi * area1) / (pow(perimeter1, 2))
+            M = cv2.moments(cnt1)
+            # centroids
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
+            M0 = M['m00'] / 1000
+            M01 = M['m01'] / 1000000
+            M10 = M['m10'] / 1000000
+            M02 = M['m02'] / 1000000000
+            M20 = M['m20'] / 1000000000
+            print("|!||!|!|!|!|!|!|!|!|!|!|! 2nd LAYER CANDIDATE", i, " area:", int(area1), " perim:", int(perimeter1),
+                  " circul:", round(circularity1, 5))
+            print(" M0:", round(M0, 3), " M01:", round(M01, 3), " M10:", round(M10, 3), " M02:", round(M02, 3), " M20:",
+                  round(M20, 5), "ratio", round(ratio, 5), " solidity", round(solidity, 4))
+            h = mask_bu.shape[0]
+            w = mask_bu.shape[1]
+
+            area_box = h * w
+            ratio = area1 / area_box
+            print("__|RATIO|__:", ratio)
+
+
+    #time.sleep(1000)
+    return 0,frame,False
 
 def crop_with_box_one_shoot(box, mask_bu, frame,depth):
 
@@ -460,15 +644,17 @@ def crop_with_box_one_shoot(box, mask_bu, frame,depth):
 
     h, w, c = frame.shape
 
+
     if xmin > 0 and ymin > 0:
         if xmax <= w and ymax <= h:
 
             mask_bu = mask_bu[ymin:ymax, xmin:xmax]
             frame = frame[ymin:ymax, xmin:xmax]
             depth = depth[ymin:ymax, xmin:xmax]
+
             return mask_bu, frame, depth
 
-    print("impossible crop entire image",w, xmin, xmax, h,ymin,ymax)
+    print("impossible crop entire image, width:",w,"x min e max:", xmin, xmax,"height: ", h,ymin,ymax)
     return mask_bu, frame, depth
 
 
@@ -485,14 +671,14 @@ def draw_and_calculate_poligonal_max_diameter(cnt, frame):
     epsilon = 0.003 * cv2.arcLength(cnt, True)
     approx = cv2.approxPolyDP(cnt, epsilon, True)
 
-    cv2.drawContours(frame, [approx], -1, (255, 255, 0), 1)
+    #cv2.drawContours(frame, [approx], -1, (255, 255, 0), 1)
 
 
 def draw_and_calculate_rotated_box(cnt, frame):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
-    cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+    #cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
     return box
 
 def fit_and_draw_line_cnt(cnt, frame):
@@ -543,16 +729,16 @@ def first_layer_detect_raw_shoots(im,frame):
                 if circularity > 0.0005 and circularity < 0.9:  # 0.05 / 0.1, 0.02
                     if area > 300 and area < 120000:  # 2200
             '''
-            if area > 5000:
+            if area > 1000:
 
                 if circularity < 0.4:
                     if perimeter > 500:
-                        print("first layer CHOSEN! i A,P,C", i, int(area), int(perimeter), circularity)
+                        #print("first layer CHOSEN! i A,P,C", i, int(area), int(perimeter), circularity)
 
 
-                        return cnt,i,edge
+                        return i
     print("no one aviable")
-    return [0], 0, edge
+    return 0
 
 
 
@@ -581,6 +767,20 @@ def writeCSVdata(time,data):
     name = ""
 
     file = open('./data/' + time +'.csv', 'a')
+    writer = csv.writer(file)
+    writer.writerow(data)
+    file.close()
+
+def writeCSVdata(time, data):
+    """
+    write data 2 CSV
+    :param data: write to a csv file input data (append to the end)
+    :return: nothing
+    """
+    # scrive su un file csv i dati estratti dalla rete Neurale
+    name = ""
+
+    file = open('./data/' + time + '.csv', 'a')
     writer = csv.writer(file)
     writer.writerow(data)
     file.close()
@@ -687,10 +887,7 @@ def undesired_objects (image):
     return img2
 
 
-
 def mask_generation(frame,bottom_color, top_color):
-
-
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -715,16 +912,22 @@ def brightness(img):
         return np.average(img)
 
 
-def blob_detector(im,frame,green,depth):
+def blob_detector(frame,depth):
+    #print("start blob")
     pixel  = 0
     volume = 0
     frame_BU = frame.copy()
     gray_bu = cv2.cvtColor(frame_BU, cv2.COLOR_BGR2GRAY)
     ret, mask_bu = cv2.threshold(gray_bu, THRES_VALUE, 255, cv2.THRESH_BINARY)
+    mask_bu = optional_closing(mask_bu)
 
 
-    cnt,i,edge  = first_layer_detect_raw_shoots(mask_bu,frame)
-
+    try:
+        i = first_layer_detect_raw_shoots(mask_bu, frame)
+    except:
+        print("error first layer, skipped analysis")
+        i = 0
+    #print("end first lay blob")
     if i != 0:
         #every video should be analized from folder with specific names: A_1 ramo A condizione 1
         #save csv all in same folder in same method  A_1
@@ -733,42 +936,49 @@ def blob_detector(im,frame,green,depth):
         #if this system is not enough use pixel
 
 
+        cnt1, frame , completion = second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame)
 
-
-
-
-        try:
-
-
-            cnt1, frame = second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame)
+        if completion:
+            #print("complietion ok,", completion)
             fit_and_draw_line_cnt(cnt1, frame)
             #draw_and_calculate_poligonal_max_diameter(cnt1, frame)
             box1 = draw_and_calculate_rotated_box(cnt1, frame)
             #print("box: ",box1)
-            mask_bu, frame, depth = crop_with_box_one_shoot(box1, mask_bu, frame, depth)
-            #mask_bu = optional_closing(mask_bu)
 
-            iteration = 3
+
+            mask_bu, frame, depth = crop_with_box_one_shoot(box1, mask_bu, frame, depth)
+
+
+
+
+
+
+
+
             #total_volume,frame = sub_box_iteration_cylindrificator(iteration, box1,frame, mask_bu)
 
 
             pixel = count_and_display_pixel(frame,mask_bu)
-
-
-
+            #print("counted pixel and displayed")
 
             volume, frame = volume_from_lenght_and_diam_med(box1, frame, mask_bu)
-            volumes, distances = sub_box_iteration_cylindrificator(box1, frame, mask_bu,depth)
+
+            volumes, distances, dA, dB = sub_box_iteration_cylindrificator(box1, frame, mask_bu,depth)
             cylindrification_results = [volumes, distances]
-            return mask_bu, frame, edge, depth, pixel, volume, cylindrification_results
+            return frame, mask_bu, depth, pixel, volume, cylindrification_results, True , dA, dB
+        else:
+            print("second layer failed, returning empty")
+            return frame,mask_bu, depth, 0, 0, [[0], [0]], False ,0,0
+
+    else:
+        return frame,mask_bu, depth, 0, 0, [[0], [0]], False,0,0
 
 
 
-            #skel = skeletonize_mask(mask_bu)
 
-        except Exception as e:
-            print("error second lalyer detection: %s", str(e))
-            return 0
+        #skel = skeletonize_mask(mask_bu)
+
+
 
 
 
