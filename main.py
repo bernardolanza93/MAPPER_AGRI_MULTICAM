@@ -6,6 +6,7 @@ import pyrealsense2 as rs
 import cv2
 import numpy as np
 import os
+import shutil
 from datetime import datetime
 from evaluator_utils import *
 
@@ -22,6 +23,36 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 
 offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
+
+
+def organize_video_from_last_acquisition():
+
+    #create directory to contain file
+    name1 = "aquisition_"
+    now = datetime.now()
+
+    # convert to string
+    date_time = now.strftime("%Y_%m_%d_%H:%M:%S")
+    folder_name = name1 + date_time
+
+    create_directory = False
+    current_directory = os.getcwd()
+    file_found = []
+    for file in os.listdir(current_directory):
+
+        if file.endswith(".mkv"):
+            create_directory = True
+            print("file found:",os.path.join(current_directory, file))
+            file_found.append(file)
+
+    os.makedirs(folder_name)
+    for f in file_found:
+        source = os.path.join(current_directory, f)
+        destination =  os.path.join(current_directory,folder_name)
+        shutil.move(source, destination)
+        print(source," moved to : ",destination)
+
+
 
 
 def check_folder(relative_path):
@@ -109,6 +140,9 @@ def search_device(ctx):
 
 
 
+
+organize_video_from_last_acquisition()
+sys.exit()
 
 
 
