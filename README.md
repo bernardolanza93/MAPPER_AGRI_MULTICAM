@@ -50,7 +50,7 @@ command to run if program contains helper info
 Contributors names and contact info
 
 ex. Dominique Pizzie  
-ex. [@DomPizzie](https://twitter.com/dompizzie)
+ex. [@BernardoLanza]([https://www.linkedin.com/in/bernardo-lanza-554064163/])
 
 ## Version History
 
