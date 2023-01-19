@@ -162,6 +162,12 @@ time.sleep(1)
 
 #D435____________________________________________
 if enable_D435i:
+    """
+    # Declare pointcloud object, for calculating pointclouds and texture mappings
+    pc = rs.pointcloud()
+    # We want the points object to be persistent so we can display the last cloud when a frame drops
+    points = rs.points()
+    """
     pipeline = rs.pipeline(ctx)
     config = rs.config()
     seriald435 = str(device_aviable['D435I'][0])
@@ -169,6 +175,7 @@ if enable_D435i:
     config.enable_device(seriald435)
     config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
     config.enable_stream(rs.stream.depth, 1280 , 720 , rs.format.z16, 30)
+    # We'll use the colorizer to generate texture for our PLY
 
     #config.enable_stream(rs.stream.accel,rs.format.motion_xyz32f,200)
     #config.enable_stream(rs.stream.gyro,rs.format.motion_xyz32f,200)
@@ -178,6 +185,7 @@ if enable_D435i:
     try:
     # Start streaming
         pipeline.start(config)
+        #colorizer = rs.colorizer()
         print("D435I started")
     except Exception as e:
         print("error pipeline D435 starting:||||:: %s", str(e))
@@ -191,6 +199,7 @@ if enable_T265:
     print(serialt265)
     configT265.enable_device(serialt265)
     configT265.enable_stream(rs.stream.pose)
+    configT265.enable_stream(rs.stream.gyro)
 
     #saver.set_option()
 
@@ -235,14 +244,25 @@ while True:
     if enable_T265:
         tframes = pipelineT265.wait_for_frames()
         pose = tframes.get_pose_frame()
+
+
         if pose:
             data = pose.get_pose_data()
+            w = data.rotation.w
+            x = -data.rotation.z
+            y = data.rotation.x
+            z = -data.rotation.y
+
+            pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi;
+            roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi;
+            yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi;
+            anglePRY = [pitch,roll,yaw]
 
             #print("Frame #{}".format(pose.frame_number))
             #print("Position: {}".format(data.translation))
             #print("Velocity: {}".format(data.velocity))
             #print("Acceleration: {}\n".format(data.acceleration))
-            writeCSVdata(time1,[frame,data.translation,data.velocity])
+            writeCSVdata(time1,[frame,data.translation,data.velocity,anglePRY])
 
     if enable_D435i:
         # Wait for a coherent pair of frames: depth and color
@@ -257,13 +277,24 @@ while True:
         #frames.as_motion_frame().get_motion_data()
 
 
+        #colorized = colorizer.process(frames)
+
         aligned_frames = align.process(frames)
 
         depth_frame = aligned_frames.get_depth_frame()
 
-
-
         color_frame = aligned_frames.get_color_frame()
+        """
+        # Create save_to_ply object
+        ply = rs.save_to_ply("1.ply")
+        # Set options to the desired values
+        # In this example we'll generate a textual PLY with normals (mesh is already created by default)
+        ply.set_option(rs.save_to_ply.option_ply_binary, False)
+        ply.set_option(rs.save_to_ply.option_ply_normals, True)
+        print("Saving to 1.ply...")
+        # Apply the processing block to the frameset which contains the depth frame and the texture
+        ply.process(colorized)
+        """
 
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
