@@ -2,11 +2,14 @@
 
 # MAPPER_AGRI_MULTICAM
 
-acquisition and mapping system for agricoltural infield analisys
+acquisition and mapping system for agricoltural infield analisys.
+Programma per valutare l'indice di crescita della vite tramite sistema di visione.
 
 ## Description
 
-An in-depth paragraph about your project and overview of use.
+Questa repository contiene sia il software di acquisizione che il software di analisi per delle misure ottiche in agricoltura. 
+Il file main.py permette di eseguire un programma in grado di acquisire e salvare immagini provenienti da una camera INTEL Realsense D435, tramita una scheda NVIDIA Jetson Nano.
+Il file media_mapper_evaluator e il relativo file evaluator_utils (contenente le funzioni innestatate) permetto l analisi dei media prodotti dal main, analisi che viene condotta su PC. Siamo quinid in grado di produrre misure geometriche e volumetriche a partire daalle acquisizioni e stimare la biomassa lignea presente all interno delle nostre acquisizioni.
 
 ## Getting Started
 
