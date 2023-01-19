@@ -14,15 +14,20 @@ Il file media_mapper_evaluator e il relativo file evaluator_utils (contenente le
 #Configurazione sensori in campo  
 
 La telecamera va posizionata ad una distanza fissa dal filare, in modo che inquadri completamente l’area di potatura. È necessario stimare:
+
 -La fascia di potatura (asse z dalla fine del tronco alla massima altezza di sviluppo dei rami)
+
 -FOV verticale della camera D435i 
+
 La distanza dal filare dipenderà da questi due parametri ( Df ~ Hfov , Lfp)
 
 #Protocollo salvataggio dati
 
 Vengono salvati i dati Row tramite due matrici di streaming video, una RGB (3 canali) e una DEPTH ( 3 canalo da riconvertire poi in depth monocalnale). Il labed del video sarà 
 -timestampato (darà l’ordine di lettura [es min_sec_millsec]) e
+
 -con le coordinate x,y,z provenienti dalla camera T265 (x_y_z) salvate su un file csv a parte.
+
 -Per utilizzare i dati della T265 è necessario creare un sistema di riferimento assoluto tramite un ARUCO MARKER per conoscere la posizione di partenza con un ottima accuratezza
 
 #Elaborazione a segmentazione
@@ -34,7 +39,9 @@ Viene estratta una maschera cromatica B&W monocanale contenete i pixel volume li
 
 Vengono effettuate delle misurazioni di volume (a partire dalla calibrazione statica pixel/volume con campioni fermi ed equidistanti dall’ottica). Saranno effettuate delle misure volumetriche tramite serbatoio graduato per conoscere il volume vero dei campioni. A partire da un acquisizione statica e confronto con il riferimento si valuteranno i valori di RMS. Valuteremo anche la STD-DEV valutando come la misura di influenzata da effetti luminosi in campo statico. 
 Queste prove saranno estese a condizioni più critiche, come:
+
 -la diminuzione della risoluzione del misurando (allontanamento il campione dalla camera) individuazione della distanza misurando camera ottimale
+
 -Aumento della variabilità della profondità del misurando (campione orientato in posizioni complesse a differenti profondità)
 
 #Protocollo labializzazione dati
