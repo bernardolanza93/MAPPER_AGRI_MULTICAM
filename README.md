@@ -15,20 +15,27 @@ Il file media_mapper_evaluator e il relativo file evaluator_utils (contenente le
 
 ### Dependencies
 
-* Describe any prerequisites, libraries, OS version, etc., needed before installing program.
-* ex. Windows 10
+* Librealsense is the foundamental library for acquisition, to acquire also the T265 camera realsese viewer is needed to fullfill all the requisites of the old T265 firmware
+* Nvidia Jetpack, python 3.9, Opencv >4.6
 
 ### Installing
 
-* How/where to download your program
-* Any modifications needed to be made to files/folders
+* We can provide you a requirementes.txt file if needed
+* matlab script are customized to fit my laptop, other script are relative to the working directory, automatically filling the absolute path with your WD.
+
+```
+pip install pyrealsense2
+sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
+sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
+```
 
 ### Executing program
 
 * How to run the program
 * Step-by-step bullets
 ```
-code blocks for commands
+python3.9 media_mapper_evaluator.py
+python3.9 main.py
 ```
 
 ## Help
