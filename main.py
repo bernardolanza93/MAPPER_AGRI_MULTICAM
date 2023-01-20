@@ -142,7 +142,7 @@ def search_device(ctx):
 
 
 organize_video_from_last_acquisition()
-sys.exit()
+
 
 
 

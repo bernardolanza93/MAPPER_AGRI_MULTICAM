@@ -456,10 +456,14 @@ def extract_medium_from_depth_segmented(depth):
     return distance_medium
 def set_white_extreme_depth_area(frame, depth, max_depth, min_depth):
     #print("depth = ", depth.shape)
+    #depth = cv2.inRange(depth, min_depth-50, max_depth-50)
     depth = cv2.inRange(depth, min_depth-50, max_depth-50)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (33, 33))
-    depth = cv2.morphologyEx(depth, cv2.MORPH_OPEN, kernel)
-    depth = cv2.morphologyEx(depth, cv2.MORPH_CLOSE, kernel)
+
+
+    #depth = cv2.inRange(depth, max_depth - 50, min_depth - 50)
+    #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    #depth = cv2.morphologyEx(depth, cv2.MORPH_OPEN, kernel)
+    #depth = cv2.morphologyEx(depth, cv2.MORPH_CLOSE, kernel)
 
     result = cv2.bitwise_and(frame, frame, mask=depth)
     result[depth == 0] = [255, 255, 255]  # Turn background white

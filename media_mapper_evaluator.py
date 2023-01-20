@@ -34,15 +34,15 @@ PATH_2_FILE = "/data/"
 PATH_2_AQUIS = "/aquisition/"
 SAVE_VIDEO = False
 TRACKBAR = False
-THRESHOLD = True
-OPENING = True
+THRESHOLD = False
+OPENING = False
 PIXEL_COUNTING = True
-MASK_DEPTH = True
+MASK_DEPTH = False
 CONVERT_DEPTH_TO_1CH = False
 CROPPING = False
 MEDIUM_DEPTH_DISPLAY = True
-BLOB_DETECTOR = True
-FILTER_DEPTH = False
+BLOB_DETECTOR = False
+FILTER_DEPTH = True
 
 
 
@@ -167,6 +167,10 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 mask = cv2.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
             elif THRESHOLD:
                 ret, mask = cv2.threshold(gray, THRES_VALUE, 255, cv2.THRESH_BINARY)
+                imask = mask < 255
+                imagem = (255 - mask)
+                green = 255 * np.ones_like(frame, np.uint8)
+                green[imask] = frame[imask]  # dentro i mask metto frame
             #frame_HSV = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
             #mask = cv2.inRange(frame_HSV, BOT, TOP)
@@ -178,10 +182,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            imask = mask < 255
-            imagem = (255 - mask)
-            green = 255 * np.ones_like(frame, np.uint8)
-            green[imask] = frame[imask]  # dentro i mask metto frame
+
 
 
 
@@ -189,7 +190,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
             if FILTER_DEPTH:
                 max_depth = 260
-                min_depth = 50
+                min_depth = 60
                 frame = set_white_extreme_depth_area (frame, frame2 ,max_depth, min_depth)
             SAVE = False
             if BLOB_DETECTOR:
@@ -233,16 +234,16 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            #frame = resize_image(frame,dimension)
-            green = resize_image(green, dimension)
+            frame = resize_image(frame,dimension)
+            #green = resize_image(green, dimension)
             #mask = resize_image(mask, dimension)
 
-            #frame2 = resize_image(frame2, dimension)
+            frame2 = resize_image(frame2, dimension)
 
 
 
             cv2.imshow("or", frame)
-            cv2.imshow("mask", mask)
+            #cv2.imshow("mask", mask)
             #cv2.imshow("green", green)
             cv2.imshow("frame2", frame2)
             #cv2.imshow("edge", edge)
@@ -250,7 +251,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            key = cv2.waitKey(1)
+            key = cv2.waitKey(0)
             if key == ord('q') or key == 27:
                 sys.exit()
                 break
