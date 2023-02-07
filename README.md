@@ -95,7 +95,7 @@ python3.9 main.py
 sudo nvpmodel -m 0
 sudo jetson_clocks
 ```
-## NB TBT
+# NB TBT
 If you want to disable the Desktop GUI only temporarily run the following command.
 ```
 sudo init 3 
