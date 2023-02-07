@@ -113,6 +113,13 @@ To enable GUI again, run the following command.
 sudo systemctl set-default graphical.target
 ```
 
+
+You can the device with:
+```
+tegrastats
+```
+to see if the GPU resources are fully utilized
+
 ## Help
 
 Any advise for common problems or issues.
