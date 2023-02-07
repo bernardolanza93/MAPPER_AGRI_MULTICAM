@@ -89,11 +89,28 @@ python3.9 media_mapper_evaluator.py
 python3.9 main.py
 ```
 
-###Improve Performance:
+### Improve Performance:
 * improve power mode
 ```
 sudo nvpmodel -m 0
 sudo jetson_clocks
+```
+## NB TBT
+# If you want to disable the Desktop GUI only temporarily run the following command.
+```
+sudo init 3 
+```
+# To enable the desktop when you finish, run the following command.
+```
+sudo init 5
+```
+# If you wish to stop Desktop GUI on every reboot, run the following command.
+```
+sudo systemctl set-default multi-user.target
+```
+# To enable GUI again, run the following command. 
+```
+sudo systemctl set-default graphical.target
 ```
 
 ## Help
