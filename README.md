@@ -96,19 +96,19 @@ sudo nvpmodel -m 0
 sudo jetson_clocks
 ```
 ## NB TBT
-# If you want to disable the Desktop GUI only temporarily run the following command.
+If you want to disable the Desktop GUI only temporarily run the following command.
 ```
 sudo init 3 
 ```
-# To enable the desktop when you finish, run the following command.
+To enable the desktop when you finish, run the following command.
 ```
 sudo init 5
 ```
-# If you wish to stop Desktop GUI on every reboot, run the following command.
+If you wish to stop Desktop GUI on every reboot, run the following command.
 ```
 sudo systemctl set-default multi-user.target
 ```
-# To enable GUI again, run the following command. 
+To enable GUI again, run the following command. 
 ```
 sudo systemctl set-default graphical.target
 ```
