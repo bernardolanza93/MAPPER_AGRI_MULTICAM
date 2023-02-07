@@ -89,6 +89,13 @@ python3.9 media_mapper_evaluator.py
 python3.9 main.py
 ```
 
+###Improve Performance:
+* improve power mode
+```
+sudo nvpmodel -m 0
+sudo jetson_clocks
+```
+
 ## Help
 
 Any advise for common problems or issues.
