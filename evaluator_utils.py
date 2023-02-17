@@ -23,9 +23,13 @@ import argparse
 import imutils
 import cv2
 from datetime import datetime
+import pyrealsense2 as rs
 
 
-THRES_VALUE = 110
+
+
+
+THRES_VALUE = 65
 CROPPING_ADVANCED = True
 max_value = 255
 max_value_H = 360//2
@@ -46,6 +50,48 @@ high_V_name = 'High V'
 OFFSET_CM_COMPRESSION = 50
 CYLINDER_SHOW = True
 
+
+
+def calculate_pointcloud(color_intrin,color_to_depth_extrin,depth_intrin,color_image,depth_image):
+    # funzionerà se riporto l immagine depth in uint16 in mm senza offset
+    height = depth_image.shape[0]
+    width = depth_image.shape[1]
+    aligned_color = np.zeros((height, width, 3))
+    height_color = color_image.shape[0]
+    width_color = color_image.shape[1]
+    for v in range(width_color):
+        for u in range(height_color):
+
+            color_pixel = [v, u]
+            color_point = rs.rs2_deproject_pixel_to_point(color_intrin, color_pixel, 1)
+            depth_point = rs.rs2_transform_point_to_point(color_to_depth_extrin, color_point)
+            depth_pixel = rs.rs2_project_point_to_pixel(depth_intrin, depth_point)
+            # depth_pixel = rs.rs2_project_color_pixel_to_depth_pixel(depth_frame.get_data(), depth_scale,
+            #     0.11, 1.0, depth_intrin, color_intrin, depth_to_color_extrin, color_to_depth_extrin, color_pixel)
+            u_depth = int(round(depth_pixel[1]))
+            v_depth = int(round(depth_pixel[0]))
+            if u_depth < 0 or u_depth > height - 1 or v_depth < 0 or v_depth > width - 1:
+                pass
+            else:
+                aligned_color[u_depth][v_depth][0] = color_image[u][v][0]
+                aligned_color[u_depth][v_depth][1] = color_image[u][v][1]
+                aligned_color[u_depth][v_depth][2] = color_image[u][v][2]
+
+
+def convert_depth_to_phys_coord_using_realsense(x, y, depth, cameraInfo):
+    _intrinsics = rs.intrinsics()
+    _intrinsics.width = cameraInfo.width
+    _intrinsics.height = cameraInfo.height
+    _intrinsics.ppx = cameraInfo.K[2]
+    _intrinsics.ppy = cameraInfo.K[5]
+    _intrinsics.fx = cameraInfo.K[0]
+    _intrinsics.fy = cameraInfo.K[4]
+    _intrinsics.model = cameraInfo.distortion_model
+    #_intrinsics.model  = rs.distortion.none
+    _intrinsics.coeffs = [i for i in cameraInfo.D]
+    result = rs.rs2_deproject_pixel_to_point(_intrinsics, [x, y], depth)
+    #result[0]: right, result[1]: down, result[2]: forward
+    return result[2], -result[0], -result[1]
 
 def distance_med_from_masked_depth(mask,depth):
     #diam
@@ -69,7 +115,7 @@ def volume_from_mask_cylinder(mask, frame):
         area = cv2.contourArea(cnt_i)
         area_image = h * w
         ratio = area / area_image
-        print("ratio", ratio)
+        #print("ratio", ratio)
         # print("ratio", ratio)
         if ratio > 0.001:
             cnt = cnt_i
@@ -143,7 +189,7 @@ def calc_box_legth(box, orig, draw):
         cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
                  (255, 0, 255), 2)
         #print("drawd :", (tlblX, tlblY) )
-        print("dimensions", dB, dA)
+        #print("dimensions", dB, dA)
     # draw the object sizes on the image
 
 
@@ -341,14 +387,14 @@ def sub_box_iteration_cylindrificator(box1,frame, mask, depth):
 
     draw = True
     dA,dB, frame = calc_box_legth(box, frame, draw)
-    print("dim : ", frame.shape, box)
+    #print("dim : ", frame.shape, box)
     # area = calc area of black in image
     number_of_black_pix = np.sum(mask == 0)
     # approx diameter = wood area  / lenght of box=max(dA,dB=
     diameter_medium = number_of_black_pix / (max(dA,dB))
     # iteration needed = maxL of box / approximate diameter
     iteration_needed = int(((max(dA,dB)) / diameter_medium) /2)
-    iteration = 1
+    iteration = 4
 
     images_collector = []
     depth_images_collector = []
@@ -395,15 +441,15 @@ def sub_box_iteration_cylindrificator(box1,frame, mask, depth):
 
 
                     distance_cylinder,masked_depth = distance_med_from_masked_depth(images_collector[x],depth_images_collector[x])
-                    print("distancce")
+                    #print("distancce")
 
                     distances.append(distance_cylinder)
-                    #vis = np.concatenate((depth_images_collector[x], images_collector[x],masked_depth), axis=1)
-                    #cv2.imshow("im"+str(x),vis)
-                    #cv2.moveWindow("im"+str(x), 150*x, 150*x);
+                    vis = np.concatenate((depth_images_collector[x], images_collector[x],masked_depth), axis=1)
+                    cv2.imshow("im"+str(x),vis)
+                    cv2.moveWindow("im"+str(x), 150*x, 150*x);
 
                     volume, dimensions, frame = volume_from_mask_cylinder(images_collector[x], frame)
-                    print("volu")
+                    #print("volu")
 
 
 
@@ -563,16 +609,16 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
             solidity = float(area1) / hull_area
 
 
-            if perimeter1 > 800 and perimeter1 < 7000: #1200
-                if circularity1 > 0.001 and circularity1 < 0.2: #0.05 / 0.1, 0.02
+            if perimeter1 > 200 and perimeter1 < 7000: #1200
+                if circularity1 > 0.01 and circularity1 < 0.3: #0.05 / 0.1, 0.02
                     if area1 > 800 and area1 < 150000: #2200
-                        if M0 > 1.15 and M0 < 160:  # 2200
-                            if M01 > 0.40 and  M01 < 110:  # 2200
-                                if M10 > 0.5 and M10  < 120:            # 220
-                                    if M02 > 0.25 and M02 < 80:
-                                        if M20 > 0.002 and M20 <140:
-                                            if solidity > 0.005 and solidity < 1:
-                                                if ratio > 0.0005 and ratio < 0.8:
+                        if M0 > 1.15 and M0 < 40:  # 2200
+                            if M01 > 0.40 and  M01 < 40:  # 2200
+                                if M10 > 0.5 and M10  < 40:            #
+                                    if M02 > 0.25 and M02 < 40:
+                                        if M20 > 0.002 and M20 < 95:
+                                            if solidity > 0.01 and solidity < 0.5:
+                                                if ratio > 0.0005 and ratio < 0.8: #rapporto pixel contour e bounding box
 
 
                                                     #print("|____________________________________|")

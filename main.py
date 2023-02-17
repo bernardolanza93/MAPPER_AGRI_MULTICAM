@@ -26,6 +26,18 @@ offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
 
 
+
+
+
+def check_intrinsics_file():
+
+    return True
+def calculate_and_save_intrinsics():
+
+
+    return True
+
+
 def organize_video_from_last_acquisition():
 
     #create directory to contain file
@@ -175,7 +187,8 @@ if enable_D435i:
     print("serial : ", type(seriald435))
     config.enable_device(seriald435)
     config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
-    config.enable_stream(rs.stream.depth, 1280 , 720 , rs.format.z16, 30)
+    config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
+
     # We'll use the colorizer to generate texture for our PLY
 
     #config.enable_stream(rs.stream.accel,rs.format.motion_xyz32f,200)
@@ -183,6 +196,11 @@ if enable_D435i:
     saver = rs.save_single_frameset()
     align_to = rs.stream.color
     align = rs.align(align_to)
+
+    if not check_intrinsics_file():
+        if calculate_and_save_intrinsics():
+            print("intrinsics calculated and ready")
+
     try:
     # Start streaming
         pipeline.start(config)
@@ -285,6 +303,14 @@ while True:
         depth_frame = aligned_frames.get_depth_frame()
 
         color_frame = aligned_frames.get_color_frame()
+
+        depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+        color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
+        depth_to_color_extrin = depth_frame.profile.get_extrinsics_to(color_frame.profile)
+        color_to_depth_extrin = color_frame.profile.get_extrinsics_to(depth_frame.profile)
+
+
+
         """
         # Create save_to_ply object
         ply = rs.save_to_ply("1.ply")

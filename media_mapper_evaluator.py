@@ -34,15 +34,15 @@ PATH_2_FILE = "/data/"
 PATH_2_AQUIS = "/aquisition/"
 SAVE_VIDEO = False
 TRACKBAR = False
-THRESHOLD = False
+THRESHOLD = True
 OPENING = False
 PIXEL_COUNTING = True
-MASK_DEPTH = False
+MASK_DEPTH = True
 CONVERT_DEPTH_TO_1CH = False
 CROPPING = False
 MEDIUM_DEPTH_DISPLAY = True
-BLOB_DETECTOR = False
-FILTER_DEPTH = True
+BLOB_DETECTOR = True
+FILTER_DEPTH = False
 
 
 
@@ -158,6 +158,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
                 result.write(frame)
 
+
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 
@@ -226,32 +227,36 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
             if PIXEL_COUNTING:
                 if SAVE:
+
                     writeCSVdata(folder_name,[nrfr,pixel,int(volume),int(distance_med), cylindrification_results[0], cylindrification_results[1]])
-                    writeCSVdata(folder_name + "geometrical", [int(dA), int(dB) , int(distance_med)])
+                    #writeCSVdata(folder_name + "geometrical", [int(dA), int(dB) , int(distance_med)])
+
                     #print(len(cylindrification_results[1]))
                 #print([nrfr,pixel])
             nrfr += 1
 
 
 
-            frame = resize_image(frame,dimension)
+            #frame = resize_image(frame,dimension)
             #green = resize_image(green, dimension)
             #mask = resize_image(mask, dimension)
 
-            frame2 = resize_image(frame2, dimension)
+            #frame2 = resize_image(frame2, dimension)
 
 
 
             cv2.imshow("or", frame)
-            #cv2.imshow("mask", mask)
+            cv2.imshow("mask", mask)
             #cv2.imshow("green", green)
             cv2.imshow("frame2", frame2)
             #cv2.imshow("edge", edge)
             #cv2.imshow("skel", skel)
+            cv2.moveWindow("mask", 500, 200)
+            cv2.moveWindow("frame2", 200, 500)
 
 
 
-            key = cv2.waitKey(0)
+            key = cv2.waitKey(1)
             if key == ord('q') or key == 27:
                 sys.exit()
                 break
