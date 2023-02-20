@@ -26,9 +26,6 @@ offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
 
 
-
-
-
 def check_intrinsics_file():
 
     return True
@@ -295,7 +292,6 @@ while True:
 
         #frames.as_motion_frame().get_motion_data()
 
-
         #colorized = colorizer.process(frames)
 
         aligned_frames = align.process(frames)
@@ -308,6 +304,8 @@ while True:
         color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
         depth_to_color_extrin = depth_frame.profile.get_extrinsics_to(color_frame.profile)
         color_to_depth_extrin = color_frame.profile.get_extrinsics_to(depth_frame.profile)
+
+        print("all intr",depth_intrin,color_intrin,depth_to_color_extrin,color_to_depth_extrin)
 
 
 
@@ -340,7 +338,6 @@ while True:
         #rescale without first 50 cm of offset unwanted
         resized = resized - offset
         #tolgo tutto sotto i 30 cm
-
 
         #stretchin all in the 0-255 cm interval
         maxi = np.clip(resized,0,255)

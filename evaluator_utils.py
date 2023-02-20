@@ -50,32 +50,11 @@ high_V_name = 'High V'
 OFFSET_CM_COMPRESSION = 50
 CYLINDER_SHOW = True
 
+def convert_u8_img_to_u16_d435_depth_image(u8_image):
+    u16_image = 0
+    return u16_image
 
-
-def calculate_pointcloud(color_intrin,color_to_depth_extrin,depth_intrin,color_image,depth_image):
-    # funzionerà se riporto l immagine depth in uint16 in mm senza offset
-    height = depth_image.shape[0]
-    width = depth_image.shape[1]
-    aligned_color = np.zeros((height, width, 3))
-    height_color = color_image.shape[0]
-    width_color = color_image.shape[1]
-    for v in range(width_color):
-        for u in range(height_color):
-
-            color_pixel = [v, u]
-            color_point = rs.rs2_deproject_pixel_to_point(color_intrin, color_pixel, 1)
-            depth_point = rs.rs2_transform_point_to_point(color_to_depth_extrin, color_point)
-            depth_pixel = rs.rs2_project_point_to_pixel(depth_intrin, depth_point)
-            # depth_pixel = rs.rs2_project_color_pixel_to_depth_pixel(depth_frame.get_data(), depth_scale,
-            #     0.11, 1.0, depth_intrin, color_intrin, depth_to_color_extrin, color_to_depth_extrin, color_pixel)
-            u_depth = int(round(depth_pixel[1]))
-            v_depth = int(round(depth_pixel[0]))
-            if u_depth < 0 or u_depth > height - 1 or v_depth < 0 or v_depth > width - 1:
-                pass
-            else:
-                aligned_color[u_depth][v_depth][0] = color_image[u][v][0]
-                aligned_color[u_depth][v_depth][1] = color_image[u][v][1]
-                aligned_color[u_depth][v_depth][2] = color_image[u][v][2]
+def obtain_intrinsics():
 
 
 def convert_depth_to_phys_coord_using_realsense(x, y, depth, cameraInfo):
