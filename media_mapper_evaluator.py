@@ -175,7 +175,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
             print(array.shape)
             write_pointcloud('pointcloud.ply', array)
 
-
+            #pub
 
             # saving reshaped array to file.
 
