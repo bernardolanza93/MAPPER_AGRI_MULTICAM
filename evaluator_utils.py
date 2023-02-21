@@ -6,7 +6,7 @@ import numpy as np
 
 
 import time
-
+import struct
 from numpy.linalg import norm
 import os
 
@@ -51,26 +51,112 @@ OFFSET_CM_COMPRESSION = 50
 CYLINDER_SHOW = True
 
 def convert_u8_img_to_u16_d435_depth_image(u8_image):
-    u16_image = 0
-    return u16_image
+    u16_image = u8_image.astype('uint16')
+    u16_image_off = u16_image + OFFSET_CM_COMPRESSION
+    u16_image_off_mm = u16_image_off * 10
+    #print(u16_image_off_mm.shape, type(u16_image_off_mm),u16_image_off_mm.dtype)
+
+
+    return u16_image_off_mm
 
 def obtain_intrinsics():
+    intrinsics = rs.intrinsics()
+    with open("intrinsics.csv", "r") as f:
+        reader = csv.reader(f)
+        for i, line in enumerate(reader):
+            if i == 0:
+                intrinsics.width = int(line[0])
+                intrinsics.height = int(line[1])
+                intrinsics.ppx = float(line[2])
+                intrinsics.ppy = float(line[3])
+                intrinsics.fx = float(line[4])
+                intrinsics.fy = float(line[5])
+
+                if str(line[6]) == "distortion.inverse_brown_conrady":
+                    intrinsics.model = rs.distortion.inverse_brown_conrady
+                else:
+                    print("not rec ognized this string for model: ", str(line[6]))
+                    intrinsics.model = rs.distortion.inverse_brown_conrady
+
+                listm = line[7].split(",")
+
+                new_list = []
+                for i in range(len(listm)):
+                    element =   listm[i]
+                    element = element.replace("[","")
+                    element = element.replace(" ", "")
+                    element = element.replace("]", "")
+                    element = float(element)
+                    new_list.append(element)
 
 
-def convert_depth_to_phys_coord_using_realsense(x, y, depth, cameraInfo):
-    _intrinsics = rs.intrinsics()
-    _intrinsics.width = cameraInfo.width
-    _intrinsics.height = cameraInfo.height
-    _intrinsics.ppx = cameraInfo.K[2]
-    _intrinsics.ppy = cameraInfo.K[5]
-    _intrinsics.fx = cameraInfo.K[0]
-    _intrinsics.fy = cameraInfo.K[4]
-    _intrinsics.model = cameraInfo.distortion_model
-    #_intrinsics.model  = rs.distortion.none
-    _intrinsics.coeffs = [i for i in cameraInfo.D]
-    result = rs.rs2_deproject_pixel_to_point(_intrinsics, [x, y], depth)
-    #result[0]: right, result[1]: down, result[2]: forward
-    return result[2], -result[0], -result[1]
+
+
+
+                intrinsics.coeffs  = new_list
+
+    return intrinsics
+
+
+def convert_depth_image_to_pointcloud(depth_image, color_image, intrinsics):
+    h, w = depth_image.shape
+
+    pointcloud = np.zeros((h,w,3), np.uint16)
+
+    for r in range(h):
+        for c in range(w):
+
+
+            distance = float(depth_image[r,c])
+            result = rs.rs2_deproject_pixel_to_point(intrinsics, [c, r], distance) #[c,r] = [x,y]
+            # result[0]: right, result[1]: down, result[2]: forward
+            print(result)
+
+            pointcloud[r,c] = [result[2], -result[0], -result[1]]
+
+    return pointcloud
+
+def write_pointcloud(filename, xyz_points, rgb_points=None):
+    '''
+    Function that writes a .ply file of the point cloud according to the camera points
+    and eventually the corresponding color points. Saves the .ply at the specified path.
+    INPUTS:
+    - filename: full path of the pointcloud to be saved, i.e. ./clouds/pointcloud.ply
+    - xyz_points: 3D camera points passed as numpy array npoints x 3
+    - rgb_points: corresponding color triplets that will be applied to each point
+    OUTPUTS:
+    - saves the cloud at the specified path.
+    '''
+
+    assert xyz_points.shape[1] == 3,'ERROR: input XYZ points should be Nx3 float array!'
+    # if no color points have been passed, put them at max intensity
+    if rgb_points is None:
+        rgb_points = np.ones(xyz_points.shape).astype(np.uint8)*255
+
+    assert xyz_points.shape == rgb_points.shape,'ERROR: input RGB colors should be Nx3 float array and have same size as input XYZ points!'
+
+    # write header of .ply file
+    fid = open(filename, 'wb')
+    fid.write(bytes('ply\n', 'utf-8'))
+    fid.write(bytes('format binary_little_endian 1.0\n', 'utf-8'))
+    fid.write(bytes('element vertex %d\n'%xyz_points.shape[0], 'utf-8'))
+    fid.write(bytes('property float x\n', 'utf-8'))
+    fid.write(bytes('property float y\n', 'utf-8'))
+    fid.write(bytes('property float z\n', 'utf-8'))
+    fid.write(bytes('property uchar red\n', 'utf-8'))
+    fid.write(bytes('property uchar green\n', 'utf-8'))
+    fid.write(bytes('property uchar blue\n', 'utf-8'))
+    fid.write(bytes('end_header\n', 'utf-8'))
+
+    # write 3D points to .ply file
+    # WARNING: rgb points are assumed to be in BGR format, so saves them
+    # in RGB format by inverting columns here
+    for i in range(xyz_points.shape[0]):
+        fid.write(bytearray(struct.pack("fffccc",xyz_points[i,0],xyz_points[i,1],xyz_points[i,2],
+                                        rgb_points[i,2].tobytes(),rgb_points[i,1].tobytes(),
+                                        rgb_points[i,0].tobytes())))
+    fid.close()
+
 
 def distance_med_from_masked_depth(mask,depth):
     #diam

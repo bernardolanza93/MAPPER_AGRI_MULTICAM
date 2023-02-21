@@ -10,6 +10,7 @@ import shutil
 from datetime import datetime
 from evaluator_utils import *
 import math as m
+import os.path
 
 #png uint 16#
 
@@ -26,13 +27,36 @@ offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
 
 
-def check_intrinsics_file():
+def writeCSVdata_generic(name, data):
+    """
+    write data 2 CSV
+    :param data: write to a csv file input data (append to the end)
+    :return: nothing
+    """
+    # scrive su un file csv i dati estratti dalla rete Neurale
 
-    return True
-def calculate_and_save_intrinsics():
+
+    file = open(name, 'a')
+    writer = csv.writer(file)
+    writer.writerow(data)
+    file.close()
 
 
-    return True
+
+
+def calculate_and_save_intrinsics(intrinsics):
+    title = "intrinsics.csv"
+    print("intrinsics create...", intrinsics, type(intrinsics))
+    int = [intrinsics.width,intrinsics.height,intrinsics.ppx,intrinsics.ppy,intrinsics.fx,intrinsics.fy,intrinsics.model,intrinsics.coeffs]
+
+
+    if not os.path.exists(title):
+        writeCSVdata_generic(title, int)
+        print("new file intrinsics written")
+        print(int)
+
+
+
 
 
 def organize_video_from_last_acquisition():
@@ -98,7 +122,7 @@ hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 #check_folder(save_location)
 
 path_here = os.getcwd()
-SAVE_VIDEO_TIME = 10 # 0 per non salvare
+SAVE_VIDEO_TIME = 0 # 0 per non salvare
 FPS_DISPLAY = True
 
 def writeCSVdata(time,data):
@@ -137,7 +161,8 @@ def search_device(ctx):
         print("No Intel Device connected")
     keys = list(device_aviable.keys())
     for i in range(len(keys)):
-        if keys[i] == "D435I":
+        if keys[i] == "D435I" or keys[i] == "D435":
+            print("found: ", keys[i])
             enable_D435i = True
         elif keys[i] == "T265":
             enable_T265 = True
@@ -180,7 +205,12 @@ if enable_D435i:
     """
     pipeline = rs.pipeline(ctx)
     config = rs.config()
-    seriald435 = str(device_aviable['D435I'][0])
+    try:
+        seriald435 = str(device_aviable['D435I'][0])
+    except:
+        print("no d435i try classic model d435")
+        seriald435 = str(device_aviable['D435'][0])
+
     print("serial : ", type(seriald435))
     config.enable_device(seriald435)
     config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
@@ -194,9 +224,7 @@ if enable_D435i:
     align_to = rs.stream.color
     align = rs.align(align_to)
 
-    if not check_intrinsics_file():
-        if calculate_and_save_intrinsics():
-            print("intrinsics calculated and ready")
+
 
     try:
     # Start streaming
@@ -302,10 +330,11 @@ while True:
 
         depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
         color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
-        depth_to_color_extrin = depth_frame.profile.get_extrinsics_to(color_frame.profile)
-        color_to_depth_extrin = color_frame.profile.get_extrinsics_to(depth_frame.profile)
 
-        print("all intr",depth_intrin,color_intrin,depth_to_color_extrin,color_to_depth_extrin)
+
+        calculate_and_save_intrinsics(depth_intrin)
+
+
 
 
 

@@ -16,6 +16,8 @@ import math
 import cv2
 import csv
 from datetime import datetime
+import open3d as o3d
+
 from evaluator_utils import *
 
 """
@@ -72,6 +74,11 @@ low_V_name = 'Low V'
 high_H_name = 'High H'
 high_S_name = 'High S'
 high_V_name = 'High V'
+
+
+intrinsics = obtain_intrinsics()
+print(intrinsics)
+
 
 for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
     print("files:", os.listdir(PATH_HERE + PATH_2_AQUIS))
@@ -147,10 +154,40 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
     while(video1.isOpened() and video2.isOpened()):
         ret, frame = video1.read()
         ret2, frame2 = video2.read()
+        print(ret,ret2)
+
+
+
 
 
         if ret == True and ret2 == True:
             frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+            frame2_u16 = convert_u8_img_to_u16_d435_depth_image(frame2)
+            print("pointclouding....")
+            pointcloud = convert_depth_image_to_pointcloud(frame2_u16, frame, intrinsics)
+            X, Y, Z = cv2.split(pointcloud)  # For BGR image
+            X = X.flatten()
+            Y = Y.flatten()
+            Z = Z.flatten()
+            print(X.shape)
+            array = np.array([X, Y, Z])
+            array = array.T
+            print(array.shape)
+            write_pointcloud('pointcloud.ply', array)
+
+
+
+            # saving reshaped array to file.
+
+
+
+            cv2.imshow("pc", pointcloud)
+
+            key = cv2.waitKey(0)
+            if key == ord('q') or key == 27:
+                sys.exit()
+                break
+
 
             # Writ ethe frame into the
             # file 'filename.avi'
