@@ -45,12 +45,13 @@ def writeCSVdata_generic(name, data):
 
 
 def calculate_and_save_intrinsics(intrinsics):
-    title = "intrinsics.csv"
-    print("intrinsics create...", intrinsics, type(intrinsics))
-    int = [intrinsics.width,intrinsics.height,intrinsics.ppx,intrinsics.ppy,intrinsics.fx,intrinsics.fy,intrinsics.model,intrinsics.coeffs]
 
+    #print("intrinsics create...", intrinsics, type(intrinsics))
+
+    title = "intrinsics.csv"
 
     if not os.path.exists(title):
+        int = [intrinsics.width, intrinsics.height, intrinsics.ppx, intrinsics.ppy, intrinsics.fx, intrinsics.fy, intrinsics.model, intrinsics.coeffs]
         writeCSVdata_generic(title, int)
         print("new file intrinsics written")
         print(int)
