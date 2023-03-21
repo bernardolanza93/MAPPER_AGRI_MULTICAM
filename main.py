@@ -360,6 +360,9 @@ while True:
                     out_BASLER.write(img_basler)
                 except:
                     print("error save basler")
+            end = time.time()
+            seconds = end - start
+            print("sec",seconds)
             #print("now showing", img_basler.shape)
             # cv2.imshow('basler', img_basler)
             # key = cv2.waitKey(1)
