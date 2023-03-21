@@ -295,7 +295,7 @@ def main(q):
 
             # Grabing Continusely (video) with minimal delay
             camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
-            camera.ExposureTimeRaw.SetValue(100)
+            camera.ExposureTimeAbs = 200
             converter = pylon.ImageFormatConverter()
 
 
