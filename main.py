@@ -360,7 +360,7 @@ while True:
                     out_BASLER.write(img_basler)
                     end = time.time()
                     seconds = end - start
-                    print("sec", seconds)
+                    print("sec", 1/seconds, "image?" ,img_basler.shape)
                 except:
                     print("error save basler")
 
