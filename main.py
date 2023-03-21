@@ -84,9 +84,6 @@ def writeCSVdata_generic(name, data):
     writer.writerow(data)
     file.close()
 
-
-
-
 def calculate_and_save_intrinsics(intrinsics):
 
     #print("intrinsics create...", intrinsics, type(intrinsics))
@@ -98,10 +95,6 @@ def calculate_and_save_intrinsics(intrinsics):
         writeCSVdata_generic(title, int)
         print("new file intrinsics written")
         print(int)
-
-
-
-
 
 def organize_video_from_last_acquisition():
 
@@ -129,9 +122,6 @@ def organize_video_from_last_acquisition():
         destination =  os.path.join(current_directory,folder_name)
         shutil.move(source, destination)
         print(source," moved to : ",destination)
-
-
-
 
 def check_folder(relative_path):
     """
@@ -166,7 +156,7 @@ hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 #check_folder(save_location)
 
 path_here = os.getcwd()
-SAVE_VIDEO_TIME = 0 # 0 per non salvare
+SAVE_VIDEO_TIME = 1 # 0 per non salvare
 FPS_DISPLAY = True
 
 def writeCSVdata(time,data):
