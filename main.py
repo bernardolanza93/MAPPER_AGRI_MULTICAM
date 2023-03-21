@@ -558,7 +558,7 @@ def image_saver(q):
     while True:
         qsize = q.qsize()
         print("size: ", qsize)
-        img_basler = q.get(False)
+        img_basler = q.get()
         out_BASLER.write(img_basler)
     out_BASLER.release()
 
