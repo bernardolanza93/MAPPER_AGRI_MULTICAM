@@ -322,8 +322,7 @@ def main(q):
         if enable_D435i:
             gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
             out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
-        gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-        out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER,1, (frame_width, frame_height))
+
 
 
         try:
@@ -359,7 +358,7 @@ def main(q):
 
                 if SAVE_VIDEO_TIME != 0:
                     try:
-                        out_BASLER.write(img_basler)
+                        q.put(img_basler)
                         end = time.time()
                         seconds = end - start
                         print("sec", 1/seconds, "image?" ,img_basler.shape)
@@ -546,11 +545,24 @@ def main(q):
     if enable_T265:
         pipelineT265.stop()
     if basler_presence:
-        out_BASLER.release()
+
         cv2.destroyAllWindows()
 
 def image_saver(q):
     print("saving")
+    frame_width = 2592
+    frame_height = 1944
+    size = (frame_width, frame_height)
+    gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
+    out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 1, (frame_width, frame_height))
+    while True:
+        qsize = q.qsize()
+        print("size: ", qsize)
+        img_basler = q.get(False)
+        out_BASLER.write(img_basler)
+    out_BASLER.release()
+
+
 
 
 q = multiprocessing.Queue(maxsize=1000)
