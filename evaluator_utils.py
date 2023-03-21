@@ -4,7 +4,7 @@
 
 import numpy as np
 
-
+import open3d as o3d
 import time
 import struct
 from numpy.linalg import norm
@@ -50,10 +50,180 @@ high_V_name = 'High V'
 OFFSET_CM_COMPRESSION = 50
 CYLINDER_SHOW = True
 
+
+def midpoint(ptA, ptB):
+    return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+def medium_points_of_box_for_dimension_extraction(box, orig):
+    # unpack the ordered bounding box, then compute the midpoint
+    # between the top-left and top-right coordinates, followed by
+    # the midpoint bet ween bottom-left and bottom-right coordinates
+    (tl, tr, br, bl) = box
+    (tltrX, tltrY) = midpoint(tl, tr)
+    (blbrX, blbrY) = midpoint(bl, br)
+    # compute the midpoint between the top-left and top-right points,
+    # followed by the midpoint between the top-righ and bottom-right
+    (tlblX, tlblY) = midpoint(tl, bl)
+    (trbrX, trbrY) = midpoint(tr, br)
+
+    #  tl *--------------tltr------------------* tr
+    #     |                                    |
+    #     |-  tlbl                             |-  tlbr
+    #     |                                    |
+    #  bl *----------------blbr----------------* br
+    # compute the Euclidean distance between the midpoints
+
+    dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+    dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    # draw the midpoints on the imageà
+    draw = True
+    if draw:
+        cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
+        cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 255, 0), -1)
+        cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 255), -1)
+        cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 50, 50), -1)
+        # draw lines between the midpoints
+        cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
+                 (255, 100, 255), 2)
+        cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
+                 (255, 0, 100), 2)
+        # print("drawd :", (tlblX, tlblY) )
+        # print("dimensions", dB, dA)
+    # draw the object sizes on the image
+
+
+
+
+    #  tl *--------------tltr------------------* tr
+    #     |                                    |
+    #     |-  tlbl                             |-  tlbr
+    #     |                                    |
+    #  bl *----------------blbr----------------* br
+    #
+
+    return (tltrX, tltrY),(blbrX, blbrY),(tlblX, tlblY),(trbrX, trbrY)
+
+
+
+def calc_box_for_subcylinder_recognition(mask):
+
+    h = mask.shape[0]
+    w = mask.shape[1]
+    cnt = []
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    for cnt_i in contours:
+        area = cv2.contourArea(cnt_i)
+        area_image = h * w
+        ratio = area / area_image
+        # print("ratio", ratio)
+        # print("ratio", ratio)
+        if ratio > 0.001:
+            cnt = cnt_i
+    if cnt == [] and len(contours) != 0:
+        # print("contours", contours)
+        print("contours l", len(contours))
+
+        cnt = contours[-1]
+
+    rect = cv2.minAreaRect(cnt)
+    """
+    except:
+        cv2.imshow("error rect",mask)
+        print(mask)
+        print("contour",cnt)
+        print(mask.shape)
+        cv2.waitKey(0)
+        time.sleep(100)
+    """
+
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+    return box
+
+
+def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe):
+
+    frame2_u16 = convert_u8_img_to_u16_d435_depth_image(depth_frame)
+    pointcloud = convert_depth_image_to_pointcloud(frame2_u16, intrinsics)
+
+
+    #array = create_flatten_array_for_ply_save(pointcloud)
+
+    #write_pointcloud('pointcloud.ply', array)
+
+    h, w, c = pointcloud.shape
+
+
+
+    #  tl *--------------tltr------------------* tr
+    #     |                                    |
+    #     |-  tlbl                             |-  tlbr
+    #     |                                    |
+    #  bl *----------------blbr----------------* br
+    #
+
+
+    (tltrX, tltrY),(blbrX, blbrY),(tlblX, tlblY),(trbrX, trbrY) = medium_points_of_box_for_dimension_extraction(box, rgbframe)
+    print("sh", rgbframe.shape)
+    pdt = pointcloud[int(tltrY), int(tltrX)]
+    pdb = pointcloud[int(blbrY),int(blbrX)]
+    pl_left = pointcloud[int(tlblY), int(tlblX)]
+    pl_right = pointcloud[int(trbrY),int(trbrX)]
+    diametro = two_points_euc_distance(pdt, pdb)  # pointcloud(y,x)
+    lunghezza = two_points_euc_distance(pl_left, pl_right)  # pointcloud(y,x)
+
+    b, g, r = cv2.split(pointcloud) #r sembrerebbe orizzonte, x
+    b = ((b - b.min()) * (1 / (b.max() - b.min()) * 255)).astype('uint8')
+    g = ((g - g.min()) * (1 / (g.max() - g.min()) * 255)).astype('uint8')
+    r = ((r - r.min()) * (1 / (r.max() - r.min()) * 255)).astype('uint8')
+
+
+    cv2.imshow("b",b)
+    cv2.imshow("g", g)
+    cv2.imshow("r", r)
+
+    cv2.waitKey(0)
+
+
+
+    volume = 0
+
+    return diametro, lunghezza
+
+
+
+def two_points_euc_distance(P1,P2):
+    x1 = P1[0]
+    y1 = P1[1]
+    z1 = P1[2]
+    x2 = P2[0]
+    y2 = P2[1]
+    z2 = P2[2]
+
+    p1 = np.array([x1, y1, z1])
+    p2 = np.array([x2, y2, z2])
+
+    squared_dist = np.sum((p1 - p2) ** 2, axis=0)
+    dist = np.sqrt(squared_dist)
+    return dist
+def create_flatten_array_for_ply_save(pointcloud):
+    X, Y, Z = cv2.split(pointcloud)  # For BGR image
+    X = X.flatten()
+    Y = Y.flatten()
+    Z = Z.flatten()
+
+    array = np.array([X, Y, Z])
+    #transpose
+    array = array.T
+    print(array.shape)
+    return array
+
 def convert_u8_img_to_u16_d435_depth_image(u8_image):
+    #print(u8_image)
     u16_image = u8_image.astype('uint16')
     u16_image_off = u16_image + OFFSET_CM_COMPRESSION
     u16_image_off_mm = u16_image_off * 10
+    #print(u16_image_off_mm)
     #print(u16_image_off_mm.shape, type(u16_image_off_mm),u16_image_off_mm.dtype)
 
 
@@ -98,10 +268,10 @@ def obtain_intrinsics():
     return intrinsics
 
 
-def convert_depth_image_to_pointcloud(depth_image, color_image, intrinsics):
+def convert_depth_image_to_pointcloud(depth_image, intrinsics):
     h, w = depth_image.shape
 
-    pointcloud = np.zeros((h,w,3), np.uint16)
+    pointcloud = np.zeros((h,w,3), np.float32)
 
     for r in range(h):
         for c in range(w):
@@ -110,9 +280,12 @@ def convert_depth_image_to_pointcloud(depth_image, color_image, intrinsics):
             distance = float(depth_image[r,c])
             result = rs.rs2_deproject_pixel_to_point(intrinsics, [c, r], distance) #[c,r] = [x,y]
             # result[0]: right, result[1]: down, result[2]: forward
-            print(result)
 
-            pointcloud[r,c] = [result[2], -result[0], -result[1]]
+            #if abs(result[0]) > 1000.0 or abs(result[1]) > 1000.0 or abs(result[2]) > 1000.0:
+                #print(result)
+
+            pointcloud[r,c] = [int(result[2]), int(-result[0]), int(-result[1])]
+
 
     return pointcloud
 
@@ -224,8 +397,7 @@ def volume_from_mask_cylinder(mask, frame):
     #print("vol",lenght_shoot)
     return volume, (dA,dB), frame
 
-def midpoint(ptA, ptB):
-    return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+
 def calc_box_legth(box, orig, draw):
 
     # unpack the ordered bounding box, then compute the midpoint
@@ -299,10 +471,11 @@ def crop_image_with_box_and_margin(frame, box):
     print("impossible crop entire image",w, xmin, xmax, h,ymin,ymax)
     return frame
 
-def rotated_box_cropper(mask, depth):
+def rotated_box_cropper(mask, depth, rgb):
     #margin augmented
     mask = cv2.copyMakeBorder(src=mask, top=15, bottom=15, left=15, right=15,borderType=cv2.BORDER_CONSTANT, value=(255))
     depth = cv2.copyMakeBorder(src=depth, top=15, bottom=15, left=15, right=15,borderType=cv2.BORDER_CONSTANT, value=(255))
+    rgb = cv2.copyMakeBorder(src=rgb, top=15, bottom=15, left=15, right=15, borderType=cv2.BORDER_CONSTANT,value=(255))
 
     #calc cnt
     imagem1 = (255 - mask)
@@ -371,14 +544,15 @@ def rotated_box_cropper(mask, depth):
         M = cv2.getPerspectiveTransform(src_pts, dst_pts)
         warped = cv2.warpPerspective(mask, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
         warped_depth = cv2.warpPerspective(depth, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
+        warped_rgb = cv2.warpPerspective(rgb, M, (width, height),borderMode=cv2.BORDER_REPLICATE)
 
         warped = (255 - warped)
         warped_depth = cv2.bitwise_not(warped_depth)
         succesful = True
-        return warped, warped_depth, box, succesful
+        return warped, warped_depth,warped_rgb, box, succesful
     else:
         succesful = False
-        return mask, depth, [], succesful
+        return mask, depth, rgb, [], succesful
 
 
 
@@ -408,7 +582,7 @@ def image_splitter(frame):
     return img1, img2
 
 
-def sub_box_iteration_cylindrificator(box1,frame, mask, depth):
+def sub_box_iteration_cylindrificator(box1,frame, mask, depth, intrinsics):
     imagem1 = (255 - mask)
     contours, hierarchy = cv2.findContours(imagem1, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_NONE)
@@ -448,9 +622,9 @@ def sub_box_iteration_cylindrificator(box1,frame, mask, depth):
         box = cv2.boxPoints(rect)
         box = np.array(box, dtype="int")
         box = perspective.order_points(box)
-        cv2.drawContours(frame, [box.astype("int")], -1, (0, 255, 0), 2)
+        #cv2.drawContours(frame, [box.astype("int")], -1, (0, 255, 0), 2)
 
-    draw = True
+    draw = False
     dA,dB, frame = calc_box_legth(box, frame, draw)
     #print("dim : ", frame.shape, box)
     # area = calc area of black in image
@@ -459,72 +633,87 @@ def sub_box_iteration_cylindrificator(box1,frame, mask, depth):
     diameter_medium = number_of_black_pix / (max(dA,dB))
     # iteration needed = maxL of box / approximate diameter
     iteration_needed = int(((max(dA,dB)) / diameter_medium) /2)
-    iteration = 4
-
+    iteration = 1
+    rgb_images_collector = []
     images_collector = []
     depth_images_collector = []
+
+    rgb_images_collector.append(frame)
     images_collector.append(mask)
     depth_images_collector.append(depth)
+
     all_images_in_loop = []
     all_images_in_loop.append(images_collector)
 
 
 
     for it in range(iteration):
-        try:
 
-            #prima ruoto e taglio
-            new_collector_images = []
-            new_collector_depth_images = []
-            for im_num in range(len(images_collector)):
-
-                rot_mask, rot_mask_depth, box, succesful = rotated_box_cropper(images_collector[im_num], depth_images_collector[im_num])
-                if succesful != False:
-
-                    #poi splitto
-                    img1,img2 = image_splitter(rot_mask)
-                    img_d1, img_d2 = image_splitter(rot_mask_depth)
-
-                    new_collector_images.append(img1)
-                    new_collector_images.append(img2)
-                    new_collector_depth_images.append(img_d1)
-                    new_collector_depth_images.append(img_d2)
-                else:
-                    breaking_point = True
-                    print(" not succesful cylkindricization, termiate frame")
-                    return 0,0
-            images_collector = new_collector_images
-            depth_images_collector = new_collector_depth_images
-            all_images_in_loop.append(images_collector)
+        #prima ruoto e taglio
+        new_collector_images = []
+        new_collector_depth_images = []
+        new_collector_RGB_images = []
 
 
-        #print("images : ",len(images_collector))
-            if CYLINDER_SHOW:
-                volumes = []
-                distances = []
-                for x in range(len(images_collector)):
+        for im_num in range(len(images_collector)):
+
+            rot_mask, rot_mask_depth, rot_rgb, box, succesful = rotated_box_cropper(images_collector[im_num], depth_images_collector[im_num], rgb_images_collector[im_num])
+            if succesful != False:
+
+                #poi splitto
+                img1,img2 = image_splitter(rot_mask)
+                img_d1, img_d2 = image_splitter(rot_mask_depth)
+                img_rgb1, img_rgb2 = image_splitter(rot_rgb)
+
+                new_collector_images.append(img1)
+                new_collector_images.append(img2)
+
+                new_collector_depth_images.append(img_d1)
+                new_collector_depth_images.append(img_d2)
+
+                new_collector_RGB_images.append(img_rgb1)
+                new_collector_RGB_images.append(img_rgb2)
 
 
-                    distance_cylinder,masked_depth = distance_med_from_masked_depth(images_collector[x],depth_images_collector[x])
-                    #print("distancce")
+            else:
+                breaking_point = True
+                print(" not succesful cylkindricization, termiate frame")
+                return 0,0
+        images_collector = new_collector_images
+        depth_images_collector = new_collector_depth_images
+        rgb_images_collector = new_collector_RGB_images
 
-                    distances.append(distance_cylinder)
-                    vis = np.concatenate((depth_images_collector[x], images_collector[x],masked_depth), axis=1)
-                    cv2.imshow("im"+str(x),vis)
-                    cv2.moveWindow("im"+str(x), 150*x, 150*x);
-
-                    volume, dimensions, frame = volume_from_mask_cylinder(images_collector[x], frame)
-                    #print("volu")
-
+        all_images_in_loop.append(images_collector)
 
 
+    #print("images : ",len(images_collector))
+    if CYLINDER_SHOW:
+        volumes = []
+        distances = []
+        print(len(images_collector))
+        for x in range(len(images_collector)):
 
 
+            distance_cylinder,masked_depth = distance_med_from_masked_depth(images_collector[x],depth_images_collector[x])
+            #print("distancce")
 
-                    volumes.append(volume)
+            distances.append(distance_cylinder)
+
+            volume, dimensions, frame = volume_from_mask_cylinder(images_collector[x], frame)
+            boxc = calc_box_for_subcylinder_recognition(images_collector[x])
 
 
-        except Exception as e:
+            diametro, lunghezza = real_volume_from_pointcloud(depth_images_collector[x], intrinsics ,boxc, rgb_images_collector[x])
+            print("dimensions image: " ,x, " cylinder: diam: ", diametro, "lunghezza: ", lunghezza)
+            #print("volu")
+            vis = np.concatenate((cv2.cvtColor(depth_images_collector[x], cv2.COLOR_GRAY2RGB) , cv2.cvtColor(images_collector[x], cv2.COLOR_GRAY2RGB) , cv2.cvtColor(masked_depth, cv2.COLOR_GRAY2RGB),rgb_images_collector[x]), axis=1)
+            cv2.imshow("im" + str(x), vis)
+            cv2.moveWindow("im" + str(x), 150 * x, 150 * x);
+
+            volumes.append(volume)
+
+        """
+            except Exception as e:
             print("error volume, %s", str(e))
             cv2.imshow("MASK!!", mask)
             cv2.imshow("FRAME!!", frame)
@@ -539,13 +728,7 @@ def sub_box_iteration_cylindrificator(box1,frame, mask, depth):
             cv2.imshow("ERROR specific" + str(x), images_collector[x])
             cv2.waitKey(0)
             time.sleep(1000)
-
-
-
-    #for image_in in images_collector:
-
-
-
+        """
 
     return volumes,distances, dA, dB
 
@@ -624,7 +807,7 @@ def volume_from_lenght_and_diam_med(box, frame, mask_bu):
     pixel = count_and_display_pixel(frame, mask_bu)
 
     diam_med = pixel / lenght_shoot
-    cv2.line(frame, box[3], box[1], (255, 255, 0), 4) #int(diam_med)
+    #cv2.line(frame, box[3], box[1], (255, 255, 0), 4) #int(diam_med)
 
     volume = math.pi * pow((diam_med / 2), 2) * lenght_shoot
     #print("volume: ", volume)
@@ -707,7 +890,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu,frame):
                                                     #print("c", cx, cy)
 
 
-                                                    frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
+                                                    #frame = cv2.circle(frame, (cx,cy), 2, (255,0,0), 2)
 
                                                     return cnt1,frame, True
     print("________!!!!____________advanced shoots not detected")
@@ -802,7 +985,7 @@ def fit_and_draw_line_cnt(cnt, frame):
     [vx, vy, x, y] = cv2.fitLine(cnt, cv2.DIST_L2, 0, 0.01, 0.01)
     lef = int((-x * vy / vx) + y)
     ri = int(((cols - x) * vy / vx) + y)
-    cv2.line(frame, (cols - 1, ri), (0, lef), (0, 255, 0), 2)
+    #cv2.line(frame, (cols - 1, ri), (0, lef), (0, 255, 0), 2)
 
 
 
@@ -1027,7 +1210,7 @@ def brightness(img):
         return np.average(img)
 
 
-def blob_detector(frame,depth):
+def blob_detector(frame,depth,intrinsics):
     #print("start blob")
     pixel  = 0
     volume = 0
@@ -1058,27 +1241,10 @@ def blob_detector(frame,depth):
             fit_and_draw_line_cnt(cnt1, frame)
             #draw_and_calculate_poligonal_max_diameter(cnt1, frame)
             box1 = draw_and_calculate_rotated_box(cnt1, frame)
-            #print("box: ",box1)
-
-
             mask_bu, frame, depth = crop_with_box_one_shoot(box1, mask_bu, frame, depth)
-
-
-
-
-
-
-
-
-            #total_volume,frame = sub_box_iteration_cylindrificator(iteration, box1,frame, mask_bu)
-
-
             pixel = count_and_display_pixel(frame,mask_bu)
-            #print("counted pixel and displayed")
-
             volume, frame = volume_from_lenght_and_diam_med(box1, frame, mask_bu)
-
-            volumes, distances, dA, dB = sub_box_iteration_cylindrificator(box1, frame, mask_bu,depth)
+            volumes, distances, dA, dB = sub_box_iteration_cylindrificator(box1, frame, mask_bu,depth, intrinsics)
             cylindrification_results = [volumes, distances]
             return frame, mask_bu, depth, pixel, volume, cylindrification_results, True , dA, dB
         else:

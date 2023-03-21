@@ -11,6 +11,9 @@ from datetime import datetime
 from evaluator_utils import *
 import math as m
 import os.path
+from pypylon import pylon
+
+import os
 
 #png uint 16#
 
@@ -18,14 +21,54 @@ import os.path
 pip install pyrealsense2
 sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
+install realsense viewer to use t265 old firmware
 
+
+install pylon viewer from
+https://www.forecr.io/blogs/connectivity/pylon-installation-for-basler-camera
+version linux arm 64 bit 6.3/6.2
+sudo pip3 install pypylon
+
+
+/usr/bin/python3 -m pip install --upgrade pip
 
 '''
 
 
 offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
+SEARCH_USB_CAMERAS = False
+USE_PYLON_CAMERA = True
 
+
+
+def returnCameraIndexes():
+    """
+    checks the first 10 indexes of cameras usb connected
+
+
+    :return: an array of the opened camera index
+    """
+    # checks the first 10 indexes of cameras usb connected
+    index = 0
+    arr = []
+    i = 10
+    while i > 0:
+        # print("retry cap : ", index)
+        try:
+            cap = cv2.VideoCapture(index)
+        except:
+            print("camera index %s not aviable",index)
+        # print("cap status :" ,cap.isOpened())
+
+        if cap.isOpened():
+            print("is open! index = %s", index)
+            arr.append(index)
+            cap.release()
+        index += 1
+        i -= 1
+    print(arr)
+    return arr
 
 def writeCSVdata_generic(name, data):
     """
@@ -179,20 +222,10 @@ def search_device(ctx):
 
 organize_video_from_last_acquisition()
 
-
-
-
-
-
-
-
-
 ##config.enable_device('947122110515')
 
 ctx = rs.context()
 enable_D435i, enable_T265, device_aviable = search_device(ctx)
-
-
 
 time.sleep(1)
 
@@ -257,12 +290,46 @@ if enable_T265:
         print("error pipeline T265 starting:||||:: %s", str(e))
     #_______________________________________________________
 
+if SEARCH_USB_CAMERAS:
+
+    cameras_array = returnCameraIndexes()
+    print(cameras_array)
+    if len(cameras_array) < 2:
+        print("one camera system")
+
+if USE_PYLON_CAMERA:
+    # conecting to the first available camera
+    camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+
+    # Grabing Continusely (video) with minimal delay
+    camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+    converter = pylon.ImageFormatConverter()
+
+    # converting to opencv bgr format
+    converter.OutputPixelFormat = pylon.PixelType_BGR8packed
+    converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+
+    # Set video resolution
+    frame_width = 2592
+    frame_height = 1944
+    size = (frame_width, frame_height)
+
+    # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
+
+    ii = 0
+    folderName = 'test'
+
+
+
 if SAVE_VIDEO_TIME != 0:
     now = datetime.now()
     hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
 
     gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
     out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
+    gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
+    out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER,  15.0, (frame_width, frame_height))
+
 
     try:
         #gst_out_depth   = "appsrc ! video/x-raw, format=GRAY ! queue ! videoconvert ! video/x-raw,format=GRAY ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
@@ -285,6 +352,32 @@ while True:
 
     # T265
     start = time.time()
+
+    if camera.IsGrabbing():
+        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+
+        if grabResult.GrabSucceeded():
+            # Access the image data
+            image = converter.Convert(grabResult)
+            img = image.GetArray()
+            cv2.namedWindow('title', cv2.WINDOW_NORMAL)
+            cv2.imshow('title', img)
+
+            # Filename
+            #filename = os.path.join(folderName, 'savedImage_' + str(ii) + '.jpg')
+            # filename = 'savedImage_' + str(ii) + '.jpg'
+            #print(filename)
+
+            # Write the frame into the file
+            # result.write(img)
+
+            # Saving the image
+            #cv2.imwrite(filename, img)
+
+            #print('Frame written \n')
+            #ii = ii + 1
+
+
 
     if enable_T265:
         tframes = pipelineT265.wait_for_frames()

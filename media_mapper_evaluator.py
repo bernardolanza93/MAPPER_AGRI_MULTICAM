@@ -80,6 +80,7 @@ intrinsics = obtain_intrinsics()
 print(intrinsics)
 
 
+
 for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
     print("files:", os.listdir(PATH_HERE + PATH_2_AQUIS))
     folder_name = folders
@@ -162,31 +163,15 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
         if ret == True and ret2 == True:
             frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+
+            """
             frame2_u16 = convert_u8_img_to_u16_d435_depth_image(frame2)
-            print("pointclouding....")
+            
             pointcloud = convert_depth_image_to_pointcloud(frame2_u16, frame, intrinsics)
-            X, Y, Z = cv2.split(pointcloud)  # For BGR image
-            X = X.flatten()
-            Y = Y.flatten()
-            Z = Z.flatten()
-            print(X.shape)
-            array = np.array([X, Y, Z])
-            array = array.T
-            print(array.shape)
+            array = create_flatten_array_for_ply_save(pointcloud)
             write_pointcloud('pointcloud.ply', array)
+            """
 
-            #pub
-
-            # saving reshaped array to file.
-
-
-
-            cv2.imshow("pc", pointcloud)
-
-            key = cv2.waitKey(0)
-            if key == ord('q') or key == 27:
-                sys.exit()
-                break
 
 
             # Writ ethe frame into the
@@ -233,8 +218,8 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
             SAVE = False
             if BLOB_DETECTOR:
                 #print("___1___",mask,"____2__", frame,"___3___", green ,"___4___",frame2)
-                #print("frames shapes", mask.shape, frame.shape, green .shape, frame2.shape)
-                frame,mask,frame2, pixel, volume, cylindrification_results, completation , dA, dB = blob_detector(frame ,frame2)
+                #print("frames s"Right"hapes", mask.shape, frame.shape, green .shape, frame2.shape)
+                frame,mask,frame2, pixel, volume, cylindrification_results, completation , dA, dB = blob_detector(frame ,frame2, intrinsics)
                 if completation:
                     SAVE = True
 
@@ -293,7 +278,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            key = cv2.waitKey(1)
+            key = cv2.waitKey(0)
             if key == ord('q') or key == 27:
                 sys.exit()
                 break
