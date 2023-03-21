@@ -376,7 +376,10 @@ while True:
 
             #print('Frame written \n')
             #ii = ii + 1
-
+        else:
+            print("camera not succeded")
+    else:
+        print("camera is not grabbing")
 
 
     if enable_T265:
