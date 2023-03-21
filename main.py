@@ -360,7 +360,7 @@ while True:
             # Access the image data
             image = converter.Convert(grabResult)
             img = image.GetArray()
-            cv2.namedWindow('title', cv2.WINDOW_NORMAL)
+            cv2.namedWindow('title', cv2.WINDOW_NORMAL)#
             cv2.imshow('title', img)
 
             # Filename
