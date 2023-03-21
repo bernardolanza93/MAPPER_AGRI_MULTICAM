@@ -16,7 +16,7 @@ import math
 import cv2
 import csv
 from datetime import datetime
-import open3d as o3d
+
 
 from evaluator_utils import *
 

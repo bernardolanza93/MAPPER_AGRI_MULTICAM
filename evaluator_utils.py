@@ -4,7 +4,7 @@
 
 import numpy as np
 
-import open3d as o3d
+
 import time
 import struct
 from numpy.linalg import norm
