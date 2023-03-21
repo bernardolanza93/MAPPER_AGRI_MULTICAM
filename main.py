@@ -366,8 +366,8 @@ while True:
             # Access the image data
             image = converter.Convert(grabResult)
             img = image.GetArray()
-            cv2.namedWindow('title', cv2.WINDOW_NORMAL)#
-            cv2.imshow('title', img)
+            print("now showing")
+            cv2.imshow('basler', img)
 
             # Filename
             #filename = os.path.join(folderName, 'savedImage_' + str(ii) + '.jpg')
