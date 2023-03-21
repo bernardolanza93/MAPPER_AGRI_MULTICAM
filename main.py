@@ -366,6 +366,13 @@ while True:
             # Access the image data
             image = converter.Convert(grabResult)
             img_basler = image.GetArray()
+
+            if SAVE_VIDEO_TIME != 0:
+                try:
+                    out.write(color_image)
+                    out_BASLER.write(img_basler)
+                except:
+                    print("error save basler")
             #print("now showing", img_basler.shape)
             # cv2.imshow('basler', img_basler)
             # key = cv2.waitKey(1)
