@@ -307,8 +307,6 @@ if USE_PYLON_CAMERA:
 
         # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
 
-        ii = 0
-        folderName = 'test'
         basler_presence = True
         print("basler configured")
     except:
@@ -324,7 +322,7 @@ if SAVE_VIDEO_TIME != 0:
     gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
     out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
     gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-    out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER,  15.0, (frame_width, frame_height))
+    out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER,  20.0, (frame_width, frame_height))
 
 
     try:
@@ -359,7 +357,6 @@ while True:
 
             if SAVE_VIDEO_TIME != 0:
                 try:
-                    out.write(color_image)
                     out_BASLER.write(img_basler)
                 except:
                     print("error save basler")
