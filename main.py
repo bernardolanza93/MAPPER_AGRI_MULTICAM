@@ -361,6 +361,11 @@ while True:
                     end = time.time()
                     seconds = end - start
                     print("sec", 1/seconds, "image?" ,img_basler.shape)
+                    cv2.imshow('basler', img_basler)
+                    key = cv2.waitKey(1)
+                    if key == ord('q') or key == 27:
+                        sys.exit()
+                        break
                 except:
                     print("error save basler")
 
