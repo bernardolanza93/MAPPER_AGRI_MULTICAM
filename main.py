@@ -368,6 +368,10 @@ while True:
             img = image.GetArray()
             print("now showing", img.shape)
             cv2.imshow('basler', img)
+            key = cv2.waitKey(1)
+            if key == ord('q') or key == 27:
+                sys.exit()
+                break
 
             # Filename
             #filename = os.path.join(folderName, 'savedImage_' + str(ii) + '.jpg')
