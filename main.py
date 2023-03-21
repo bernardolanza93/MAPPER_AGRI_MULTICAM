@@ -299,25 +299,29 @@ if SEARCH_USB_CAMERAS:
 
 if USE_PYLON_CAMERA:
     # conecting to the first available camera
-    camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+    try:
+        camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
 
-    # Grabing Continusely (video) with minimal delay
-    camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
-    converter = pylon.ImageFormatConverter()
+        # Grabing Continusely (video) with minimal delay
+        camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+        converter = pylon.ImageFormatConverter()
 
-    # converting to opencv bgr format
-    converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-    converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+        # converting to opencv bgr format
+        converter.OutputPixelFormat = pylon.PixelType_BGR8packed
+        converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
-    # Set video resolution
-    frame_width = 2592
-    frame_height = 1944
-    size = (frame_width, frame_height)
+        # Set video resolution
+        frame_width = 2592
+        frame_height = 1944
+        size = (frame_width, frame_height)
 
-    # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
+        # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
 
-    ii = 0
-    folderName = 'test'
+        ii = 0
+        folderName = 'test'
+        basler_presence = True
+    except:
+        basler_presence = False
 
 
 
@@ -516,7 +520,7 @@ while True:
             break
 
 
-    if enable_T265 == False and enable_D435i == False:
+    if enable_T265 == False and enable_D435i == False and basler_presence == False:
         print("no device, termination...")
         sys.exit()
 
