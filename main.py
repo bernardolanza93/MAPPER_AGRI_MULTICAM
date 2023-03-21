@@ -322,7 +322,7 @@ if SAVE_VIDEO_TIME != 0:
         gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
         out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
     gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-    out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER,0, (frame_width, frame_height))
+    out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER,0.0001, (frame_width, frame_height))
 
 
     try:
