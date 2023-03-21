@@ -295,7 +295,9 @@ def main(q):
 
             # Grabing Continusely (video) with minimal delay
             camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+            camera.ExposureTimeRaw.SetValue(100)
             converter = pylon.ImageFormatConverter()
+
 
             # converting to opencv bgr format
             converter.OutputPixelFormat = pylon.PixelType_BGR8packed
@@ -359,14 +361,14 @@ def main(q):
                 if SAVE_VIDEO_TIME != 0:
                     try:
                         q.put(img_basler)
-                        end = time.time()
-                        seconds = end - start
-                        print("sec", 1/seconds, "image?" ,img_basler.shape)
-                        cv2.imshow('basler', img_basler)
-                        key = cv2.waitKey(1)
-                        if key == ord('q') or key == 27:
-                            sys.exit()
-                            break
+                        # end = time.time()
+                        # seconds = end - start
+                        #print("sec", 1/seconds, "image?" ,img_basler.shape)
+                        # cv2.imshow('basler', img_basler)
+                        # key = cv2.waitKey(1)
+                        # if key == ord('q') or key == 27:
+                        #     sys.exit()
+                        #     break
                     except:
                         print("error save basler")
 
