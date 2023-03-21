@@ -320,6 +320,7 @@ if USE_PYLON_CAMERA:
         ii = 0
         folderName = 'test'
         basler_presence = True
+        print("basler configured")
     except:
         basler_presence = False
 
