@@ -366,7 +366,7 @@ while True:
             # Access the image data
             image = converter.Convert(grabResult)
             img = image.GetArray()
-            print("now showing")
+            print("now showing", img.shape)
             cv2.imshow('basler', img)
 
             # Filename
