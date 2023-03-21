@@ -323,6 +323,7 @@ if USE_PYLON_CAMERA:
         print("basler configured")
     except:
         basler_presence = False
+        print("basler failed")
 
 
 
