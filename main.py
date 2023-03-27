@@ -473,7 +473,7 @@ def main(q):
             if SAVE_VIDEO_TIME != 0:
                 try:
                     out.write(color_image)
-                    out_BASLER.write(img_basler)
+
                     try:
                         #save here depth mapù
                         out_depth.write(intcm)
