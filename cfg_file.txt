@@ -16,7 +16,7 @@ GainSelector	All
 BlackLevelSelector	All
 BlackLevelRaw	0
 BlackLevelSelector	All
-GammaRaw	1500
+GammaRaw	2000
 Width	2592
 Height	1944
 OffsetX	0
