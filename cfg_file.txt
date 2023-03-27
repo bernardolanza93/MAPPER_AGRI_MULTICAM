@@ -2,7 +2,7 @@
 # GenApi persistence file (version 3.1.0)
 # Device = Basler::UsbCameraParams -- Basler USB3Vision camera interface -- Device version = 1.0.0 -- Product GUID = DCE63AE1-21D3-4F6D-9DE6-45A8DE7D1C81 -- Product version GUID = BF6FC75E-DC47-4D68-9CB1-CF8D554E1AC9
 GainSelector	All
-GainRaw	23
+GainRaw	28
 GainSelector	All
 GainSelector	All
 GainAuto	Continuous
@@ -16,7 +16,7 @@ GainSelector	All
 BlackLevelSelector	All
 BlackLevelRaw	0
 BlackLevelSelector	All
-GammaRaw	1000
+GammaRaw	1500
 Width	2592
 Height	1944
 OffsetX	0
