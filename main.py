@@ -295,10 +295,11 @@ def main(q):
 
             camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             #lo usa la cri vediamo a che serve
-            #camera.Open()
+            camera.Open()
 
             print('Using device: ', camera.GetDeviceInfo().GetModelName())
-            pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
+            pylon.FeaturePersistence.Save(config_file, camera.GetNodeMap())
+            #pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
 
             # Grabing Continusely (video) with minimal delay
             camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -319,9 +320,9 @@ def main(q):
 
             basler_presence = True
             print("basler configured")
-        except:
+        except Exception as e:
             basler_presence = False
-            print("basler failed")
+            print("basler failed", e)
 
 
 
