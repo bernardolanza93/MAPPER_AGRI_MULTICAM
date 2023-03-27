@@ -152,7 +152,7 @@ def main(q):
     check_folder("/data/")
     now = datetime.now()
     hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
-    config_file = "/cfg/cfg_file.txt"
+    config_file = "cfg_file.txt"
     #acquisition_today =  "aquisition_" + str(now)
     #save_location = "/data/"+acquisition_today
     #check_folder(save_location)
