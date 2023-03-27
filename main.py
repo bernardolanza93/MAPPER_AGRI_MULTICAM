@@ -152,6 +152,7 @@ def main(q):
     check_folder("/data/")
     now = datetime.now()
     hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
+    config_file = "/cfg/cfg_file.pfs"
     #acquisition_today =  "aquisition_" + str(now)
     #save_location = "/data/"+acquisition_today
     #check_folder(save_location)
@@ -291,11 +292,17 @@ def main(q):
     if USE_PYLON_CAMERA:
         # conecting to the first available camera
         try:
+
             camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+            #lo usa la cri vediamo a che serve
+            #camera.Open()
+
+            print('Using device: ', camera.GetDeviceInfo().GetModelName())
+            pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
 
             # Grabing Continusely (video) with minimal delay
             camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
-            camera.ExposureTimeRaw.SetValue(200)
+
             converter = pylon.ImageFormatConverter()
 
 
@@ -361,37 +368,11 @@ def main(q):
                 if SAVE_VIDEO_TIME != 0:
                     try:
                         q.put(img_basler)
-                        # end = time.time()
-                        # seconds = end - start
-                        #print("sec", 1/seconds, "image?" ,img_basler.shape)
-                        # cv2.imshow('basler', img_basler)
-                        # key = cv2.waitKey(1)
-                        # if key == ord('q') or key == 27:
-                        #     sys.exit()
-                        #     break
+
                     except:
                         print("error save basler")
 
-                #print("now showing", img_basler.shape)
-                # cv2.imshow('basler', img_basler)
-                # key = cv2.waitKey(1)
-                # if key == ord('q') or key == 27:
-                #     sys.exit()
-                #     break
 
-                # Filename
-                #filename = os.path.join(folderName, 'savedImage_' + str(ii) + '.jpg')
-                # filename = 'savedImage_' + str(ii) + '.jpg'
-                #print(filename)
-
-                # Write the frame into the file
-                # result.write(img)
-
-                # Saving the image
-                #cv2.imwrite(filename, img)
-
-                #print('Frame written \n')
-                #ii = ii + 1
             else:
                 print("camera not succeded")
         else:
