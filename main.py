@@ -298,7 +298,13 @@ def main(q):
             camera.Open()
 
             print('Using device: ', camera.GetDeviceInfo().GetModelName())
-            pylon.FeaturePersistence.Save(config_file, camera.GetNodeMap())
+            try:
+                pylon.FeaturePersistence.Save(config_file, camera.GetNodeMap())
+            except Exception as e:
+
+                print("basler failed", e)
+                print("basler failed", config_file)
+
             #pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
 
             # Grabing Continusely (video) with minimal delay
@@ -323,6 +329,8 @@ def main(q):
         except Exception as e:
             basler_presence = False
             print("basler failed", e)
+
+
 
 
 
