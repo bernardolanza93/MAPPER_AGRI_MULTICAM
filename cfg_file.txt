@@ -95,7 +95,7 @@ AutoBacklightCompensationRaw	0
 AutoFunctionProfile	Smart
 AutoFunctionROISelector	ROI1
 AutoFunctionROIWidth	2592
-AutoFunctionROISelector	ROI2x
+AutoFunctionROISelector	ROI1
 AutoFunctionROIWidth	2592
 AutoFunctionROISelector	ROI1
 AutoFunctionROISelector	ROI1
