@@ -152,7 +152,7 @@ def main(q):
     check_folder("/data/")
     now = datetime.now()
     hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
-    config_file = "cfg_file.txt"
+    config_file = "cfg_file.pfs"
     #acquisition_today =  "aquisition_" + str(now)
     #save_location = "/data/"+acquisition_today
     #check_folder(save_location)
@@ -299,13 +299,14 @@ def main(q):
 
             print('Using device: ', camera.GetDeviceInfo().GetModelName())
             try:
-                pylon.FeaturePersistence.Save(config_file, camera.GetNodeMap())
+                pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
+                #pylon.FeaturePersistence.Save(config_file, camera.GetNodeMap())
             except Exception as e:
 
-                print("basler failed", e)
+                print("basler failed load config", e)
                 print("basler failed", config_file)
 
-            #pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
+            #
 
             # Grabing Continusely (video) with minimal delay
             camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
