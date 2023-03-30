@@ -135,16 +135,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
         result = cv2.VideoWriter('filename.avi',
                                  cv2.VideoWriter_fourcc(*'MJPG'),
                                  20, size)
-    if TRACKBAR:
-        cv2.namedWindow(window_capture_name)
-        cv2.namedWindow(window_detection_name)
 
-        cv2.createTrackbar(low_H_name, window_detection_name, low_H, max_value_H, on_low_H_thresh_trackbar)
-        cv2.createTrackbar(high_H_name, window_detection_name, high_H, max_value_H, on_high_H_thresh_trackbar)
-        cv2.createTrackbar(low_S_name, window_detection_name, low_S, max_value, on_low_S_thresh_trackbar)
-        cv2.createTrackbar(high_S_name, window_detection_name, high_S, max_value, on_high_S_thresh_trackbar)
-        cv2.createTrackbar(low_V_name, window_detection_name, low_V, max_value, on_low_V_thresh_trackbar)
-        cv2.createTrackbar(high_V_name, window_detection_name, high_V, max_value, on_high_V_thresh_trackbar)
 
     nrfr = 0
     total1 = int(video1.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -162,16 +153,8 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
         if ret == True and ret2 == True:
+
             frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-
-            """
-            frame2_u16 = convert_u8_img_to_u16_d435_depth_image(frame2)
-            
-            pointcloud = convert_depth_image_to_pointcloud(frame2_u16, frame, intrinsics)
-            array = create_flatten_array_for_ply_save(pointcloud)
-            write_pointcloud('pointcloud.ply', array)
-            """
-
 
 
             # Writ ethe frame into the
@@ -202,15 +185,6 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
                 mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
-
-
-
-
-
-
-
-
-
             if FILTER_DEPTH:
                 max_depth = 260
                 min_depth = 60
@@ -222,15 +196,6 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 frame,mask,frame2, pixel, volume, cylindrification_results, completation , dA, dB = blob_detector(frame ,frame2, intrinsics)
                 if completation:
                     SAVE = True
-
-                """
-                try:
-                    mask, frame, edge, frame2, pixel, volume, cylindrification_results = blob_detector(mask, frame, green, frame2)
-                    SAVE = True
-                except Exception as e:
-                    print("error BLOB: %s", str(e))
-                    SAVE = False
-                """
 
             if MASK_DEPTH:
                 imask = mask < 255
@@ -267,14 +232,14 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            cv2.imshow("or", frame)
-            cv2.imshow("mask", mask)
-            #cv2.imshow("green", green)
-            cv2.imshow("frame2", frame2)
-            #cv2.imshow("edge", edge)
-            #cv2.imshow("skel", skel)
-            cv2.moveWindow("mask", 500, 200)
-            cv2.moveWindow("frame2", 200, 500)
+            # cv2.imshow("or", frame)
+            # cv2.imshow("mask", mask)
+            # #cv2.imshow("green", green)
+            # cv2.imshow("frame2", frame2)
+            # #cv2.imshow("edge", edge)
+            # #cv2.imshow("skel", skel)
+            # cv2.moveWindow("mask", 500, 200)
+            # cv2.moveWindow("frame2", 200, 500)
 
 
 

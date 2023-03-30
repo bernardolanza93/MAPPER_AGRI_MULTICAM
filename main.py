@@ -366,27 +366,27 @@ def main(q):
 
         # T265
         start = time.time()
+        if basler_presence:
+            if camera.IsGrabbing():
+                grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
-        if camera.IsGrabbing():
-            grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+                if grabResult.GrabSucceeded():
+                    # Access the image data
+                    image = converter.Convert(grabResult)
+                    img_basler = image.GetArray()
 
-            if grabResult.GrabSucceeded():
-                # Access the image data
-                image = converter.Convert(grabResult)
-                img_basler = image.GetArray()
+                    if SAVE_VIDEO_TIME != 0:
+                        try:
+                            q.put(img_basler)
 
-                if SAVE_VIDEO_TIME != 0:
-                    try:
-                        q.put(img_basler)
-
-                    except:
-                        print("error save basler")
+                        except:
+                            print("error save basler")
 
 
+                else:
+                    print("camera not succeded")
             else:
-                print("camera not succeded")
-        else:
-            print("camera is not grabbing")
+                print("camera is not grabbing")
 
 
         if enable_T265:
@@ -410,7 +410,8 @@ def main(q):
                 #print("Position: {}".format(data.translation))
                 #print("Velocity: {}".format(data.velocity))
                 #print("Acceleration: {}\n".format(data.acceleration))
-                writeCSVdata(time1,[frame,data.translation,data.velocity,anglePRY])
+                time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
+                writeCSVdata(time1,[frame,time_st,data.translation,data.velocity,anglePRY])
 
         if enable_D435i:
             # Wait for a coherent pair of frames: depth and color
