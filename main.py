@@ -551,7 +551,7 @@ def image_saver(q,status):
     out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
     while status.value != 0:
         qsize = q.qsize()
-        print("size: ", qsize)
+        #print("size: ", qsize)
         img_basler = q.get()
         out_BASLER.write(img_basler)
     out_BASLER.release()
@@ -564,6 +564,7 @@ def image_saver(q,status):
 
 
 def observer(status):
+    time.sleep(2)
     try:
         while True:
             time.sleep(0.2)
