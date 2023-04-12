@@ -365,7 +365,7 @@ def main(q,status):
 
     while True:
 
-        if status == 0:
+        if  status.value == 0:
             break
         else:
             frame += 1
@@ -549,7 +549,13 @@ def image_saver(q,status):
 
     gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
     out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
-    while status != 0:
+    while status.value != 0:
+        qsize = q.qsize()
+        print("size: ", qsize)
+        img_basler = q.get()
+        out_BASLER.write(img_basler)
+    out_BASLER.release()
+    while not q.empty():
         qsize = q.qsize()
         print("size: ", qsize)
         img_basler = q.get()
@@ -557,18 +563,31 @@ def image_saver(q,status):
     out_BASLER.release()
 
 
+def observer(status):
+    try:
+        while True:
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        print(' -KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
+        status.value = 0
+
+
+
+
 def processor():
     status = multiprocessing.Value("i", 1)
     q = multiprocessing.Queue(maxsize=1000)
     p1 = multiprocessing.Process(target=main, args=(q,status))
     p2 = multiprocessing.Process(target=image_saver, args=(q,status))
-
+    p3 = multiprocessing.Process(target=observer, args=(status,))
 
     p1.start()
     p2.start()
+    p3.start()
 
     p1.join()
     p2.join()
+    p3.join()
 
 
     # both processes finished
@@ -580,8 +599,5 @@ def processor():
     print("SAVER is alive?    -> {}".format(p2.is_alive()))
 
 
-try:
-    processor()
-except KeyboardInterrupt:
-    print(' -KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
-    # sys.exit(0)
+
+processor()
