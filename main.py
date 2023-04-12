@@ -559,7 +559,9 @@ def main():
     p2 = multiprocessing.Process(target=image_saver, args=(q,))
 
 
-    print("EXIT KILL SIG")
+    p1.start()
+    p2.start()
+
     p1.join()
     p2.join()
 
