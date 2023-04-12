@@ -607,6 +607,7 @@ def processor():
         print(' KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
         print("STATUS ZERO")
         status.value = 0
+        time.sleep(0.5)
     finally:
         status.value = 0
         time.sleep(0.5)
