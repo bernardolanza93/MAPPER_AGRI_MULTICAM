@@ -149,7 +149,56 @@ def check_folder(relative_path):
     else:
         print('directory ok:', path)
 
-def main(q):
+
+def writeCSVdata(time,data):
+    """
+    write data 2 CSV
+    :param data: write to a csv file input data (append to the end)
+    :return: nothing
+    """
+    # scrive su un file csv i dati estratti dalla rete Neurale
+    name = "localization"
+
+    file = open('./data/' + name + '_'+ time +'.csv', 'a')
+    writer = csv.writer(file)
+    writer.writerow(data)
+    file.close()
+
+def search_device(ctx):
+    enable_D435i = False
+    enable_T265 = False
+    device_aviable = {}
+
+    print("ctx.devices  = ",ctx.devices)
+    if len(ctx.devices) > 0:
+        for d in ctx.devices:
+            print(d)
+            device = d.get_info(rs.camera_info.name)
+            serial = d.get_info(rs.camera_info.serial_number)
+            model = str(device.split(' ')[-1])
+
+            device_aviable[model] = [serial,device]
+
+
+            print('Found device: ', device_aviable)
+
+    else:
+        print("No Intel Device connected")
+    keys = list(device_aviable.keys())
+    for i in range(len(keys)):
+        if keys[i] == "D435I" or keys[i] == "D435":
+            print("found: ", keys[i])
+            enable_D435i = True
+        elif keys[i] == "T265":
+            enable_T265 = True
+        else:
+            print("camera not recognized")
+
+    print("D435i ok ? => ", enable_D435i, "___|||____  T265 ok ? => ", enable_T265)
+
+    return enable_D435i, enable_T265, device_aviable
+
+def main(q,status):
 
     check_folder("/data/")
 
@@ -162,55 +211,6 @@ def main(q):
     path_here = os.getcwd()
     SAVE_VIDEO_TIME = 1 # 0 per non salvare
     FPS_DISPLAY = True
-
-    def writeCSVdata(time,data):
-        """
-        write data 2 CSV
-        :param data: write to a csv file input data (append to the end)
-        :return: nothing
-        """
-        # scrive su un file csv i dati estratti dalla rete Neurale
-        name = "localization"
-
-        file = open('./data/' + name + '_'+ time +'.csv', 'a')
-        writer = csv.writer(file)
-        writer.writerow(data)
-        file.close()
-
-    def search_device(ctx):
-        enable_D435i = False
-        enable_T265 = False
-        device_aviable = {}
-
-        print("ctx.devices  = ",ctx.devices)
-        if len(ctx.devices) > 0:
-            for d in ctx.devices:
-                print(d)
-                device = d.get_info(rs.camera_info.name)
-                serial = d.get_info(rs.camera_info.serial_number)
-                model = str(device.split(' ')[-1])
-
-                device_aviable[model] = [serial,device]
-
-
-                print('Found device: ', device_aviable)
-
-        else:
-            print("No Intel Device connected")
-        keys = list(device_aviable.keys())
-        for i in range(len(keys)):
-            if keys[i] == "D435I" or keys[i] == "D435":
-                print("found: ", keys[i])
-                enable_D435i = True
-            elif keys[i] == "T265":
-                enable_T265 = True
-            else:
-                print("camera not recognized")
-
-        print("D435i ok ? => ", enable_D435i, "___|||____  T265 ok ? => ", enable_T265)
-
-        return enable_D435i, enable_T265, device_aviable
-
 
 
 
@@ -364,163 +364,167 @@ def main(q):
     time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
 
     while True:
-        frame += 1
 
-        # T265
-        start = time.time()
-        if basler_presence:
-            if camera.IsGrabbing():
-                grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+        if status == 0:
+            break
+        else:
+            frame += 1
 
-                if grabResult.GrabSucceeded():
-                    # Access the image data
-                    image = converter.Convert(grabResult)
-                    img_basler = image.GetArray()
+            # T265
+            start = time.time()
+            if basler_presence:
+                if camera.IsGrabbing():
+                    grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
-                    if SAVE_VIDEO_TIME != 0:
-                        try:
-                            q.put(img_basler)
+                    if grabResult.GrabSucceeded():
+                        # Access the image data
+                        image = converter.Convert(grabResult)
+                        img_basler = image.GetArray()
 
-                        except:
-                            print("error save basler")
+                        if SAVE_VIDEO_TIME != 0:
+                            try:
+                                q.put(img_basler)
+
+                            except:
+                                print("error save basler")
 
 
+                    else:
+                        print("camera not succeded, no image")
                 else:
-                    print("camera not succeded, no image")
-            else:
-                print("camera is not grabbing")
+                    print("camera is not grabbing")
 
 
-        if enable_T265:
-            try:
-                tframes = pipelineT265.wait_for_frames()
-            except Exception as e:
-                print("ERROR T265 wait4fr: %s",e)
-                pose = 0
-            try:
-                pose = tframes.get_pose_frame()
-
-            except Exception as e:
-                print("ERROR T265 getFr: %s", e)
-                pose = 0
-
-
-            if pose:
-                data = pose.get_pose_data()
-                w = data.rotation.w
-                x = -data.rotation.z
-                y = data.rotation.x
-                z = -data.rotation.y
-
-                pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi;
-                roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi;
-                yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi;
-                anglePRY = [pitch,roll,yaw]
-
-                #print("Frame #{}".format(pose.frame_number))
-                #print("Position: {}".format(data.translation))
-                #print("Velocity: {}".format(data.velocity))
-                #print("Acceleration: {}\n".format(data.acceleration))
-                time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
-                writeCSVdata(time1,[frame,time_st,data.translation,data.velocity,anglePRY])
-
-        if enable_D435i:
-            # Wait for a coherent pair of frames: depth and color
-
-            try:
-                frames = pipeline.wait_for_frames()
-
-            except Exception as e:
-                print("PIPELINE error:||||:: %s", str(e))
-                sys.exit()
-
-            #frames.as_motion_frame().get_motion_data()
-
-            #colorized = colorizer.process(frames)
-
-            aligned_frames = align.process(frames)
-
-            depth_frame = aligned_frames.get_depth_frame()
-
-            color_frame = aligned_frames.get_color_frame()
-
-            depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
-            color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
-
-
-            calculate_and_save_intrinsics(depth_intrin)
-
-            color_image = np.asanyarray(color_frame.get_data())
-            depth_image = np.asanyarray(depth_frame.get_data())
-
-            width = int(1920)
-            height = int(1080)
-            dim = (width, height)
-
-            # resize image depth to fit rgb
-            resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
-
-            #convert u16 mm bw image to u16 cm bw
-            resized = resized/10
-            #rescale without first 50 cm of offset unwanted
-            resized = resized - offset
-            #tolgo tutto sotto i 30 cm
-
-            #stretchin all in the 0-255 cm interval
-            maxi = np.clip(resized,0,255)
-            #convert to 8 bit
-            intcm = maxi.astype('uint8')
-
-
-
-            if SAVE_VIDEO_TIME != 0:
+            if enable_T265:
                 try:
-                    out.write(color_image)
-
-                    try:
-                        #save here depth mapù
-                        out_depth.write(intcm)
-                        #np.savetxt("image.txt", depth_image,fmt='%i')
-
-                    except Exception as e:
-                        print("error saving depth 1 ch:||||:: %s", str(e))
-                    #cv2.imwrite('im.jpg', color_image)
-                    #frames = pipeline.wait_for_frames()
-                    #saver.process(frames)
-                    pass
-
+                    tframes = pipelineT265.wait_for_frames()
+                except Exception as e:
+                    print("ERROR T265 wait4fr: %s",e)
+                    pose = 0
+                try:
+                    pose = tframes.get_pose_frame()
 
                 except Exception as e:
-                    print("error save video:||||:: %s", str(e))
-                #cv2.imwrite('im.jpg', color_image)
-
-                #result.write(color_image)
+                    print("ERROR T265 getFr: %s", e)
+                    pose = 0
 
 
-            #print("size", depth_image.shape,  color_image.shape)
-            #images = np.hstack((color_image, depth_colormap))
-            #cv2.imshow('Color Stream', depth_image)
+                if pose:
+                    data = pose.get_pose_data()
+                    w = data.rotation.w
+                    x = -data.rotation.z
+                    y = data.rotation.x
+                    z = -data.rotation.y
 
-            color_image = resize_image(color_image,50)
-            depth_image = resize_image(depth_image, 50)
-            #cv2.imshow('depth Stream', color_image)
-            #cv2.imshow('dept!!!h Stream', intcm)
+                    pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi;
+                    roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi;
+                    yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi;
+                    anglePRY = [pitch,roll,yaw]
 
-            if FPS_DISPLAY:
-                end = time.time()
-                seconds = end - start
-                fps = 1 / seconds
-                print(fps)
-            key = cv2.waitKey(1)
-            if key == 27:
-                #result.release()
-                #cv2.destroyAllWindows()
-                break
+                    #print("Frame #{}".format(pose.frame_number))
+                    #print("Position: {}".format(data.translation))
+                    #print("Velocity: {}".format(data.velocity))
+                    #print("Acceleration: {}\n".format(data.acceleration))
+                    time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
+                    writeCSVdata(time1,[frame,time_st,data.translation,data.velocity,anglePRY])
+
+            if enable_D435i:
+                # Wait for a coherent pair of frames: depth and color
+
+                try:
+                    frames = pipeline.wait_for_frames()
+
+                except Exception as e:
+                    print("PIPELINE error:||||:: %s", str(e))
+                    sys.exit()
+
+                #frames.as_motion_frame().get_motion_data()
+
+                #colorized = colorizer.process(frames)
+
+                aligned_frames = align.process(frames)
+
+                depth_frame = aligned_frames.get_depth_frame()
+
+                color_frame = aligned_frames.get_color_frame()
+
+                depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+                color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
 
 
-        if enable_T265 == False and enable_D435i == False and basler_presence == False:
-            print("no device, termination...")
-            sys.exit()
+                calculate_and_save_intrinsics(depth_intrin)
+
+                color_image = np.asanyarray(color_frame.get_data())
+                depth_image = np.asanyarray(depth_frame.get_data())
+
+                width = int(1920)
+                height = int(1080)
+                dim = (width, height)
+
+                # resize image depth to fit rgb
+                resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+
+                #convert u16 mm bw image to u16 cm bw
+                resized = resized/10
+                #rescale without first 50 cm of offset unwanted
+                resized = resized - offset
+                #tolgo tutto sotto i 30 cm
+
+                #stretchin all in the 0-255 cm interval
+                maxi = np.clip(resized,0,255)
+                #convert to 8 bit
+                intcm = maxi.astype('uint8')
+
+
+
+                if SAVE_VIDEO_TIME != 0:
+                    try:
+                        out.write(color_image)
+
+                        try:
+                            #save here depth mapù
+                            out_depth.write(intcm)
+                            #np.savetxt("image.txt", depth_image,fmt='%i')
+
+                        except Exception as e:
+                            print("error saving depth 1 ch:||||:: %s", str(e))
+                        #cv2.imwrite('im.jpg', color_image)
+                        #frames = pipeline.wait_for_frames()
+                        #saver.process(frames)
+                        pass
+
+
+                    except Exception as e:
+                        print("error save video:||||:: %s", str(e))
+                    #cv2.imwrite('im.jpg', color_image)
+
+                    #result.write(color_image)
+
+
+                #print("size", depth_image.shape,  color_image.shape)
+                #images = np.hstack((color_image, depth_colormap))
+                #cv2.imshow('Color Stream', depth_image)
+
+                color_image = resize_image(color_image,50)
+                depth_image = resize_image(depth_image, 50)
+                #cv2.imshow('depth Stream', color_image)
+                #cv2.imshow('dept!!!h Stream', intcm)
+
+                if FPS_DISPLAY:
+                    end = time.time()
+                    seconds = end - start
+                    fps = 1 / seconds
+                    print(fps)
+                key = cv2.waitKey(1)
+                if key == 27:
+                    #result.release()
+                    #cv2.destroyAllWindows()
+                    break
+
+
+            if enable_T265 == False and enable_D435i == False and basler_presence == False:
+                print("no device, termination...")
+                sys.exit()
 
 
 
@@ -535,7 +539,7 @@ def main(q):
 
         cv2.destroyAllWindows()
 
-def image_saver(q):
+def image_saver(q,status):
     print("saving")
     frame_width = 2592
     frame_height = 1944
@@ -545,7 +549,7 @@ def image_saver(q):
 
     gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
     out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
-    while True:
+    while status != 0:
         qsize = q.qsize()
         print("size: ", qsize)
         img_basler = q.get()
@@ -554,9 +558,10 @@ def image_saver(q):
 
 
 def processor():
+    status = multiprocessing.Value("i", 1)
     q = multiprocessing.Queue(maxsize=1000)
-    p1 = multiprocessing.Process(target=main, args=(q,))
-    p2 = multiprocessing.Process(target=image_saver, args=(q,))
+    p1 = multiprocessing.Process(target=main, args=(q,status))
+    p2 = multiprocessing.Process(target=image_saver, args=(q,status))
 
 
     p1.start()
