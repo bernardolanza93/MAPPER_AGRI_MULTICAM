@@ -589,7 +589,7 @@ def processor():
 
         p1.start()
         p2.start()
-        p3.start()
+        #p3.start()
 
         p1.join()
         p2.join()
