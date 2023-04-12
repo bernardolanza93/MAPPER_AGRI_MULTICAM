@@ -560,10 +560,10 @@ def image_saver(q,status):
 
 
 def observer(status):
-    time.sleep(2)
+
     try:
         while True:
-            time.sleep(0.1)
+            time.sleep(0.001)
 
     except KeyboardInterrupt:
         print(' KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
