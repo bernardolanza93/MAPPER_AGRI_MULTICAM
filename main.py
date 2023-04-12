@@ -553,7 +553,7 @@ def image_saver(q):
     out_BASLER.release()
 
 
-def main():
+def processor():
     q = multiprocessing.Queue(maxsize=1000)
     p1 = multiprocessing.Process(target=main, args=(q,))
     p2 = multiprocessing.Process(target=image_saver, args=(q,))
@@ -576,7 +576,7 @@ def main():
 
 
 try:
-    main()
+    processor()
 except KeyboardInterrupt:
     print(' -KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
     # sys.exit(0)
