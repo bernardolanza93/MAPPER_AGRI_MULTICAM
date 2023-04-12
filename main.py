@@ -549,18 +549,13 @@ def image_saver(q,status):
 
     gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
     out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
-    while status.value != 0:
+    while True:
         qsize = q.qsize()
         print("size: ", qsize)
         img_basler = q.get()
         out_BASLER.write(img_basler)
 
-    while not q.empty():
-        print("CONTINUE SAVING")
-        qsize = q.qsize()
-        print("size: ", qsize)
-        img_basler = q.get()
-        out_BASLER.write(img_basler)
+
     out_BASLER.release()
 
 
