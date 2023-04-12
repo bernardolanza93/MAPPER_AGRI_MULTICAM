@@ -572,7 +572,7 @@ def observer(status):
 
     except KeyboardInterrupt:
         print(' KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
-        print("STATUS ZERO")
+        print("OBSERVER ZERO")
         status.value = 0
 
 
@@ -604,8 +604,8 @@ def processor():
         print("MAIN is alive? -> {}".format(p1.is_alive()))
         print("SAVER is alive?    -> {}".format(p2.is_alive()))
     except KeyboardInterrupt:
-        print(' KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
-        print("STATUS ZERO")
+        print(' KeyboardInterrupt- main Killed by user, exiting...{} '.format(datetime.now()))
+        print("STATUS PROCESSOR ZERO")
         status.value = 0
         time.sleep(0.5)
     finally:
