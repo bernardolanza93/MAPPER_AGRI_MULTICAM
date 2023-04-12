@@ -552,25 +552,29 @@ def image_saver(q):
         out_BASLER.write(img_basler)
     out_BASLER.release()
 
-q = multiprocessing.Queue(maxsize=1000)
-p1 = multiprocessing.Process(target=main, args=(q,))
-p2 = multiprocessing.Process(target=image_saver, args=(q,))
-try:
-    p1.start()
-    p2.start()
-except Exception as e:
+
+def main():
+    q = multiprocessing.Queue(maxsize=1000)
+    p1 = multiprocessing.Process(target=main, args=(q,))
+    p2 = multiprocessing.Process(target=image_saver, args=(q,))
+
+
     print("EXIT KILL SIG")
     p1.join()
     p2.join()
 
-p1.join()
-p2.join()
+
+    # both processes finished
+    print("Both processes finished execution!")
+
+    # check if processes are alive
+    # controllo se sono ancora vivi o se sono terminati e ne printo lo status
+    print("MAIN is alive? -> {}".format(p1.is_alive()))
+    print("SAVER is alive?    -> {}".format(p2.is_alive()))
 
 
-# both processes finished
-print("Both processes finished execution!")
-
-# check if processes are alive
-# controllo se sono ancora vivi o se sono terminati e ne printo lo status
-print("MAIN is alive? -> {}".format(p1.is_alive()))
-print("SAVER is alive?    -> {}".format(p2.is_alive()))
+try:
+    main()
+except KeyboardInterrupt:
+    print(' -KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
+    # sys.exit(0)
