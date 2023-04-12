@@ -555,9 +555,14 @@ def image_saver(q):
 q = multiprocessing.Queue(maxsize=1000)
 p1 = multiprocessing.Process(target=main, args=(q,))
 p2 = multiprocessing.Process(target=image_saver, args=(q,))
+try:
+    p1.start()
+    p2.start()
+except Exception as e:
+    print("EXIT KILL SIG")
+    p1.join()
+    p2.join()
 
-p1.start()
-p2.start()
 p1.join()
 p2.join()
 
