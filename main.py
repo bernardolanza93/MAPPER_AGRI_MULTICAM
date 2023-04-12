@@ -579,28 +579,42 @@ def observer(status):
 
 
 def processor():
-    status = multiprocessing.Value("i", 1)
-    q = multiprocessing.Queue(maxsize=1000)
-    p1 = multiprocessing.Process(target=main, args=(q,status))
-    p2 = multiprocessing.Process(target=image_saver, args=(q,status))
-    p3 = multiprocessing.Process(target=observer, args=(status,))
+    try:
 
-    p1.start()
-    p2.start()
-    p3.start()
+        status = multiprocessing.Value("i", 1)
+        q = multiprocessing.Queue(maxsize=1000)
+        p1 = multiprocessing.Process(target=main, args=(q,status))
+        p2 = multiprocessing.Process(target=image_saver, args=(q,status))
+        p3 = multiprocessing.Process(target=observer, args=(status,))
 
-    p1.join()
-    p2.join()
-    p3.join()
+        p1.start()
+        p2.start()
+        p3.start()
+
+        p1.join()
+        p2.join()
+        p3.join()
 
 
-    # both processes finished
-    print("Both processes finished execution!")
+        # both processes finished
+        print("Both processes finished execution!")
 
-    # check if processes are alive
-    # controllo se sono ancora vivi o se sono terminati e ne printo lo status
-    print("MAIN is alive? -> {}".format(p1.is_alive()))
-    print("SAVER is alive?    -> {}".format(p2.is_alive()))
+        # check if processes are alive
+        # controllo se sono ancora vivi o se sono terminati e ne printo lo status
+        print("MAIN is alive? -> {}".format(p1.is_alive()))
+        print("SAVER is alive?    -> {}".format(p2.is_alive()))
+    except KeyboardInterrupt:
+        print(' KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
+        print("STATUS ZERO")
+        status.value = 0
+    finally:
+        status.value = 0
+        time.sleep(0.5)
+        p1.join()
+        p2.join()
+        p3.join()
+
+
 
 
 
