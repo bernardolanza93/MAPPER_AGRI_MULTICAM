@@ -232,13 +232,13 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            # cv2.imshow("or", frame)
+            cv2.imshow("or", frame)
             # cv2.imshow("mask", mask)
             # #cv2.imshow("green", green)
             # cv2.imshow("frame2", frame2)
             # #cv2.imshow("edge", edge)
             # #cv2.imshow("skel", skel)
-            # cv2.moveWindow("mask", 500, 200)
+            cv2.moveWindow("mask", 500, 200)
             # cv2.moveWindow("frame2", 200, 500)
 
 

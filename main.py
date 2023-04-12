@@ -39,6 +39,8 @@ offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
 SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = True
+now = datetime.now()
+date_time = now.strftime("%Y_%m_%d_%H:%M:%S")
 
 
 
@@ -100,10 +102,10 @@ def organize_video_from_last_acquisition():
 
     #create directory to contain file
     name1 = "aquisition_"
-    now = datetime.now()
+
 
     # convert to string
-    date_time = now.strftime("%Y_%m_%d_%H:%M:%S")
+
     folder_name = name1 + date_time
 
     create_directory = False
@@ -150,8 +152,8 @@ def check_folder(relative_path):
 def main(q):
 
     check_folder("/data/")
-    now = datetime.now()
-    hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    hourstr = date_time
     config_file = "cfg_file.txt"
     #acquisition_today =  "aquisition_" + str(now)
     #save_location = "/data/"+acquisition_today
@@ -384,14 +386,23 @@ def main(q):
 
 
                 else:
-                    print("camera not succeded")
+                    print("camera not succeded, no image")
             else:
                 print("camera is not grabbing")
 
 
         if enable_T265:
-            tframes = pipelineT265.wait_for_frames()
-            pose = tframes.get_pose_frame()
+            try:
+                tframes = pipelineT265.wait_for_frames()
+            except Exception as e:
+                print("ERROR T265 wait4fr: %s",e)
+                pose = 0
+            try:
+                pose = tframes.get_pose_frame()
+
+            except Exception as e:
+                print("ERROR T265 getFr: %s", e)
+                pose = 0
 
 
             if pose:
@@ -439,26 +450,8 @@ def main(q):
 
             calculate_and_save_intrinsics(depth_intrin)
 
-
-
-
-
-            """
-            # Create save_to_ply object
-            ply = rs.save_to_ply("1.ply")
-            # Set options to the desired values
-            # In this example we'll generate a textual PLY with normals (mesh is already created by default)
-            ply.set_option(rs.save_to_ply.option_ply_binary, False)
-            ply.set_option(rs.save_to_ply.option_ply_normals, True)
-            print("Saving to 1.ply...")
-            # Apply the processing block to the frameset which contains the depth frame and the texture
-            ply.process(colorized)
-            """
-
             color_image = np.asanyarray(color_frame.get_data())
             depth_image = np.asanyarray(depth_frame.get_data())
-
-
 
             width = int(1920)
             height = int(1080)
@@ -558,9 +551,6 @@ def image_saver(q):
         img_basler = q.get()
         out_BASLER.write(img_basler)
     out_BASLER.release()
-
-
-
 
 q = multiprocessing.Queue(maxsize=1000)
 p1 = multiprocessing.Process(target=main, args=(q,))

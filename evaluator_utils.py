@@ -606,7 +606,7 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
     iteration_needed = int(((max(dA, dB)) / diameter_medium) / 2)
 
 
-    iteration =4
+    iteration =2
 
 
 
