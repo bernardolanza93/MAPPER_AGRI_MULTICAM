@@ -569,6 +569,7 @@ def observer(status):
             time.sleep(0.2)
     except KeyboardInterrupt:
         print(' -KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
+        print("STATUS ZERO")
         status.value = 0
 
 
