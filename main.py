@@ -567,6 +567,8 @@ def observer(status):
     try:
         while True:
             time.sleep(0.2)
+            tasto = input("Hit enter to terminate")
+            print("input:", tasto)
     except KeyboardInterrupt:
         print(' -KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
         print("STATUS ZERO")
