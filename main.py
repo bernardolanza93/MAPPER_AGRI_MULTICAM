@@ -554,8 +554,9 @@ def image_saver(q,status):
         print("size: ", qsize)
         img_basler = q.get()
         out_BASLER.write(img_basler)
-    out_BASLER.release()
+
     while not q.empty():
+        print("CONTINUE SAVING")
         qsize = q.qsize()
         print("size: ", qsize)
         img_basler = q.get()
@@ -567,7 +568,7 @@ def observer(status):
     time.sleep(2)
     try:
         while True:
-            time.sleep(0.2)
+            time.sleep(0.1)
 
     except KeyboardInterrupt:
         print(' KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
