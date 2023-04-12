@@ -551,7 +551,7 @@ def image_saver(q,status):
     out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
     while status.value != 0:
         qsize = q.qsize()
-        #print("size: ", qsize)
+        print("size: ", qsize)
         img_basler = q.get()
         out_BASLER.write(img_basler)
     out_BASLER.release()
@@ -568,10 +568,9 @@ def observer(status):
     try:
         while True:
             time.sleep(0.2)
-            tasto = input("Hit enter to terminate")
-            print("input:", tasto)
+
     except KeyboardInterrupt:
-        print(' -KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
+        print(' KeyboardInterrupt- AB_main_PC Killed by user, exiting...{} '.format(datetime.now()))
         print("STATUS ZERO")
         status.value = 0
 
