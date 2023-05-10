@@ -603,12 +603,7 @@ def processor():
         print("STATUS PROCESSOR ZERO")
         status.value = 0
         time.sleep(0.5)
-    finally:
-        status.value = 0
-        time.sleep(0.5)
-        p1.join()
-        p2.join()
-        p3.join()
+
 
 
 

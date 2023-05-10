@@ -2,10 +2,10 @@ import cv2
 import os
 
 # specify the path to the global folder containing the video folders
-input_folder_path = "/home/mmt-ben/Downloads/video-20230403T100325Z-001/video/"
+input_folder_path = "/home/mmt-ben/Downloads/hk"
 
 # specify the path to the folder where output images will be saved
-output_folder_path = "/home/mmt-ben/Documents/dataset_cell/"
+output_folder_path = "/home/mmt-ben/Documents/hokuto/"
 
 # create the output folder if it doesn't exist
 if not os.path.exists(output_folder_path):
@@ -34,17 +34,18 @@ for folder_name in os.listdir(input_folder_path):
 
                 # loop through each frame in the video
                 while cap.isOpened():
+
                     ret, frame = cap.read()
 
                     # check if there are still frames left in the video
                     if ret:
                         # construct the filename for the output image
-                        output_filename = "frame_" + str(folder_name) +"_" + str(frame_count).zfill(6) + ".jpg"
+                        output_filename = "frame_" + str(frame_count) + "_"+ str(folder_name) +"_" +  ".jpg"
 
                         output_filepath = os.path.join(output_folder_path, output_filename)
 
                         # save the current frame as a JPEG image
-                        if (frame_count % 12 == 0):
+                        if (frame_count % 1 == 0):
                             print(output_filename)
                             frame = cv2.rotate(frame, cv2.ROTATE_180)
                             cv2.imwrite(output_filepath, frame)

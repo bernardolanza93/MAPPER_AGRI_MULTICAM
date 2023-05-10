@@ -4,7 +4,7 @@ import time
 import struct
 from numpy.linalg import norm
 import os
-
+import statistics
 import os
 import sys
 import math
@@ -112,6 +112,50 @@ def crop_with_box_one_shoot(box, mask_bu, frame, depth):
     return mask_bu, frame, depth
 
 
+
+def write_pointcloud(filename, xyz_points, rgb_points=None):
+    '''
+    Function that writes a .ply file of the point cloud according to the camera points
+    and eventually the corresponding color points. Saves the .ply at the specified path.
+    INPUTS:
+    - filename: full path of the pointcloud to be saved, i.e. ./clouds/pointcloud.ply
+    - xyz_points: 3D camera points passed as numpy array npoints x 3
+    - rgb_points: corresponding color triplets that will be applied to each point
+    OUTPUTS:
+    - saves the cloud at the specified path.
+    '''
+
+    assert xyz_points.shape[1] == 3, 'ERROR: input XYZ points should be Nx3 float array!'
+    # if no color points have been passed, put them at max intensity
+    if rgb_points is None:
+        rgb_points = np.ones(xyz_points.shape).astype(np.uint8) * 255
+
+    assert xyz_points.shape == rgb_points.shape, 'ERROR: input RGB colors should be Nx3 float array and have same size as input XYZ points!'
+
+    # write header of .ply file
+    fid = open(filename, 'wb')
+    fid.write(bytes('ply\n', 'utf-8'))
+    fid.write(bytes('format binary_little_endian 1.0\n', 'utf-8'))
+    fid.write(bytes('element vertex %d\n' % xyz_points.shape[0], 'utf-8'))
+    fid.write(bytes('property float x\n', 'utf-8'))
+    fid.write(bytes('property float y\n', 'utf-8'))
+    fid.write(bytes('property float z\n', 'utf-8'))
+    fid.write(bytes('property uchar red\n', 'utf-8'))
+    fid.write(bytes('property uchar green\n', 'utf-8'))
+    fid.write(bytes('property uchar blue\n', 'utf-8'))
+    fid.write(bytes('end_header\n', 'utf-8'))
+
+    # write 3D points to .ply file
+    # WARNING: rgb points are assumed to be in BGR format, so saves them
+    # in RGB format by inverting columns here
+    for i in range(xyz_points.shape[0]):
+        fid.write(bytearray(struct.pack("fffccc", xyz_points[i, 0], xyz_points[i, 1], xyz_points[i, 2],
+                                        rgb_points[i, 2].tobytes(), rgb_points[i, 1].tobytes(),
+                                        rgb_points[i, 0].tobytes())))
+    fid.close()
+
+
+
 def draw_and_identify_current_cnt(frame, i, box):
     font = cv2.FONT_HERSHEY_SIMPLEX
     fontScale = 1
@@ -125,14 +169,14 @@ def draw_and_calculate_poligonal_max_diameter(cnt, frame):
     epsilon = 0.003 * cv2.arcLength(cnt, True)
     approx = cv2.approxPolyDP(cnt, epsilon, True)
 
-    cv2.drawContours(frame, [approx], -1, (255, 255, 0), 1)
+    #cv2.drawContours(frame, [approx], -1, (255, 255, 0), 1)
 
 
 def draw_and_calculate_rotated_box(cnt, frame):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
-    cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+    #cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
     return box
 
 
@@ -186,7 +230,7 @@ def first_layer_detect_raw_shoots(im, frame):
             '''
             if area > 1000:
 
-                if circularity < 0.4:
+                if circularity < 0.8:
                     if perimeter > 500:
                         # print("first layer CHOSEN! i A,P,C", i, int(area), int(perimeter), circularity)
 

@@ -21,9 +21,9 @@ from datetime import datetime
 import pyrealsense2 as rs
 from additional_functions import *
 
-THRES_VALUE = 65
+THRES_VALUE = 30
 CROPPING_ADVANCED = True
-max_value = 255
+max_value = 50
 max_value_H = 360 // 2
 low_H = 0
 low_S = 0
@@ -101,6 +101,8 @@ def medium_points_of_box_for_dimension_extraction(box, orig):
 
 
 def calc_box_for_subcylinder_recognition(mask):
+    mask = (255 - mask)
+    #cv2.imshow("mcdo", imagem1)
     h = mask.shape[0]
     w = mask.shape[1]
     cnt = []
@@ -110,6 +112,7 @@ def calc_box_for_subcylinder_recognition(mask):
         area = cv2.contourArea(cnt_i)
         area_image = h * w
         ratio = area / area_image
+
         # print("ratio", ratio)
         # print("ratio", ratio)
         if ratio > 0.001:
@@ -123,7 +126,7 @@ def calc_box_for_subcylinder_recognition(mask):
     rect = cv2.minAreaRect(cnt)
     """
     except:
-        cv2.imshow("error rect",mask)
+        cv2.imshow("error rect",mask)   
         print(mask)
         print("contour",cnt)
         print(mask.shape)
@@ -159,24 +162,25 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
     dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
     dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
     orig = rgbframe
-    divider_diam = 3
+    divider_diam = 5
+
+    (tl, tr, br, bl) = box
 
     diameter = dA
     length = dB
 
     h, w, c = orig.shape
 
-    # cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 255), -1)
-    # cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 255, 0), -1)
+    cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
+    cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (0, 255, 0), -1)
     secure_pointL = (int(tlblX + diameter / divider_diam), int(tlblY))
     secure_pointR = (int(trbrX - diameter / divider_diam), int(trbrY))
-    black_pointL = orig[secure_pointL[0] - 5:secure_pointL[0] + 5, :]
-    black_pointR = orig[secure_pointR[0] - 5:secure_pointR[0] + 5, :]
+
 
 
 
     mask_copy_rect = mask.copy()
-    cv2.rectangle(mask_copy_rect, (int(secure_pointL[0] + diameter/2), 0), (int(secure_pointR[0]-diameter/2), h), (255, 255, 255), -1)
+    cv2.rectangle(rgbframe, tl, br, (255, 0, 65), 2)
     kernel = np.ones((9, 9), np.uint8)
     mask_copy_rect = cv2.dilate(mask_copy_rect, kernel, iterations=1)
     mask_inv_rect = 255 - mask_copy_rect
@@ -190,8 +194,8 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
         # draw the contour and center of the shape on the image
-        cv2.drawContours(orig, [c], -1, (0, 255, 0), 2)
-        cv2.circle(orig, (cX, cY), 2, (255, 255, 255), -1)
+        #cv2.drawContours(orig, [c], -1, (0, 255, 0), 2)
+        #cv2.circle(orig, (cX, cY), 2, (255, 255, 255), -1)
         cs.append(cX)
         cs.append(cY)
 
@@ -201,38 +205,83 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
     r_image  = mask_inv_rect[0: h, int(w/2):w]
     pointcloud_l = pointcloud[0: h, 0:int(w/2)]
     pointcloud_r  = pointcloud[0: h, int(w/2):w]
-    PL  = cv2.mean(pointcloud_l, l_image)
-    PR = cv2.mean(pointcloud_r, r_image)
-    #print(pointcloud.shape)
 
-    len  = two_points_euc_distance(PL,PR)
-    print("RATIO", length/len)
+    #cv2.imshow("mass",mask)
 
 
-
+#pointcloud visibile
+    visible_pointcloud = ((pointcloud - pointcloud.min()) * (1/(pointcloud.max() - pointcloud.min()) * 255)).astype('uint8')
+    #cv2.imshow("mass_pt", visible_pointcloud)
 
 
 
 
+    zvec = []
+    yvec = []
+    xvec = []
+    for x in range(pointcloud.shape[0]):
+        for y in range(pointcloud.shape[1]):
+            point = pointcloud[x, y]
+            point_mask = mask[x, y]
+            if point_mask == 0:
+                #cv2.circle(rgbframe, (y + int(w/2), x), 1, (255, 0, 255), -1)
+                zzz = int(point[2])
+                xxx = int(point[1]) #ATTENZIONE CHE SONO INVERTITI!!!!!!!!
+                yyy = int(point[0])
+                zvec.append(zzz)
+                xvec.append(xxx)
+                yvec.append(yyy)
 
-    #draw_and_calculate_poligonal_max_diameter(c,orig)
-    M = cv2.moments(c)
-    cX = int(M["m10"] / M["m00"])
-    cY = int(M["m01"] / M["m00"])
 
-    # cv2.circle(orig,(secure_pointL), 3, (255, 0, 255), 2)
-    # cv2.circle(orig,(secure_pointR), 3, (255, 0, 255), 2)
-    # cv2.circle(orig,(secure_pointL), 3, (255, 0, 255), 2)
-    # cv2.circle(orig,(secure_pointR), 3, (255, 255, 0), 2)
 
-    # cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
-    #          (255, 0, 100), 2)
 
-    cv2.putText(orig, " lmm = " + str(int(len)) +", rto:" + str(round(length/len,3)), (4, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
-                (255, 255, 0), 1, cv2.LINE_AA)
-    # cv2.putText(orig, "d:" + str(diameter) + ", lpx: " + str(length) + " lmm = " + str(int(len)) + ", rto:" + str(
-    #     round(length / len, 3)), (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-    #             (255, 255, 0), 1, cv2.LINE_AA)
+    deltax = max(xvec) - min(xvec)
+    deltay = max(yvec) - min(yvec)
+    deltaz = max(zvec) - min(zvec)
+    meanz = statistics.mean(list(zvec))
+    stdz = statistics.stdev(list(zvec))
+
+    print("Right styatistcal", meanz, stdz)
+
+
+    print("delta PRIMA x y z", deltax,deltay,deltaz )
+
+
+    zvec = []
+    yvec = []
+    xvec = []
+    filter_alpha = 0.5
+    for x in range(pointcloud.shape[0]):
+        for y in range(pointcloud.shape[1]):
+            point = pointcloud[x, y]
+            point_mask = mask[x, y]
+            if point_mask == 0:
+
+                #cv2.circle(rgbframe, (y + int(w/2), x), 1, (255, 0, 255), -1)
+                zzz = int(point[2])
+                xxx = int(point[1])
+                yyy = int(point[0])
+                if zzz < meanz + stdz * filter_alpha and zzz > meanz - stdz * filter_alpha:
+                    cv2.circle(rgbframe, (y , x), 1, (255, 0, 255), -1)
+                    zvec.append(zzz)
+                    xvec.append(xxx)
+                    yvec.append(yyy)
+
+    deltax = max(xvec) - min(xvec)
+    deltay = max(yvec) - min(yvec)
+    deltaz = max(zvec) - min(zvec)
+    perc_max95_x =  np.percentile(xvec, 99)
+    perc_max05_x = np.percentile(xvec, 1)
+    delta_percx = perc_max95_x-perc_max05_x
+    print("len point", len(xvec),len(yvec),len(zvec))
+    print("delta DOPO x y z", deltax, deltay, deltaz, "delta percentile 95-0", delta_percx)
+    ratiommpx =  delta_percx/length
+    print("RATIO", delta_percx/length)
+    diam_cm = ratiommpx*dA
+    print("DIAMETER: ", diam_cm)
+    print("LENGHT: ", delta_percx)
+    string1 = str("l_mm = " + str(int(delta_percx)) +" r:" + str(round(ratiommpx,3)) +" dmm:"  + str(int(diam_cm)))
+    cv2.putText(orig ,string1, (4, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1, cv2.LINE_AA)
 
 
     pdt = pointcloud[int(tltrY), int(tltrX)]
@@ -272,50 +321,8 @@ def convert_depth_image_to_pointcloud(depth_image, intrinsics):
             # print(result)
 
             pointcloud[r, c] = [int(result[2]), int(-result[0]), int(-result[1])]
-
+            #x,y,z
     return pointcloud
-
-
-def write_pointcloud(filename, xyz_points, rgb_points=None):
-    '''
-    Function that writes a .ply file of the point cloud according to the camera points
-    and eventually the corresponding color points. Saves the .ply at the specified path.
-    INPUTS:
-    - filename: full path of the pointcloud to be saved, i.e. ./clouds/pointcloud.ply
-    - xyz_points: 3D camera points passed as numpy array npoints x 3
-    - rgb_points: corresponding color triplets that will be applied to each point
-    OUTPUTS:
-    - saves the cloud at the specified path.
-    '''
-
-    assert xyz_points.shape[1] == 3, 'ERROR: input XYZ points should be Nx3 float array!'
-    # if no color points have been passed, put them at max intensity
-    if rgb_points is None:
-        rgb_points = np.ones(xyz_points.shape).astype(np.uint8) * 255
-
-    assert xyz_points.shape == rgb_points.shape, 'ERROR: input RGB colors should be Nx3 float array and have same size as input XYZ points!'
-
-    # write header of .ply file
-    fid = open(filename, 'wb')
-    fid.write(bytes('ply\n', 'utf-8'))
-    fid.write(bytes('format binary_little_endian 1.0\n', 'utf-8'))
-    fid.write(bytes('element vertex %d\n' % xyz_points.shape[0], 'utf-8'))
-    fid.write(bytes('property float x\n', 'utf-8'))
-    fid.write(bytes('property float y\n', 'utf-8'))
-    fid.write(bytes('property float z\n', 'utf-8'))
-    fid.write(bytes('property uchar red\n', 'utf-8'))
-    fid.write(bytes('property uchar green\n', 'utf-8'))
-    fid.write(bytes('property uchar blue\n', 'utf-8'))
-    fid.write(bytes('end_header\n', 'utf-8'))
-
-    # write 3D points to .ply file
-    # WARNING: rgb points are assumed to be in BGR format, so saves them
-    # in RGB format by inverting columns here
-    for i in range(xyz_points.shape[0]):
-        fid.write(bytearray(struct.pack("fffccc", xyz_points[i, 0], xyz_points[i, 1], xyz_points[i, 2],
-                                        rgb_points[i, 2].tobytes(), rgb_points[i, 1].tobytes(),
-                                        rgb_points[i, 0].tobytes())))
-    fid.close()
 
 
 def distance_med_from_masked_depth(mask, depth):
@@ -398,19 +405,19 @@ def calc_box_legth(box, orig, draw):
     dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
     dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
     # draw the midpoints on the imageà
-    if draw:
-        cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
-        cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
-        cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
-        cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
-        # draw lines between the midpoints
-        cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
-                 (255, 0, 255), 2)
-        cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
-                 (255, 0, 255), 2)
-        # print("drawd :", (tlblX, tlblY) )
-        # print("dimensions", dB, dA)
-    # draw the object sizes on the image
+    # if draw:
+    #     cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
+    #     cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
+    #     cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
+    #     cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
+    #     # draw lines between the midpoints
+    #     cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
+    #              (255, 0, 255), 2)
+    #     cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
+    #              (255, 0, 255), 2)
+    #     # print("drawd :", (tlblX, tlblY) )
+    #     # print("dimensions", dB, dA)
+    # # draw the object sizes on the image
 
     """
     cv2.putText(orig, "{:.1f}in".format(dA),
@@ -606,7 +613,7 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
     iteration_needed = int(((max(dA, dB)) / diameter_medium) / 2)
 
 
-    iteration =2
+    iteration = 0
 
 
 
@@ -793,14 +800,14 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
             solidity = float(area1) / hull_area
 
             if perimeter1 > 200 and perimeter1 < 7000:  # 1200
-                if circularity1 > 0.01 and circularity1 < 0.3:  # 0.05 / 0.1, 0.02
+                if circularity1 > 0.01 and circularity1 < 0.5:  # 0.05 / 0.1, 0.02
                     if area1 > 800 and area1 < 150000:  # 2200
-                        if M0 > 1.15 and M0 < 40:  # 2200
-                            if M01 > 0.40 and M01 < 40:  # 2200
-                                if M10 > 0.5 and M10 < 40:  #
+                        if M0 > 1.15 and M0 < 100:  # 2200
+                            if M01 > 0.40 and M01 < 70:  # 2200
+                                if M10 > 0.5 and M10 < 70:  #
                                     if M02 > 0.25 and M02 < 40:
                                         if M20 > 0.002 and M20 < 95:
-                                            if solidity > 0.01 and solidity < 0.5:
+                                            if solidity > 0.01 and solidity < 1:
                                                 if ratio > 0.0005 and ratio < 0.8:  # rapporto pixel contour e bounding box
 
                                                     # print("|____________________________________|")
@@ -831,6 +838,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
                                                     return cnt1, frame, True
     print("________!!!!____________advanced shoots not detected")
     print("len contours", len(contours1))
+    cv2.imshow("eee", mask_bu)
     for cnt1 in contours1:
         # calcolo area e perimetro
         area1 = cv2.contourArea(cnt1)

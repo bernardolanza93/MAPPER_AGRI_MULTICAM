@@ -173,6 +173,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 mask = cv2.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
             elif THRESHOLD:
                 ret, mask = cv2.threshold(gray, THRES_VALUE, 255, cv2.THRESH_BINARY)
+                cv2.imshow("cdscsdc", mask)
                 imask = mask < 255
                 imagem = (255 - mask)
                 green = 255 * np.ones_like(frame, np.uint8)
