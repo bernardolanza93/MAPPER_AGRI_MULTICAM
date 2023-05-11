@@ -8,6 +8,10 @@ import numpy as np
 import statistics
 import pyrealsense2 as rs
 import csv
+import sys
+
+
+print(sys.version)
 
 
 
