@@ -267,6 +267,10 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
                     xvec.append(xxx)
                     yvec.append(yyy)
 
+
+
+    #ORA CALCOLIAMO SOLO IL DELTA X MA DOVRAI FARE PITAGORA E CALCOLARE LA DIAGONALE (I TRALCI SONO STRETTI QUINDI LA DIAGONALE VERA DOVREBBE CONTARE POCO, PENSALA
+    # SE IL PEZZO E INCLINATO 45 LA POINTCLOUD DEVE PRESENTARE I VALORI X E Y
     deltax = max(xvec) - min(xvec)
     deltay = max(yvec) - min(yvec)
     deltaz = max(zvec) - min(zvec)
@@ -303,7 +307,7 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
 
     volume = 0
 
-    return diametro, lunghezza
+    return diam_cm, delta_percx
 
 
 def convert_depth_image_to_pointcloud(depth_image, intrinsics):
@@ -690,8 +694,7 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
 
                 diametro, lunghezza = real_volume_from_pointcloud(depthr, intrinsics, boxc,
                                                                   rgb, maskr)
-                #print("dimensions image: ", x, " cylinder: diam: ", diametro, "lunghezza: ", lunghezza)
-                # print("volu")
+
             except Exception as e:
                 print("e", e)
             # depth #mask #dpth mASKED #RGB
@@ -704,7 +707,7 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
 
 
 
-    return volumes, distances, dA, dB
+    return volumes, distances, diametro, lunghezza
 
 
 
@@ -810,7 +813,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
                                             if solidity > 0.01 and solidity < 1:
                                                 if ratio > 0.0005 and ratio < 0.8:  # rapporto pixel contour e bounding box
 
-                                                    # print("|____________________________________|")
+                                                    # print("mask|____________________________________|")
                                                     # print("__|RATIO-CORRECT|__:", ratio)
                                                     print("|____________________|2nd LAYER CHOSEN", i, " area:",
                                                           int(area1), " perim:", int(perimeter1), " circul:",

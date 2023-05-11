@@ -147,7 +147,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
         ret, frame = video1.read()
         ret2, frame2 = video2.read()
         print(ret,ret2)
-
+        cv2.imshow("frame2", frame2)
 
 
 
@@ -177,7 +177,8 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 imask = mask < 255
                 imagem = (255 - mask)
                 green = 255 * np.ones_like(frame, np.uint8)
-                green[imask] = frame[imask]  # dentro i mask metto frame
+                green[imask] = frame[imask]  # dentro i mask metto frameù
+                cv2.imshow("cdscuhbiusdc", green)
             #frame_HSV = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
             #mask = cv2.inRange(frame_HSV, BOT, TOP)
@@ -215,7 +216,8 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
             if PIXEL_COUNTING:
                 if SAVE:
-
+                    writeCSVdata(folder_name + "_real_dim", [nrfr, pixel, int(volume), int(distance_med), cylindrification_results[0],
+                                               cylindrification_results[1]])
                     writeCSVdata(folder_name,[nrfr,pixel,int(volume),int(distance_med), cylindrification_results[0], cylindrification_results[1]])
                     #writeCSVdata(folder_name + "geometrical", [int(dA), int(dB) , int(distance_med)])
 
@@ -236,7 +238,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
             cv2.imshow("or", frame)
             # cv2.imshow("mask", mask)
             # #cv2.imshow("green", green)
-            # cv2.imshow("frame2", frame2)
+
             # #cv2.imshow("edge", edge)
             # #cv2.imshow("skel", skel)
             cv2.moveWindow("mask", 500, 200)
