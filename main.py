@@ -649,10 +649,6 @@ def processor():
 
 
 
-try:
-    processor()
-except Exception as e:
-    print("error on pipeline:", e)
-    print("exiting")
-    sys.exit()
+processor()
+
 
