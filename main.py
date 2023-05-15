@@ -218,22 +218,20 @@ def main(q,status):
     check_folder("/data/")
 
     config_file = "cfg_file.txt"
-    #acquisition_today =  "aquisition_" + str(now)
-    #save_location = "/data/"+acquisition_today
-    #check_folder(save_location)
 
-    path_here = os.getcwd()
     SAVE_VIDEO_TIME = 1 # 0 per non salvare
     FPS_DISPLAY = True
 
 
 
     organize_video_from_last_acquisition()
-
+    print("FOLDER ORGANIZED COMPLETED!")
     ##config.enable_device('947122110515')
 
     ctx = rs.context()
     enable_D435i, enable_T265, device_aviable = search_device(ctx)
+
+    print("D435:",enable_D435i, " | T265:",enable_T265)
 
     time.sleep(1)
 
@@ -348,6 +346,9 @@ def main(q,status):
             basler_presence = False
             status.value = 0
             print("basler failed", e)
+
+
+    print("BASLER P:",basler_presence," | BASLER S:",status.value)
 
 
 
