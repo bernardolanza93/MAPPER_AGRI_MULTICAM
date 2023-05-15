@@ -100,7 +100,7 @@ def calculate_and_save_intrinsics(intrinsics):
 
 def organize_video_from_last_acquisition():
     try:
-        path_dir = "/aquisition_raw/"
+        path_dir = "aquisition_raw/"
         if not os.path.exists(path_dir):
             # Create the folder if it doesn't exist
             os.makedirs(path_dir)
@@ -130,8 +130,8 @@ def organize_video_from_last_acquisition():
             destination =  os.path.join(current_directory,folder_name)
             shutil.move(source, destination)
             print(source," moved to : ",destination)
-    except:
-        print("error saving files in folders...")
+    except Exception as e:
+        print("error saving files in folders...",e)
         sys.exit()
 
 def check_folder(relative_path):
