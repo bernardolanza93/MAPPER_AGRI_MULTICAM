@@ -235,7 +235,7 @@ def main(q,status):
 
     print("D435:",enable_D435i, " | T265:",enable_T265)
 
-    time.sleep(1)
+
 
     #D435____________________________________________
     if enable_D435i:
