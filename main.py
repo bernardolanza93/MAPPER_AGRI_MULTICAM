@@ -513,7 +513,7 @@ def main(q,status):
             if SAVE_VIDEO_TIME != 0:
                 try:
                     out.write(color_image)
-                    print("FRAME SAVE")
+
 
                 except Exception as e:
                     print("error save video:||||:: %s", str(e))
@@ -529,7 +529,7 @@ def main(q,status):
         if FPS_DISPLAY:
             end = time.time()
             seconds = end - start
-            fps = 1 / seconds
+            fps = round(1 / seconds,3)
             print(fps)
             #cv2.imwrite('im.jpg', color_image)
             #frames = pipeline.wait_for_frames()
