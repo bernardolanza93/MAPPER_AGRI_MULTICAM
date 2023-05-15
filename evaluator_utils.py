@@ -21,7 +21,7 @@ from datetime import datetime
 import pyrealsense2 as rs
 from additional_functions import *
 
-THRES_VALUE = 30
+THRES_VALUE = 80
 CROPPING_ADVANCED = True
 max_value = 50
 max_value_H = 360 // 2
@@ -179,6 +179,8 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
 
 
 
+
+
     mask_copy_rect = mask.copy()
     cv2.rectangle(rgbframe, tl, br, (255, 0, 65), 2)
     kernel = np.ones((9, 9), np.uint8)
@@ -276,16 +278,32 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
     deltaz = max(zvec) - min(zvec)
     perc_max95_x =  np.percentile(xvec, 99)
     perc_max05_x = np.percentile(xvec, 1)
+    perc_max95_y =  np.percentile(yvec, 99)
+    perc_max05_y = np.percentile(yvec, 1)
+
+
+
     delta_percx = perc_max95_x-perc_max05_x
-    print("len point", len(xvec),len(yvec),len(zvec))
-    print("delta DOPO x y z", deltax, deltay, deltaz, "delta percentile 95-0", delta_percx)
-    ratiommpx =  delta_percx/length
-    print("RATIO", delta_percx/length)
+    delta_percy = perc_max95_y - perc_max05_y
+
+
+
+
+
+
+
+
+    perc_tot = math.sqrt(delta_percx ** 2 + delta_percy ** 2)
+    print(" percentile X", delta_percx, "percentile y", delta_percy, "tot", perc_tot)
+
+    ratiommpx =  perc_tot/length
+    print("RATIO", ratiommpx)
     diam_cm = ratiommpx*dA
     print("DIAMETER: ", diam_cm)
-    print("LENGHT: ", delta_percx)
+    print("LENGHT: ", perc_tot)
     string1 = str("l_mm = " + str(int(delta_percx)) +" r:" + str(round(ratiommpx,3)) +" dmm:"  + str(int(diam_cm)))
     cv2.putText(orig ,string1, (4, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1, cv2.LINE_AA)
+    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)), (0, 0, 255), 2)
 
 
     pdt = pointcloud[int(tltrY), int(tltrX)]
@@ -617,7 +635,7 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
     iteration_needed = int(((max(dA, dB)) / diameter_medium) / 2)
 
 
-    iteration = 0
+    iteration = 2
 
 
 

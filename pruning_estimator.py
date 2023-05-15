@@ -8,6 +8,7 @@ import numpy as np
 import statistics
 import pyrealsense2 as rs
 import csv
+from datetime import datetime
 import sys
 
 
@@ -15,7 +16,7 @@ print(sys.version)
 
 
 
-THRES_VALUE = 30
+THRES_VALUE = 80
 PATH_2_AQUIS = "/aquisition/"
 PATH_HERE = os.getcwd()
 OFFSET_CM_COMPRESSION = 50
@@ -63,7 +64,12 @@ def medium_points_of_box_for_dimension_extraction(box, orig):
     # unpack the ordered bounding box, then compute the midpoint
     # between the top-left and top-right coordinates, followed by
     # the midpoint bet ween bottom-left and bottom-right coordinates
+
+
     (tl, tr, br, bl) = box
+
+
+
     (tltrX, tltrY) = midpoint(tl, tr)
     (blbrX, blbrY) = midpoint(bl, br)
     # compute the midpoint between the top-left and top-right points,
@@ -124,9 +130,6 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
     pointcloud = convert_depth_image_to_pointcloud(frame2_u16, intrinsics)
     #print("shapes:", rgbframe.shape, frame2_u16.shape, pointcloud.shape)
 
-    # array = create_flatten_array_for_ply_save(pointcloud)
-
-    # write_pointcloud('pointcloud.ply', array)
 
     h, w, c = pointcloud.shape
 
@@ -139,8 +142,21 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
 
     (tltrX, tltrY), (blbrX, blbrY), (tlblX, tlblY), (trbrX, trbrY) = medium_points_of_box_for_dimension_extraction(box,
                                                                                                                    rgbframe)
-    dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
-    dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    A = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+    B = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+
+    if A > B:
+        dB = A
+        dA = B
+        (tlblX, tlblY), (trbrX, trbrY), (tltrX, tltrY), (blbrX, blbrY) = medium_points_of_box_for_dimension_extraction(
+            box,
+            rgbframe)
+    else:
+        dA = A
+        dB = B
+
+
+
     orig = rgbframe
     divider_diam = 5
 
@@ -151,8 +167,7 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
 
     h, w, c = orig.shape
 
-    cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (0, 255, 0), -1)
+
 
 
 
@@ -168,11 +183,21 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
     #cv2.imshow("mass_pt", visible_pointcloud)
 
 
+    #erodiamo un pelo la maschera per tralasciare i valori estremi
+    # Creating kernel
+    kernel = np.ones((7, 7), np.uint8)
 
+    # Using cv2.erode() method
 
+    mask = cv2.dilate(mask, kernel)
+    cv2.imshow("sdcx", mask)
     zvec = []
     yvec = []
     xvec = []
+
+
+
+
     for x in range(pointcloud.shape[0]):
         for y in range(pointcloud.shape[1]):
             point = pointcloud[x, y]
@@ -198,13 +223,13 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
     print("Right styatistcal", meanz, stdz)
 
 
-    print("delta PRIMA x y z", deltax,deltay,deltaz )
+    #print("delta PRIMA x y z", deltax,deltay,deltaz )
 
 
     zvec = []
     yvec = []
     xvec = []
-    filter_alpha = 0.5
+    filter_alpha = 1
     for x in range(pointcloud.shape[0]):
         for y in range(pointcloud.shape[1]):
             point = pointcloud[x, y]
@@ -230,18 +255,28 @@ def real_volume_from_pointcloud(depth_frame, intrinsics, box, rgbframe, mask):
     deltaz = max(zvec) - min(zvec)
     perc_max95_x =  np.percentile(xvec, 99)
     perc_max05_x = np.percentile(xvec, 1)
-    delta_percx = perc_max95_x-perc_max05_x
+    perc_max95_y = np.percentile(yvec, 99)
+    perc_max05_y = np.percentile(yvec, 1)
 
-    print("delta DOPO x y z", deltax, deltay, deltaz, "delta percentile 95-0", delta_percx)
-    ratiommpx =  delta_percx/length
-    print("RATIO", delta_percx/length)
-    diam_cm = ratiommpx*dA
+    delta_percx = perc_max95_x - perc_max05_x
+    delta_percy = perc_max95_y - perc_max05_y
+
+    perc_tot = math.sqrt(delta_percx ** 2 + delta_percy ** 2)
+    print(" DELTA X", delta_percx, "DELTA y", delta_percy, "HYP", perc_tot)
+
+    ratiommpx = perc_tot / length
+    print("RATIO", ratiommpx)
+    diam_cm = ratiommpx * dA
     print("DIAMETER: ", diam_cm)
-    print("LENGHT: ", delta_percx)
-    string1 = str("l_mm = " + str(int(delta_percx)) +" r:" + str(round(ratiommpx,3)) +" dmm:"  + str(int(diam_cm)))
-    cv2.putText(orig ,string1, (4, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1, cv2.LINE_AA)
-
-
+    print("LENGHT: ", perc_tot)
+    string1 = str("l_mm = " + str(int(perc_tot)) + " r:" + str(round(ratiommpx, 3)) + " dmm:" + str(int(diam_cm)))
+    cv2.putText(orig, string1, (4, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1, cv2.LINE_AA)
+    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)), (0, 0, 255), 1)
+    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)), (0, 255, 0), 1)
+    # cv2.circle(orig, (int(tlblX), int(tlblY)), 2, (255, 0, 0), 1)
+    # cv2.circle(orig, (int(trbrX), int(trbrY)), 2, (0, 255, 0), 1)
+    cv2.circle(orig, (int(tltrX), int(tltrY)), 2, (255, 0, 0), 1)
+    cv2.circle(orig, (int(blbrX), int(blbrY)), 2, (0, 255, 0), 1)
 
     return diam_cm, delta_percx
 
@@ -297,6 +332,7 @@ def rotate_image_width_horizontal_max(image):
 
 
 def image_splitter(frame):
+
     h = frame.shape[0]
     w = frame.shape[1]
     # channels = frame.shape[2]
@@ -316,10 +352,23 @@ def image_splitter(frame):
         img1 = frame[:, :half]
         img2 = frame[:, half:]
 
+
+
+
+
+
     return img1, img2
 
 
+
 def rotated_box_cropper(mask, depth, rgb):
+
+    inh, inw, c = rgb.shape
+    if inw > inh:
+        widthside = True
+    else:
+        widthside = False
+
     # margin augmented
     mask = cv2.copyMakeBorder(src=mask, top=15, bottom=15, left=15, right=15, borderType=cv2.BORDER_CONSTANT,
                               value=(255))
@@ -329,6 +378,11 @@ def rotated_box_cropper(mask, depth, rgb):
 
     # calc cnt
     imagem1 = (255 - mask)
+
+
+
+
+
 
     contours, hierarchy = cv2.findContours(imagem1, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_NONE)
@@ -385,6 +439,9 @@ def rotated_box_cropper(mask, depth, rgb):
                             [width - 1, height - 1]], dtype="float32")
 
         M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+
+
+
         warped = cv2.warpPerspective(mask, M, (width, height), borderMode=cv2.BORDER_REPLICATE)
         warped_depth = cv2.warpPerspective(depth, M, (width, height), borderMode=cv2.BORDER_REPLICATE)
         warped_rgb = cv2.warpPerspective(rgb, M, (width, height), borderMode=cv2.BORDER_REPLICATE)
@@ -392,6 +449,22 @@ def rotated_box_cropper(mask, depth, rgb):
         warped = (255 - warped)
         warped_depth = cv2.bitwise_not(warped_depth)
         succesful = True
+
+        inh, inw, c = warped_rgb.shape
+        if widthside:
+            if inw < inh:
+                warped_rgb = cv2.rotate(warped_rgb, cv2.ROTATE_90_CLOCKWISE)
+                warped_depth = cv2.rotate(warped_depth, cv2.ROTATE_90_CLOCKWISE)
+                warped = cv2.rotate(warped, cv2.ROTATE_90_CLOCKWISE)
+        else:
+            if inh < inw:
+                warped_rgb = cv2.rotate(warped_rgb, cv2.ROTATE_90_CLOCKWISE)
+                warped_depth = cv2.rotate(warped_depth, cv2.ROTATE_90_CLOCKWISE)
+                warped = cv2.rotate(warped, cv2.ROTATE_90_CLOCKWISE)
+
+
+
+
         return warped, warped_depth, warped_rgb, box, succesful
     else:
         succesful = False
@@ -424,8 +497,16 @@ def calc_box_legth(box, orig, draw):
     (trbrX, trbrY) = midpoint(tr, br)
     # compute the Euclidean distance between the midpoints
 
-    dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
-    dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    A = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+    B = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    if A < B:
+        dA = A
+        dB = B
+    else:
+        dB = A
+        dA = B
+
+
     # draw the midpoints on the imageà
     # if draw:
 
@@ -441,12 +522,13 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
     imagem1 = (255 - mask)
 
 
+
     draw = False
     dA, dB, frame = calc_box_legth(box1, frame, draw)
     # print("dim : ", frame.shape, box)
     # area = calc area of black in image
 
-    iteration = 0
+    iteration = 3
 
 
     rgb_images_collector = []
@@ -471,13 +553,16 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
 
             rot_mask, rot_mask_depth, rot_rgb, box, succesful = rotated_box_cropper(images_collector[im_num],
                                                                                     depth_images_collector[im_num],
-                                                                                    rgb_images_collector[im_num])
+                                                                                   rgb_images_collector[im_num])
+
             if succesful != False:
 
                 # poi splitto
+
                 img1, img2 = image_splitter(rot_mask)
                 img_d1, img_d2 = image_splitter(rot_mask_depth)
                 img_rgb1, img_rgb2 = image_splitter(rot_rgb)
+
 
                 new_collector_images.append(img1)
                 new_collector_images.append(img2)
@@ -506,9 +591,9 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
     #print(len(images_collector))
     for x in range(len(images_collector)):
 
-        rgb = rotate_image_width_horizontal_max(rgb_images_collector[x])
-        depthr = rotate_image_width_horizontal_max(depth_images_collector[x])
-        maskr = rotate_image_width_horizontal_max(images_collector[x])
+        rgb = rgb_images_collector[x]
+        depthr = depth_images_collector[x]
+        maskr = images_collector[x]
 
 
         # print("distancce")
@@ -524,8 +609,12 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics):
         except Exception as e:
             print("e", e)
         # depth #mask #dpth mASKED #RGB
+        h, w, c = rgb.shape
+        ax = 0
+        if w < h:
+            ax = 1
 
-        vis = np.concatenate((rgb,cv2.cvtColor(depthr, cv2.COLOR_GRAY2BGR),cv2.cvtColor(maskr, cv2.COLOR_GRAY2BGR)), axis=0)
+        vis = np.concatenate((rgb,cv2.cvtColor(depthr, cv2.COLOR_GRAY2BGR),cv2.cvtColor(maskr, cv2.COLOR_GRAY2BGR)), axis=ax)
         cv2.imshow("im" + str(x), vis)
         cv2.moveWindow("im" + str(x), 150 * x, 150 * x)
 
@@ -707,7 +796,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 
 
-            cv2.imshow("cdscsdc", mask)
+            #cv2.imshow("cdscsdc", mask)
             cv2.imshow("or", frame)
 
             key = cv2.waitKey(0)

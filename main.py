@@ -99,31 +99,34 @@ def calculate_and_save_intrinsics(intrinsics):
         print(int)
 
 def organize_video_from_last_acquisition():
+    try:
+        #create directory to contain file
+        name1 = "aquisition_"
 
-    #create directory to contain file
-    name1 = "aquisition_"
 
+        # convert to string
 
-    # convert to string
+        folder_name = name1 + date_time
 
-    folder_name = name1 + date_time
+        create_directory = False
+        current_directory = os.getcwd()
+        file_found = []
+        for file in os.listdir(current_directory):
 
-    create_directory = False
-    current_directory = os.getcwd()
-    file_found = []
-    for file in os.listdir(current_directory):
+            if file.endswith(".mkv"):
+                create_directory = True
+                print("file found:",os.path.join(current_directory, file))
+                file_found.append(file)
 
-        if file.endswith(".mkv"):
-            create_directory = True
-            print("file found:",os.path.join(current_directory, file))
-            file_found.append(file)
-
-    os.makedirs(folder_name)
-    for f in file_found:
-        source = os.path.join(current_directory, f)
-        destination =  os.path.join(current_directory,folder_name)
-        shutil.move(source, destination)
-        print(source," moved to : ",destination)
+        os.makedirs(folder_name)
+        for f in file_found:
+            source = os.path.join(current_directory, f)
+            destination =  os.path.join(current_directory,folder_name)
+            shutil.move(source, destination)
+            print(source," moved to : ",destination)
+    except:
+        print("error saving files in folders...")
+        sys.exit()
 
 def check_folder(relative_path):
     """
@@ -608,5 +611,10 @@ def processor():
 
 
 
+try:
+    processor()
+except Exception as e:
+    print("error on pipeline:", e)
+    print("exiting")
+    sys.exit()
 
-processor()
