@@ -343,6 +343,7 @@ def main(q,status):
             # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
 
             basler_presence = True
+            status.value = 1
             print("basler configured")
         except Exception as e:
             basler_presence = False
@@ -566,31 +567,33 @@ def main(q,status):
         cv2.destroyAllWindows()
 
 def image_saver(q,basler_status):
-    time.sleep(5)
+    time.sleep()
+    while True:
 
-    if basler_status.value == 1:
+        if basler_status.value == 1:
 
-        print("saving:", basler_status.value)
-        frame_width = 2592
-        frame_height = 1944
-
-
-
-
-        gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-        out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
-        while True:
-            qsize = q.qsize()
-            print("size: ", qsize)
-            img_basler = q.get()
-            out_BASLER.write(img_basler)
+            print("saving:", basler_status.value)
+            frame_width = 2592
+            frame_height = 1944
 
 
-        out_BASLER.release()
-    else:
-        print("saving:", basler_status.value)
 
-        pass
+
+            gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
+            out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
+            while True:
+                qsize = q.qsize()
+                print("size: ", qsize)
+                img_basler = q.get()
+                out_BASLER.write(img_basler)
+
+
+            out_BASLER.release()
+        else:
+            print("NO saving:", basler_status.value)
+            time.sleep(1)
+
+
 
 
 def observer(status):
@@ -610,7 +613,7 @@ def observer(status):
 def processor():
     try:
 
-        status = multiprocessing.Value("i", 1)
+        status = multiprocessing.Value("i", 0)
         q = multiprocessing.Queue(maxsize=1000)
 
         p1 = multiprocessing.Process(target=main, args=(q,status))
@@ -639,6 +642,7 @@ def processor():
         print("STATUS PROCESSOR ZERO")
         time.sleep(1)
         status.value = 0
+        sys.exit()
 
 
 
