@@ -310,6 +310,7 @@ def main(q,status):
 
                 print("basler failed load config", e)
                 print("basler failed", config_file)
+                status.value = 0
 
             #
 
@@ -334,6 +335,7 @@ def main(q,status):
             print("basler configured")
         except Exception as e:
             basler_presence = False
+            status.value = 0
             print("basler failed", e)
 
 
@@ -375,27 +377,35 @@ def main(q,status):
 
             # T265
             start = time.time()
-            if basler_presence:
-                if camera.IsGrabbing():
-                    grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+            try:
+                if basler_presence:
+                    if camera.IsGrabbing():
 
-                    if grabResult.GrabSucceeded():
-                        # Access the image data
-                        image = converter.Convert(grabResult)
-                        img_basler = image.GetArray()
+                        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
-                        if SAVE_VIDEO_TIME != 0:
-                            try:
-                                q.put(img_basler)
+                        if grabResult.GrabSucceeded():
+                            # Access the image data
+                            image = converter.Convert(grabResult)
+                            img_basler = image.GetArray()
 
-                            except:
-                                print("error save basler")
+                            if SAVE_VIDEO_TIME != 0:
+                                try:
+                                    q.put(img_basler)
+
+                                except:
+                                    print("error save basler")
 
 
+                        else:
+                            print("camera not succeded, no image")
+                            status.value = 0
                     else:
-                        print("camera not succeded, no image")
-                else:
-                    print("camera is not grabbing")
+                        print("camera is not grabbing")
+                        status.value = 0
+            except Exception as e:
+                print("ERROR basler in loop wait4fr: %s", e)
+                basler_presence = False
+                status.value = 0
 
 
             if enable_T265:
@@ -542,24 +552,27 @@ def main(q,status):
 
         cv2.destroyAllWindows()
 
-def image_saver(q,status):
-    print("saving")
-    frame_width = 2592
-    frame_height = 1944
+def image_saver(q,basler_status):
+    if basler_status.value == 1:
+        print("saving")
+        frame_width = 2592
+        frame_height = 1944
 
 
 
 
-    gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-    out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
-    while True:
-        qsize = q.qsize()
-        print("size: ", qsize)
-        img_basler = q.get()
-        out_BASLER.write(img_basler)
+        gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
+        out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
+        while True:
+            qsize = q.qsize()
+            print("size: ", qsize)
+            img_basler = q.get()
+            out_BASLER.write(img_basler)
 
 
-    out_BASLER.release()
+        out_BASLER.release()
+    else:
+        time.sleep(5)
 
 
 def observer(status):
