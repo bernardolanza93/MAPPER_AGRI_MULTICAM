@@ -41,8 +41,9 @@ SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = False
 now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
-SAVE_VIDEO_TIME = 1  # 0 per non salvare
+SAVE_VIDEO_TIME = 0  # 0 per non salvare
 FPS_DISPLAY = True
+DISPLAY_RGB = True
 
 
 
@@ -546,8 +547,11 @@ def main(q,status):
 
                 color_image = resize_image(color_image,50)
                 depth_image = resize_image(depth_image, 50)
-                #cv2.imshow('depth Stream', color_image)
-                #cv2.imshow('dept!!!h Stream', intcm)
+
+                if DISPLAY_RGB:
+
+                    #cv2.imshow('depth Stream', color_image)
+                    cv2.imshow('dept!!!h Stream', intcm)
 
 
                 key = cv2.waitKey(1)
