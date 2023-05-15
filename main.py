@@ -299,6 +299,8 @@ def main(q,status):
         except Exception as e:
             print("error pipeline T265 starting:||||:: %s", str(e))
         #_______________________________________________________
+    else:
+        print("no T265 MODE")
 
     if SEARCH_USB_CAMERAS:
 
@@ -355,7 +357,8 @@ def main(q,status):
 
         print("BASLER P:",basler_presence," | BASLER S:",status.value)
 
-
+    else:
+        print("NO BASLER MODE")
 
 
 
@@ -379,10 +382,13 @@ def main(q,status):
         except Exception as e:
             print("error save 1ch depth:||||:: %s", str(e))
 
+    else:
+        print("NO SAVE VIDEO D435 MODE")
 
     frame = 0
     now = datetime.now()
     time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
+    print("START LOOP")
 
     while True:
 
