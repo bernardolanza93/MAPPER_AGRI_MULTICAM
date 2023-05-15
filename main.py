@@ -128,13 +128,15 @@ def organize_video_from_last_acquisition():
                 file_found.append(file)
 
         os.makedirs(folder_name)
+
         for f in file_found:
+
             source = os.path.join(current_directory, f)
             destination = os.path.join(current_directory,folder_name)
             shutil.move(source, destination)
             print(source," moved to : ",destination)
 
-        sys.exit()
+
     except Exception as e:
         print("error saving files in folders...",e)
 
