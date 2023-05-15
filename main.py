@@ -462,6 +462,7 @@ def main(q,status):
 
                 try:
                     frames = pipeline.wait_for_frames()
+                    print("frME OK")
 
                 except Exception as e:
                     print("PIPELINE error:||||:: %s", str(e))
@@ -509,6 +510,7 @@ def main(q,status):
                 if SAVE_VIDEO_TIME != 0:
                     try:
                         out.write(color_image)
+                        print("FRAME SAVE")
 
                     except Exception as e:
                         print("error save video:||||:: %s", str(e))
