@@ -384,7 +384,7 @@ def main(q,status):
     time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
 
     while True:
-        print("loop")
+
         if USE_PYLON_CAMERA:
             if  status.value == 0:
                 break
@@ -520,6 +520,12 @@ def main(q,status):
 
                     except Exception as e:
                         print("error saving depth 1 ch:||||:: %s", str(e))
+
+                    if FPS_DISPLAY:
+                        end = time.time()
+                        seconds = end - start
+                        fps = 1 / seconds
+                        print(fps)
                     #cv2.imwrite('im.jpg', color_image)
                     #frames = pipeline.wait_for_frames()
                     #saver.process(frames)
@@ -541,11 +547,7 @@ def main(q,status):
                 #cv2.imshow('depth Stream', color_image)
                 #cv2.imshow('dept!!!h Stream', intcm)
 
-                if FPS_DISPLAY:
-                    end = time.time()
-                    seconds = end - start
-                    fps = 1 / seconds
-                    print(fps)
+
                 key = cv2.waitKey(1)
                 if key == 27:
                     #result.release()
