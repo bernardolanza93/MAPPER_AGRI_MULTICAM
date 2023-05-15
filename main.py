@@ -391,7 +391,7 @@ def main(q,status):
     print("START LOOP")
 
     while True:
-
+        start = time.time()
         if USE_PYLON_CAMERA:
             if  status.value == 0:
                 break
@@ -399,7 +399,7 @@ def main(q,status):
                 frame += 1
 
                 # T265
-                start = time.time()
+
                 try:
                     if basler_presence:
                         if camera.IsGrabbing():
@@ -526,11 +526,11 @@ def main(q,status):
                 except Exception as e:
                     print("error saving depth 1 ch:||||:: %s", str(e))
 
-            if FPS_DISPLAY:
-                end = time.time()
-                seconds = end - start
-                fps = 1 / seconds
-                print(fps)
+        if FPS_DISPLAY:
+            end = time.time()
+            seconds = end - start
+            fps = 1 / seconds
+            print(fps)
             #cv2.imwrite('im.jpg', color_image)
             #frames = pipeline.wait_for_frames()
             #saver.process(frames)
