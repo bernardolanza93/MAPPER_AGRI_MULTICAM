@@ -351,7 +351,7 @@ def main(q,status):
             print("basler failed", e)
 
 
-    print("BASLER P:",basler_presence," | BASLER S:",status.value)
+        print("BASLER P:",basler_presence," | BASLER S:",status.value)
 
 
 
