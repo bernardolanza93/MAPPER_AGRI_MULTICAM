@@ -567,7 +567,7 @@ def main(q,status):
         cv2.destroyAllWindows()
 
 def image_saver(q,basler_status):
-    time.sleep()
+    time.sleep(1)
     while True:
 
         if basler_status.value == 1:
