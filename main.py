@@ -40,7 +40,7 @@ T265_MANDATORY = False
 SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = True
 now = datetime.now()
-date_time = now.strftime("%Y_%m_%d_%H:%M:%S")
+date_time = now.strftime("%Y_%m_%d_%H-%M-%S")
 
 
 
