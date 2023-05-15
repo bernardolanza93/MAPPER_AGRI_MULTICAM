@@ -383,43 +383,43 @@ def main(q,status):
     time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
 
     while True:
+        if USE_PYLON_CAMERA:
+            if  status.value == 0:
+                break
+            else:
+                frame += 1
 
-        if  status.value == 0:
-            break
-        else:
-            frame += 1
+                # T265
+                start = time.time()
+                try:
+                    if basler_presence:
+                        if camera.IsGrabbing():
 
-            # T265
-            start = time.time()
-            try:
-                if basler_presence:
-                    if camera.IsGrabbing():
+                            grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
-                        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+                            if grabResult.GrabSucceeded():
+                                # Access the image data
+                                image = converter.Convert(grabResult)
+                                img_basler = image.GetArray()
 
-                        if grabResult.GrabSucceeded():
-                            # Access the image data
-                            image = converter.Convert(grabResult)
-                            img_basler = image.GetArray()
+                                if SAVE_VIDEO_TIME != 0:
+                                    try:
+                                        q.put(img_basler)
 
-                            if SAVE_VIDEO_TIME != 0:
-                                try:
-                                    q.put(img_basler)
-
-                                except:
-                                    print("error save basler")
+                                    except:
+                                        print("error save basler")
 
 
+                            else:
+                                print("camera not succeded, no image")
+                                status.value = 0
                         else:
-                            print("camera not succeded, no image")
+                            print("camera is not grabbing")
                             status.value = 0
-                    else:
-                        print("camera is not grabbing")
-                        status.value = 0
-            except Exception as e:
-                print("ERROR basler in loop wait4fr: %s", e)
-                basler_presence = False
-                status.value = 0
+                except Exception as e:
+                    print("ERROR basler in loop wait4fr: %s", e)
+                    basler_presence = False
+                    status.value = 0
 
 
             if enable_T265:
