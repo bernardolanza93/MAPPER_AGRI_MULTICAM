@@ -431,141 +431,141 @@ def main(q,status):
                     status.value = 0
 
 
-            if enable_T265:
-                try:
-                    tframes = pipelineT265.wait_for_frames()
-                except Exception as e:
-                    print("ERROR T265 wait4fr: %s",e)
-                    pose = 0
-                try:
-                    pose = tframes.get_pose_frame()
+        if enable_T265:
+            try:
+                tframes = pipelineT265.wait_for_frames()
+            except Exception as e:
+                print("ERROR T265 wait4fr: %s",e)
+                pose = 0
+            try:
+                pose = tframes.get_pose_frame()
 
-                except Exception as e:
-                    print("ERROR T265 getFr: %s", e)
-                    pose = 0
-
-
-                if pose:
-                    data = pose.get_pose_data()
-                    w = data.rotation.w
-                    x = -data.rotation.z
-                    y = data.rotation.x
-                    z = -data.rotation.y
-
-                    pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi;
-                    roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi;
-                    yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi;
-                    anglePRY = [pitch,roll,yaw]
-
-                    #print("Frame #{}".format(pose.frame_number))
-                    #print("Position: {}".format(data.translation))
-                    #print("Velocity: {}".format(data.velocity))
-                    #print("Acceleration: {}\n".format(data.acceleration))
-                    time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
-                    writeCSVdata(time1,[frame,time_st,data.translation,data.velocity,anglePRY])
-
-            if enable_D435i:
-                # Wait for a coherent pair of frames: depth and color
-                print("frame grabbing")
-                try:
-                    frames = pipeline.wait_for_frames()
-                    print("frME OK")
-
-                except Exception as e:
-                    print("PIPELINE error:||||:: %s", str(e))
-                    sys.exit()
-
-                aligned_frames = align.process(frames)
-
-                depth_frame = aligned_frames.get_depth_frame()
-
-                color_frame = aligned_frames.get_color_frame()
-
-                depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
-                color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
+            except Exception as e:
+                print("ERROR T265 getFr: %s", e)
+                pose = 0
 
 
-                calculate_and_save_intrinsics(depth_intrin)
+            if pose:
+                data = pose.get_pose_data()
+                w = data.rotation.w
+                x = -data.rotation.z
+                y = data.rotation.x
+                z = -data.rotation.y
 
-                color_image = np.asanyarray(color_frame.get_data())
-                depth_image = np.asanyarray(depth_frame.get_data())
+                pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi;
+                roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi;
+                yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi;
+                anglePRY = [pitch,roll,yaw]
 
-                width = int(1920)
-                height = int(1080)
-                dim = (width, height)
+                #print("Frame #{}".format(pose.frame_number))
+                #print("Position: {}".format(data.translation))
+                #print("Velocity: {}".format(data.velocity))
+                #print("Acceleration: {}\n".format(data.acceleration))
+                time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
+                writeCSVdata(time1,[frame,time_st,data.translation,data.velocity,anglePRY])
 
-                # resize image depth to fit rgb
-                resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+        if enable_D435i:
+            # Wait for a coherent pair of frames: depth and color
+            print("frame grabbing")
+            try:
+                frames = pipeline.wait_for_frames()
+                print("frME OK")
 
-                #convert u16 mm bw image to u16 cm bw
-                resized = resized/10
-                #rescale without first 50 cm of offset unwanted
-                resized = resized - offset
-                #tolgo tutto sotto i 30 cm
-
-                #stretchin all in the 0-255 cm interval
-                maxi = np.clip(resized,0,255)
-                #convert to 8 bit
-                intcm = maxi.astype('uint8')
-
-
-
-                if SAVE_VIDEO_TIME != 0:
-                    try:
-                        out.write(color_image)
-                        print("FRAME SAVE")
-
-                    except Exception as e:
-                        print("error save video:||||:: %s", str(e))
-
-                    try:
-                        #save here depth map
-                        out_depth.write(intcm)
-                        #np.savetxt("image.txt", depth_image,fmt='%i')
-
-                    except Exception as e:
-                        print("error saving depth 1 ch:||||:: %s", str(e))
-
-                    if FPS_DISPLAY:
-                        end = time.time()
-                        seconds = end - start
-                        fps = 1 / seconds
-                        print(fps)
-                    #cv2.imwrite('im.jpg', color_image)
-                    #frames = pipeline.wait_for_frames()
-                    #saver.process(frames)
-
-
-
-
-                    #cv2.imwrite('im.jpg', color_image)
-
-                    #result.write(color_image)
-
-
-                #print("size", depth_image.shape,  color_image.shape)
-                #images = np.hstack((color_image, depth_colormap))
-                #cv2.imshow('Color Stream', depth_image)
-
-                color_image = resize_image(color_image,50)
-                depth_image = resize_image(depth_image, 50)
-
-                if DISPLAY_RGB:
-
-                    #cv2.imshow('depth Stream', color_image)
-                    cv2.imshow('dept!!!h Stream', intcm)
-
-
-                key = cv2.waitKey(1)
-                if key == 27:
-                    #result.release()
-                    #cv2.destroyAllWindows()
-                    break
-
-
-            if enable_T265 == False and enable_D435i == False and basler_presence == False:
-                print("no device, termination...")
+            except Exception as e:
+                print("PIPELINE error:||||:: %s", str(e))
                 sys.exit()
+
+            aligned_frames = align.process(frames)
+
+            depth_frame = aligned_frames.get_depth_frame()
+
+            color_frame = aligned_frames.get_color_frame()
+
+            depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+            color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
+
+
+            calculate_and_save_intrinsics(depth_intrin)
+
+            color_image = np.asanyarray(color_frame.get_data())
+            depth_image = np.asanyarray(depth_frame.get_data())
+
+            width = int(1920)
+            height = int(1080)
+            dim = (width, height)
+
+            # resize image depth to fit rgb
+            resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+
+            #convert u16 mm bw image to u16 cm bw
+            resized = resized/10
+            #rescale without first 50 cm of offset unwanted
+            resized = resized - offset
+            #tolgo tutto sotto i 30 cm
+
+            #stretchin all in the 0-255 cm interval
+            maxi = np.clip(resized,0,255)
+            #convert to 8 bit
+            intcm = maxi.astype('uint8')
+
+
+
+            if SAVE_VIDEO_TIME != 0:
+                try:
+                    out.write(color_image)
+                    print("FRAME SAVE")
+
+                except Exception as e:
+                    print("error save video:||||:: %s", str(e))
+
+                try:
+                    #save here depth map
+                    out_depth.write(intcm)
+                    #np.savetxt("image.txt", depth_image,fmt='%i')
+
+                except Exception as e:
+                    print("error saving depth 1 ch:||||:: %s", str(e))
+
+            if FPS_DISPLAY:
+                end = time.time()
+                seconds = end - start
+                fps = 1 / seconds
+                print(fps)
+            #cv2.imwrite('im.jpg', color_image)
+            #frames = pipeline.wait_for_frames()
+            #saver.process(frames)
+
+
+
+
+                #cv2.imwrite('im.jpg', color_image)
+
+                #result.write(color_image)
+
+
+            #print("size", depth_image.shape,  color_image.shape)
+            #images = np.hstack((color_image, depth_colormap))
+            #cv2.imshow('Color Stream', depth_image)
+
+            color_image = resize_image(color_image,50)
+            depth_image = resize_image(depth_image, 50)
+
+            if DISPLAY_RGB:
+
+                #cv2.imshow('depth Stream', color_image)
+                cv2.imshow('dept!!!h Stream', intcm)
+
+
+            key = cv2.waitKey(1)
+            if key == 27:
+                #result.release()
+                #cv2.destroyAllWindows()
+                break
+
+
+        if enable_T265 == False and enable_D435i == False and basler_presence == False:
+            print("no device, termination...")
+            sys.exit()
 
 
 
