@@ -114,7 +114,7 @@ def organize_video_from_last_acquisition():
 
         folder_name = path_dir  + name1 + date_time
 
-        print("folder:", folder_name)
+        print("folder dest:", folder_name)
 
 
         current_directory = os.getcwd()
@@ -609,11 +609,13 @@ def processor():
 
         status = multiprocessing.Value("i", 1)
         q = multiprocessing.Queue(maxsize=1000)
+
         p1 = multiprocessing.Process(target=main, args=(q,status))
         p2 = multiprocessing.Process(target=image_saver, args=(q,status))
         p3 = multiprocessing.Process(target=observer, args=(status,))
 
         p1.start()
+        print("main started")
         p2.start()
         #p3.start()
 
