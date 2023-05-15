@@ -274,7 +274,7 @@ def main(q,status):
         # Start streaming
             pipeline.start(config)
             #colorizer = rs.colorizer()
-            print("D435I started")
+            print("D435I PIPELINE MODE started")
         except Exception as e:
             print("error pipeline D435 starting:||||:: %s", str(e))
         #_________________________________________________
@@ -474,10 +474,6 @@ def main(q,status):
                 except Exception as e:
                     print("PIPELINE error:||||:: %s", str(e))
                     sys.exit()
-
-                #frames.as_motion_frame().get_motion_data()
-
-                #colorized = colorizer.process(frames)
 
                 aligned_frames = align.process(frames)
 
