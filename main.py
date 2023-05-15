@@ -508,7 +508,7 @@ def main(q,status):
                         out.write(color_image)
 
                         try:
-                            #save here depth mapù
+                            #save here depth map
                             out_depth.write(intcm)
                             #np.savetxt("image.txt", depth_image,fmt='%i')
 
@@ -566,6 +566,7 @@ def main(q,status):
         cv2.destroyAllWindows()
 
 def image_saver(q,basler_status):
+    time.sleep(5)
 
     if basler_status.value == 1:
 
