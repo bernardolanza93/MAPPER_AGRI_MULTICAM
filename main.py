@@ -41,6 +41,8 @@ SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = False
 now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
+SAVE_VIDEO_TIME = 1  # 0 per non salvare
+FPS_DISPLAY = True
 
 
 
@@ -221,8 +223,7 @@ def main(q,status):
 
     config_file = "cfg_file.txt"
 
-    SAVE_VIDEO_TIME = 1 # 0 per non salvare
-    FPS_DISPLAY = True
+
 
 
 
@@ -383,6 +384,7 @@ def main(q,status):
     time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
 
     while True:
+        print("loop")
         if USE_PYLON_CAMERA:
             if  status.value == 0:
                 break
