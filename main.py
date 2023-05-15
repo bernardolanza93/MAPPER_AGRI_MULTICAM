@@ -510,21 +510,23 @@ def main(q,status):
                     try:
                         out.write(color_image)
 
-                        try:
-                            #save here depth map
-                            out_depth.write(intcm)
-                            #np.savetxt("image.txt", depth_image,fmt='%i')
-
-                        except Exception as e:
-                            print("error saving depth 1 ch:||||:: %s", str(e))
-                        #cv2.imwrite('im.jpg', color_image)
-                        #frames = pipeline.wait_for_frames()
-                        #saver.process(frames)
-                        pass
-
-
                     except Exception as e:
                         print("error save video:||||:: %s", str(e))
+
+                    try:
+                        #save here depth map
+                        out_depth.write(intcm)
+                        #np.savetxt("image.txt", depth_image,fmt='%i')
+
+                    except Exception as e:
+                        print("error saving depth 1 ch:||||:: %s", str(e))
+                    #cv2.imwrite('im.jpg', color_image)
+                    #frames = pipeline.wait_for_frames()
+                    #saver.process(frames)
+
+
+
+
                     #cv2.imwrite('im.jpg', color_image)
 
                     #result.write(color_image)
