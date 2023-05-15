@@ -583,7 +583,7 @@ def image_saver(q,basler_status):
 
         out_BASLER.release()
     else:
-        time.sleep(5)
+        pass
 
 
 def observer(status):
