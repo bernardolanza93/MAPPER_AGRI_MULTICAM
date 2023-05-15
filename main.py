@@ -38,7 +38,7 @@ sudo pip3 install pypylon
 offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
 SEARCH_USB_CAMERAS = False
-USE_PYLON_CAMERA = True
+USE_PYLON_CAMERA = False
 now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
 
@@ -568,30 +568,31 @@ def main(q,status):
 
 def image_saver(q,basler_status):
     time.sleep(1)
-    while True:
+    if USE_PYLON_CAMERA:
+        while True:
 
-        if basler_status.value == 1:
+            if basler_status.value == 1:
 
-            print("saving:", basler_status.value)
-            frame_width = 2592
-            frame_height = 1944
-
-
-
-
-            gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-            out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
-            while True:
-                qsize = q.qsize()
-                print("size: ", qsize)
-                img_basler = q.get()
-                out_BASLER.write(img_basler)
+                print("saving:", basler_status.value)
+                frame_width = 2592
+                frame_height = 1944
 
 
-            out_BASLER.release()
-        else:
-            print("NO saving:", basler_status.value)
-            time.sleep(1)
+
+
+                gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
+                out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
+                while True:
+                    qsize = q.qsize()
+                    print("size: ", qsize)
+                    img_basler = q.get()
+                    out_BASLER.write(img_basler)
+
+
+                out_BASLER.release()
+            else:
+                print("NO saving:", basler_status.value)
+                time.sleep(1)
 
 
 
