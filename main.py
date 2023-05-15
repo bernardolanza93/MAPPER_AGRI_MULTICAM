@@ -460,7 +460,7 @@ def main(q,status):
 
             if enable_D435i:
                 # Wait for a coherent pair of frames: depth and color
-
+                print("frame grabbing")
                 try:
                     frames = pipeline.wait_for_frames()
                     print("frME OK")
