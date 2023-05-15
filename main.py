@@ -41,7 +41,7 @@ SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = False
 now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
-SAVE_VIDEO_TIME = 1  # 0 per non salvare
+SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
 DISPLAY_RGB = False
 
@@ -466,10 +466,10 @@ def main(q,status):
 
         if enable_D435i:
             # Wait for a coherent pair of frames: depth and color
-            print("frame grabbing")
+
             try:
                 frames = pipeline.wait_for_frames()
-                print("frME OK")
+
 
             except Exception as e:
                 print("PIPELINE error:||||:: %s", str(e))
