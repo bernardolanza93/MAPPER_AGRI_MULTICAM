@@ -100,13 +100,19 @@ def calculate_and_save_intrinsics(intrinsics):
 
 def organize_video_from_last_acquisition():
     try:
+        path_dir = "/aquisition_raw/"
+        if not os.path.exists(path_dir):
+            # Create the folder if it doesn't exist
+            os.makedirs(path_dir)
+
         #create directory to contain file
+
         name1 = "aquisition_"
 
 
         # convert to string
 
-        folder_name = name1 + date_time
+        folder_name = path_dir  + name1 + date_time
 
         create_directory = False
         current_directory = os.getcwd()
