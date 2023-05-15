@@ -634,10 +634,11 @@ def processor():
         print("MAIN is alive? -> {}".format(p1.is_alive()))
         print("SAVER is alive?    -> {}".format(p2.is_alive()))
     except KeyboardInterrupt:
-        print(' KeyboardInterrupt- main Killed by user, exiting...{} '.format(datetime.now()))
+        print(' KILLED ..{} '.format(datetime.now()))
         print("STATUS PROCESSOR ZERO")
+        time.sleep(1)
         status.value = 0
-        time.sleep(0.5)
+
 
 
 
