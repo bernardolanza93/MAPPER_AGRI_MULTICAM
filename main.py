@@ -118,7 +118,7 @@ def organize_video_from_last_acquisition():
 
 
         current_directory = os.getcwd()
-        print("here")
+
         file_found = []
         for file in os.listdir(current_directory):
 
@@ -564,8 +564,10 @@ def main(q,status):
         cv2.destroyAllWindows()
 
 def image_saver(q,basler_status):
+
     if basler_status.value == 1:
-        print("saving")
+
+        print("saving:", basler_status.value)
         frame_width = 2592
         frame_height = 1944
 
@@ -583,6 +585,8 @@ def image_saver(q,basler_status):
 
         out_BASLER.release()
     else:
+        print("saving:", basler_status.value)
+
         pass
 
 
