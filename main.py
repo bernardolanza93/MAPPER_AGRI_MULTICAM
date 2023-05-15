@@ -40,7 +40,7 @@ T265_MANDATORY = False
 SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = True
 now = datetime.now()
-date_time = now.strftime("%Y_%m_%d_%H-%M-%S")
+date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
 
 
 
@@ -114,25 +114,31 @@ def organize_video_from_last_acquisition():
 
         folder_name = path_dir  + name1 + date_time
 
-        create_directory = False
+        print("folder:", folder_name)
+
+
         current_directory = os.getcwd()
+        print("here")
         file_found = []
         for file in os.listdir(current_directory):
 
             if file.endswith(".mkv"):
-                create_directory = True
+
                 print("file found:",os.path.join(current_directory, file))
                 file_found.append(file)
 
         os.makedirs(folder_name)
         for f in file_found:
             source = os.path.join(current_directory, f)
-            destination =  os.path.join(current_directory,folder_name)
+            destination = os.path.join(current_directory,folder_name)
             shutil.move(source, destination)
             print(source," moved to : ",destination)
+
+        sys.exit()
     except Exception as e:
         print("error saving files in folders...",e)
-        sys.exit()
+
+
 
 def check_folder(relative_path):
     """
@@ -211,7 +217,6 @@ def main(q,status):
 
     check_folder("/data/")
 
-    hourstr = date_time
     config_file = "cfg_file.txt"
     #acquisition_today =  "aquisition_" + str(now)
     #save_location = "/data/"+acquisition_today
@@ -350,7 +355,6 @@ def main(q,status):
 
     if SAVE_VIDEO_TIME != 0:
         now = datetime.now()
-        hourstr = now.strftime("%Y-%m-%d %H:%M:%S")
         if enable_D435i:
             gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
             out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
