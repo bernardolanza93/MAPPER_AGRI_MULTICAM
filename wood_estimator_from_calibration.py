@@ -18,17 +18,23 @@ print(sys.version)
 
 ZOOM = 100
 iteration = 0
-THRES_VALUE = 40
+THRES_VALUE = 70
 ALPHA_FILTER = 1
-#modifica con il tuo percorso dove ci sono i video salvati
-#con slash finale, questo path deve contenere le cartelle delle singole acquisizioni
-PATH_2_AQUIS = "/home/mmt-ben/Documents/calibration_video/"
+PATH_2_AQUIS = "/aquisition/"
 PATH_HERE = os.getcwd()
 OFFSET_CM_COMPRESSION = 50
 KERNEL = 5
 POINT_CLOUD_GRAPH = False
-L_real = 337
+L_real = 315
 D_real = 73
+CONTINOUS_STREAM = 1
+
+ML = 0.0006995400
+BL = 0.0366454492
+MD = 0.0007305686085937236
+BD = -0.01690100263467237
+
+
 
 
 def crop_with_rect_rot(frame,rect, display = False):
@@ -256,9 +262,7 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
                     xvec.append(xxx)
                     yvec.append(yyy)
 
-    deltax = max(xvec) - min(xvec)
-    deltay = max(yvec) - min(yvec)
-    deltaz = max(zvec) - min(zvec)
+
 
 
     meanz = round(statistics.mean(list(zvec)),2)
@@ -286,8 +290,6 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
                         zvec.append(zzz)
                         xvec.append(xxx)
                         yvec.append(yyy)
-    meanz = round(statistics.mean(list(zvec)),2)
-    stdz = round(statistics.stdev(list(zvec)),2)
 
     #ORA CALCOLIAMO SOLO IL DELTA X MA DOVRAI FARE PITAGORA E CALCOLARE LA DIAGONALE (I TRALCI SONO STRETTI QUINDI LA DIAGONALE VERA DOVREBBE CONTARE POCO, PENSALA
     # SE IL PEZZO E INCLINATO 45 LA POINTCLOUD DEVE PRESENTARE I VALORI X E Y
@@ -301,23 +303,21 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
     delta_percy = perc_max95_y - perc_max05_y
 
 
-    ratio_mm_px_L = delta_percx / length
-    ratio_mm_px_D = delta_percy / dA
 
-    ratio_real_L = L_real / length
-    ratio_real_D = D_real / dA
+    #R = mm/px
+    #real = R * pi
+    current_ratio = (float(ML)*float(meanz)) + float(BL)
+    print("current R", current_ratio, " mz", meanz, " m", ML)
+    real_L = length * current_ratio
+    real_D = dA * current_ratio
 
 
 
-    perc_tot = round(math.sqrt(delta_percx ** 2 + delta_percy ** 2),2)
-    #print(" DELTA X", delta_percx, "DELTA y", delta_percy, "HYP", perc_tot)
-    #print("Z-mean:", meanz," Z-std:", stdz)
-    ratiommpx = perc_tot / length
-    #print("RATIO", ratiommpx)
-    diam_cm = ratiommpx * dA
-    #print("DIAMETER: ", diam_cm)
-    #print("LENGHT: ", perc_tot)
-    string1 = str("l_mm = " + str(int(perc_tot)) + " r:" + str(round(ratiommpx, 3)) + " dmm:" + str(int(diam_cm)))
+
+
+
+
+    string1 = str("l_mm = " + str(int(real_L)) + " r:" + str(round(current_ratio, 3)) + " dmm:" + str(int(real_D)))
     cv2.putText(orig, string1, (4, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1, cv2.LINE_AA)
     cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)), (255, 0, 0), 1)
     cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)), (255, 255, 0), 1)
@@ -346,7 +346,7 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
         ax3.set_title('Y, dim:' + str(delta_percy))
         fig.suptitle("len:" + str(len(zvec))  + " mean:" +  str(meanz) + " sdt:" + str(stdz) + " dim" + str(perc_tot) + "mm")
 
-    return delta_percx, delta_percy , ratio_mm_px_L , ratio_mm_px_D , ratio_real_L , ratio_real_D , meanz
+    return real_L,real_D, current_ratio, meanz
 
 
 
@@ -644,9 +644,6 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics,point
     LLL = []
     DDD = []
     RRL = []
-    RRD = []
-    RPCL = []
-    RPCD = []
     ZZZ = []
 
     for x in range(len(images_collector)):
@@ -663,16 +660,13 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics,point
             boxc = calc_box_for_subcylinder_recognition(maskr)
 
 
-            delta_percx, delta_percy , ratio_mm_px_L , ratio_mm_px_D , ratio_real_L , ratio_real_D, Z_d = real_volume_from_pointcloud(pc,depthr, intrinsics, boxc,
+            L,D, R, Z = real_volume_from_pointcloud(pc,depthr, intrinsics, boxc,
                                                               rgb, maskr)
 
-            LLL.append(delta_percx)
-            DDD.append(delta_percy)
-            RRL.append(ratio_real_L)
-            RRD.append(ratio_real_D)
-            RPCL.append(ratio_mm_px_L)
-            RPCD.append(ratio_mm_px_D)
-            ZZZ.append(Z_d)
+            LLL.append(L)
+            DDD.append(D)
+            RRL.append(R)
+            ZZZ.append(Z)
 
         except Exception as e:
             print("e", e)
@@ -694,20 +688,17 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics,point
         l_tot = round(sum(LLL),2)
         d_med = round(statistics.mean(DDD),2)
         r_L_real_med = round(statistics.mean(RRL),4)
-        r_D_real_med = round(statistics.mean(RRD), 4)
-        r_L_pc_med = round(statistics.mean(RPCL), 4)
-        r_D_pc_med = round(statistics.mean(RPCD), 4)
         dep_med = round(statistics.mean(ZZZ),2)
     else:
         l_tot = 0
         d_med = 0
-        r_med = 0
+        r_L_real_med = 0
         dep_med = 0
 
 
 
 
-    return  l_tot, d_med, r_L_real_med, r_D_real_med, r_L_pc_med, r_D_pc_med, dep_med
+    return  l_tot, d_med, r_L_real_med, dep_med
 
 def draw_and_calculate_rotated_box(cnt, frame):
     rect = cv2.minAreaRect(cnt)
@@ -754,15 +745,15 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
             solidity = float(area1) / hull_area
 
             if perimeter1 > 200 and perimeter1 < 7000:  # 1200
-                if circularity1 > 0.4 and circularity1 < 0.6:  # 0.05 / 0.1, 0.02
+                if circularity1 > 0.01 and circularity1 < 0.6:  # 0.05 / 0.1, 0.02
                     if area1 > 800 and area1 < 150000:  # 2200
-                        if M0 > 1.15 and M0 < 130:  # 2200
-                            if M01 > 0.40 and M01 < 70:  # 2200
-                                if M10 > 0.5 and M10 < 140:  #
+                        if M0 > 1.00 and M0 < 130:  # 2200
+                            if M01 > 0.01 and M01 < 70:  # 2200
+                                if M10 > 0.01 and M10 < 140:  #
                                     if M02 > 0.25 and M02 < 40:
-                                        if M20 > 0.002 and M20 < 150:
-                                            if solidity > 0.9 and solidity < 1:
-                                                if ratio > 0.0005 and ratio < 0.8:  # rapporto pixel contour e bounding box
+                                        if M20 > 0.0002 and M20 < 150:
+                                            if solidity > 0.1 and solidity < 0.5:
+                                                if ratio > 0.00005 and ratio < 0.8:  # rapporto pixel contour e bounding box
 
                                                     # print("|____________________________________|")
                                                     # print("__|RATIO-CORRECT|__:", ratio)
@@ -820,13 +811,13 @@ RPCLLL = []
 RPCDDD = []
 Z_all = []
 
-for folders in os.listdir(PATH_2_AQUIS):
-    print("files:", os.listdir(PATH_2_AQUIS))
+for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
+    print("files:", os.listdir(PATH_HERE + PATH_2_AQUIS))
     folder_name = folders
     #videos = os.listdir(PATH_HERE + PATH_2_AQUIS+ "/" + folder_name)
     #writeCSVdata(folder_name, ["frame", "pixel", "volume", "distance_med", "volumes", "distances"])
 
-    for videos in os.listdir(PATH_2_AQUIS + folder_name):
+    for videos in os.listdir(PATH_HERE + PATH_2_AQUIS+ "/" + folder_name):
 
         #print(videos)
         print("ITERATION:", folder_name)
@@ -836,12 +827,12 @@ for folders in os.listdir(PATH_2_AQUIS):
 
             if videos.split(".")[0] == "RGB":
 
-                path_rgb= os.path.join(PATH_2_AQUIS + folder_name, videos)
+                path_rgb= os.path.join(PATH_HERE + PATH_2_AQUIS+ "/" + folder_name, videos)
                 #creo l oggetto per lo streaming
                 video1 = cv2.VideoCapture(path_rgb)
             elif videos.split(".")[0] == "DEPTH":
 
-                path_depth= os.path.join(PATH_2_AQUIS + folder_name, videos)
+                path_depth= os.path.join(PATH_HERE + PATH_2_AQUIS+ "/" + folder_name, videos)
                 video2 = cv2.VideoCapture(path_depth)
 
         # We need to check if camera
@@ -911,14 +902,11 @@ for folders in os.listdir(PATH_2_AQUIS):
 
 
                     box1 = draw_and_calculate_rotated_box(cnt1, frame)
-                    l_tot, d_med, r_L_real_med, r_D_real_med, r_L_pc_med, r_D_pc_med, dep_med  = sub_box_iteration_cylindrificator(box1, frame, mask, frame2, intrinsics,pointcloud)
+                    l_tot, d_med, r_L_real_med, dep_med  = sub_box_iteration_cylindrificator(box1, frame, mask, frame2, intrinsics,pointcloud)
                     # L e D dovrebbero essere costanti
                     L_.append(l_tot)
                     D_.append(d_med)
                     RRLLL.append(r_L_real_med)
-                    RRDDD.append(r_D_real_med)
-                    RPCLLL.append(r_L_pc_med)
-                    RPCDDD.append(r_D_pc_med)
                     Z_all.append(dep_med)
 
                 except Exception as e:
@@ -929,9 +917,9 @@ for folders in os.listdir(PATH_2_AQUIS):
                     plt.draw()
                     plt.pause(0.001)
                 #cv2.imshow("cdscsdc", mask)
-                cv2.imshow("or", resize_image(frame,50))
+                cv2.imshow("or", resize_image(frame,100))
 
-                key = cv2.waitKey(1)
+                key = cv2.waitKey(CONTINOUS_STREAM)
                 if key == ord('q') or key == 27:
                     sys.exit()
                     break
@@ -951,9 +939,6 @@ plt.close('all')
 L_.append(l_tot)
 D_.append(d_med)
 RRLLL.append(r_L_real_med)
-RRDDD.append(r_D_real_med)
-RPCLLL.append(r_L_pc_med)
-RPCDDD.append(r_D_pc_med)
 Z_all.append(dep_med)
 
 
@@ -962,65 +947,42 @@ fig,  ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
 ax1.plot(L_)
 ax1.set_title('lenght medium =' + str(round(statistics.mean(L_),2)))
 ax1.axhline(y= statistics.mean(L_), color='r', linestyle='-')
-ax1.axhline(y= L_real, color='g', linestyle='--')
+
 
 ax2.plot(D_)
 ax2.set_title('diameter medium =' + str(round(statistics.mean(D_),2)))
 ax2.axhline(y=statistics.mean(D_), color='r', linestyle='-')
-ax2.axhline(y= D_real, color='g', linestyle='--')
 
 
-ax3.scatter(Z_all,RRLLL, color='b')
-#ax3.scatter(Z_all,RPCLLL, color='b')
-ax3.grid(True)
-#obtain m (slope) and b(intercept) of linear regression line
-m, b = np.polyfit(Z_all, RPCLLL, 1)
 
 
-mrr, brr = np.polyfit(Z_all, RRLLL, 1)
 
-mr, br = np.polyfit(Z_all, RRLLL, 1, cov=True)
-dm = np.sqrt(br[0][0])
-db = np.sqrt(br[1][1])
-
-print("m: {} +/- {}".format(mr[0], np.sqrt(br[0][0])))
-print("b: {} +/- {}".format(mr[1], np.sqrt(br[1][1])))
-
-
-ax3.set_title("R = m*Z + b | m="  + str(round(mrr,7)) + "+/-" +str(round(dm,7)) + "; b="+ str(round(brr,3))+ "+/-" +str(round(db,3)))
-
+#obtain m (slope) and b(intercept) of linear regression lin
 #add linear regression line to scatterplot
 Z_all = [float(i) for i in Z_all]
-#ax3.plot(Z_all,[x * m for x in Z_all]+b,color='g', linestyle='--')
-ax3.plot(Z_all,[x * mrr for x in Z_all]+brr, color='r', linestyle='-.')
-ax3.set_xlabel('Z-depth [mm]')
-ax3.set_ylabel('ratio [mm/px]')
-
-print("m, b", mrr , brr)
 
 
 
-ax4.scatter(Z_all,RRDDD, color='r')
-ax4.set_title('D) RRmean:' + str(round(statistics.mean(RRDDD),2)) + 'RPC:' + str(round(statistics.mean(RPCDDD),2)) + "P mean" + str(round(statistics.mean(Z_all),2)))
-ax4.scatter(Z_all,RPCDDD, color='b')
+deviation  = [x - L_real for x in L_]
+absolute_dev = [abs(ele) for ele in deviation]
+squares = [i*i for i in deviation]
+RMSE = np.sqrt(np.mean(squares))
+
+ax3.hist(deviation, color='g')
+ax3.legend()
+ax3.grid(True)
+ax3.set_xlabel('error [mm]')
+ax3.set_ylabel('frequency')
+
+
+ax4.scatter(Z_all,absolute_dev, color='b')
+ax4.set_title('RMSE= ' + str(round(RMSE,2)) + " mm")
+ax4.set_xlabel('Z [mm]')
+ax4.set_ylabel('error [mm]')
+
+#ax4.scatter(Z_all,RPCDDD, color='b')
 ax4.legend()
 ax4.grid(True)
-
-
-
-
-
-#obtain m (slope) and b(intercept) of linear regression line
-m, b = np.polyfit(Z_all, RPCDDD, 1)
-mr, br = np.polyfit(Z_all, RRDDD, 1)
-#add linear regression line to scatterplot
-ax4.plot(Z_all,[x * m for x in Z_all]+b,color='g', linestyle='--')
-ax4.plot(Z_all,[x * mr for x in Z_all]+br,color='r', linestyle='--')
-
-
-
-print("m, b", mr , br)
-
 
 
 fig.suptitle("analysis of results")
