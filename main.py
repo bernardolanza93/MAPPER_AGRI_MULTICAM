@@ -339,6 +339,7 @@ def RS_capture(queue,status):
                         time.sleep(2)
                         print("retriing...t265 start:",i)
                         try:
+                            pipelineT265.start(configT265)
                             tframes = pipelineT265.wait_for_frames()
                             i = 10
                         except:
