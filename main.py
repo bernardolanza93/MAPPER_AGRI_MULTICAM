@@ -434,8 +434,8 @@ def RS_capture(queue,status):
                 # images = np.hstack((color_image, depth_colormap))
                 # cv2.imshow('Color Stream', depth_image)
 
-                color_image = resize_image(color_image, 50)
-                depth_image = resize_image(depth_image, 50)
+                # color_image = resize_image(color_image, 50)
+                # depth_image = resize_image(depth_image, 50)
 
                 if DISPLAY_RGB:
                     # cv2.imshow('depth Stream', color_image)
