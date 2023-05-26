@@ -289,8 +289,8 @@ def RS_capture(queue,status):
 
         try:
             # Start streaming
-            pipelineT265.start(configT265)
-            print("T265 started OK")
+            started = pipelineT265.start(configT265)
+            print("T265 started OK",started)
         except Exception as e:
             print("error pipeline T265 starting:||||:: %s", str(e))
         # _______________________________________________________
