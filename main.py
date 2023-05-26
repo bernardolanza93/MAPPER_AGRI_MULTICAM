@@ -328,18 +328,12 @@ def RS_capture(queue,status):
             frame += 1
 
             if enable_T265:
-                try:
-                    tframes = pipelineT265.wait_for_frames()
-                except Exception as e:
-                    print("ERROR T265 wait4fr: %s", e, "object ideally not present",started)
-                    print("restarting")
 
-                    started = pipelineT265.start(configT265)
-                    tframes = pipelineT265.wait_for_frames()
-                    print("started and frames!", tframes)
+                tframes = pipelineT265.wait_for_frames()
 
 
-                    pose = 0
+
+                pose = 0
                 try:
                     pose = tframes.get_pose_frame()
 
