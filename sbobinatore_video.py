@@ -2,7 +2,7 @@ import cv2
 import os
 
 # specify the path to the global folder containing the video folders
-input_folder_path = "/home/mmt-ben/Downloads/hk"
+input_folder_path = "/home/mmt-ben/Documents/flower/aquisition_2023_05_18_12_20_13-20230526T104242Z-001/"
 
 # specify the path to the folder where output images will be saved
 output_folder_path = "/home/mmt-ben/Documents/hokuto/"
@@ -18,14 +18,14 @@ for folder_name in os.listdir(input_folder_path):
     folder_path = os.path.join(input_folder_path, folder_name)
 
     # check if the folder name starts with "acquisition_time_"
-    if folder_name.startswith("VID"):
+    if folder_name.startswith("aquisition"):
         print(folder_path)
 
         # loop through each video file in the folder
         for filename in os.listdir(folder_path):
 
             # check if the file is a video file in .mkv format
-            if filename.endswith(".mp4"):
+            if filename.endswith(".mkv"):
                 filepath = os.path.join(folder_path, filename)
 
                 # open the video file using OpenCV
