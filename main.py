@@ -38,7 +38,7 @@ sudo pip3 install pypylon
 offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
 SEARCH_USB_CAMERAS = False
-USE_PYLON_CAMERA = False
+USE_PYLON_CAMERA = True
 now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
