@@ -343,11 +343,15 @@ def RS_capture(queue,status):
                                 pipeline.stop()
                             except:
                                 print("cant stop null pipeline")
-                            pipelineT265.start(configT265)
+                            try:
+                                pipelineT265.start(configT265)
+                            except:
+                                print("cant start already started pipeline")
+
                             tframes = pipelineT265.wait_for_frames()
                             i = 10
                         except Exception as e:
-                            print("failed, try one more time:",e)
+                            print("failed W4F, try one more time:",e)
 
                     pose = 0
                 try:
