@@ -275,6 +275,7 @@ def RS_capture(queue,status):
 
     if enable_T265:
         # T265_________________________________________________
+
         pipelineT265 = rs.pipeline(ctx)
         configT265 = rs.config()
         serialt265 = str(device_aviable['T265'][0])
@@ -282,13 +283,14 @@ def RS_capture(queue,status):
         configT265.enable_device(serialt265)
         configT265.enable_stream(rs.stream.pose)
         configT265.enable_stream(rs.stream.gyro)
+        print("configured succesfully T265...")
 
         # saver.set_option()
 
         try:
             # Start streaming
             pipelineT265.start(configT265)
-            print("T265 started")
+            print("T265 started OK")
         except Exception as e:
             print("error pipeline T265 starting:||||:: %s", str(e))
         # _______________________________________________________
@@ -370,19 +372,13 @@ def RS_capture(queue,status):
                     sys.exit()
 
                 aligned_frames = align.process(frames)
-
                 depth_frame = aligned_frames.get_depth_frame()
-
                 color_frame = aligned_frames.get_color_frame()
-
                 depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
                 color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
-
                 calculate_and_save_intrinsics(depth_intrin)
-
                 color_image = np.asanyarray(color_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
-
                 width = int(1920)
                 height = int(1080)
                 dim = (width, height)
@@ -422,20 +418,6 @@ def RS_capture(queue,status):
                 seconds = end - start
                 fps = round(1 / seconds, 3)
                 print(fps)
-                # cv2.imwrite('im.jpg', color_image)
-                # frames = pipeline.wait_for_frames()
-                # saver.process(frames)
-
-                # cv2.imwrite('im.jpg', color_image)
-
-                # result.write(color_image)
-
-                # print("size", depth_image.shape,  color_image.shape)
-                # images = np.hstack((color_image, depth_colormap))
-                # cv2.imshow('Color Stream', depth_image)
-
-                # color_image = resize_image(color_image, 50)
-                # depth_image = resize_image(depth_image, 50)
 
                 if DISPLAY_RGB:
                     # cv2.imshow('depth Stream', color_image)
@@ -447,6 +429,7 @@ def RS_capture(queue,status):
                     # cv2.destroyAllWindows()
                     break
         else:
+            print("no realsense error!!!!")
             time.sleep(5)
 
         if enable_T265 == False and enable_D435i == False :
