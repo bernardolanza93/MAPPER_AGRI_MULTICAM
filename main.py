@@ -363,6 +363,7 @@ def RS_capture(queue,status):
                     # print("Position: {}".format(data.translation))
                     # print("Velocity: {}".format(data.velocity))
                     # print("Acceleration: {}\n".format(data.acceleration))
+                    now = datetime.now()
                     time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
                     writeCSVdata(time1, [frame, time_st, data.translation, data.velocity, anglePRY])
 
