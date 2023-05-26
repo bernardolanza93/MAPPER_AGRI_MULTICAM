@@ -441,13 +441,13 @@ def RS_capture(queue,status):
             print("no device, termination...")
             sys.exit()
 
-        if enable_D435i:
-            pipeline.stop()
-            out.release()
-            out_depth.release()
-            cv2.destroyAllWindows()
-        if enable_T265:
-            pipelineT265.stop()
+    if enable_D435i:
+        pipeline.stop()
+        out.release()
+        out_depth.release()
+        cv2.destroyAllWindows()
+    if enable_T265:
+        pipelineT265.stop()
 
 
 
