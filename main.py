@@ -333,6 +333,17 @@ def RS_capture(queue,status):
                     tframes = pipelineT265.wait_for_frames()
                 except Exception as e:
                     print("ERROR T265 wait4fr: %s", e)
+                    i = 0
+                    while i<10:
+                        i = i+1
+                        time.sleep(2)
+                        print("retriing...t265 start:",i)
+                        try:
+                            tframes = pipelineT265.wait_for_frames()
+                            i = 10
+                        except:
+                            print("failed, try one more time")
+
                     pose = 0
                 try:
                     pose = tframes.get_pose_frame()
