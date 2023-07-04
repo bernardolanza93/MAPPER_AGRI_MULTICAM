@@ -11,6 +11,7 @@ import csv
 from datetime import datetime
 import sys
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score
 
 
 
@@ -754,14 +755,14 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
             solidity = float(area1) / hull_area
 
             if perimeter1 > 200 and perimeter1 < 7000:  # 1200
-                if circularity1 > 0.4 and circularity1 < 0.6:  # 0.05 / 0.1, 0.02
+                if circularity1 > 0.44 and circularity1 < 0.48:  # 0.05 / 0.1, 0.02
                     if area1 > 800 and area1 < 150000:  # 2200
                         if M0 > 1.15 and M0 < 130:  # 2200
                             if M01 > 0.40 and M01 < 70:  # 2200
                                 if M10 > 0.5 and M10 < 140:  #
                                     if M02 > 0.25 and M02 < 40:
                                         if M20 > 0.002 and M20 < 150:
-                                            if solidity > 0.9 and solidity < 1:
+                                            if solidity > 0.96 and solidity < 0.999:
                                                 if ratio > 0.0005 and ratio < 0.8:  # rapporto pixel contour e bounding box
 
                                                     # print("|____________________________________|")
@@ -820,8 +821,13 @@ RPCLLL = []
 RPCDDD = []
 Z_all = []
 
+ii = 0
+print("total file: ", len(os.listdir(PATH_2_AQUIS)))
+
 for folders in os.listdir(PATH_2_AQUIS):
-    print("files:", os.listdir(PATH_2_AQUIS))
+    ii = ii + 1
+
+    print("files number:", ii, " name:", os.listdir(PATH_2_AQUIS))
     folder_name = folders
     #videos = os.listdir(PATH_HERE + PATH_2_AQUIS+ "/" + folder_name)
     #writeCSVdata(folder_name, ["frame", "pixel", "volume", "distance_med", "volumes", "distances"])
@@ -979,6 +985,23 @@ m, b = np.polyfit(Z_all, RPCLLL, 1)
 
 mrr, brr = np.polyfit(Z_all, RRLLL, 1)
 
+y_estimated = [(x * mrr) + brr for x in Z_all]
+y_residuals = [a_i - b_i for a_i, b_i in zip(y_estimated, RRLLL)]
+squared_res = [i ** 2 for i in y_residuals]
+MSE = statistics.mean(squared_res)
+RMSE = math.sqrt(MSE)
+print("mse rmse", MSE, RMSE)
+
+
+r_squared =  r2_score(RRLLL, y_estimated)
+
+#view R-squared value
+print("R squared = ", r_squared)
+
+
+
+
+
 mr, br = np.polyfit(Z_all, RRLLL, 1, cov=True)
 dm = np.sqrt(br[0][0])
 db = np.sqrt(br[1][1])
@@ -987,7 +1010,7 @@ print("m: {} +/- {}".format(mr[0], np.sqrt(br[0][0])))
 print("b: {} +/- {}".format(mr[1], np.sqrt(br[1][1])))
 
 
-ax3.set_title("R = m*Z + b | m="  + str(round(mrr,7)) + "+/-" +str(round(dm,7)) + "; b="+ str(round(brr,3))+ "+/-" +str(round(db,3)))
+ax3.set_title("R = m*Z + b : RMSE=" + str(round(RMSE,4))+ " \n m="  + str(round(mrr,7)) + "+/-" +str(round(dm,7)) + "; b="+ str(round(brr,3))+ "+/-" +str(round(db,3)))
 
 #add linear regression line to scatterplot
 Z_all = [float(i) for i in Z_all]
@@ -1016,6 +1039,52 @@ mr, br = np.polyfit(Z_all, RRDDD, 1)
 #add linear regression line to scatterplot
 ax4.plot(Z_all,[x * m for x in Z_all]+b,color='g', linestyle='--')
 ax4.plot(Z_all,[x * mr for x in Z_all]+br,color='r', linestyle='--')
+
+
+folder_path = 'results'
+
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+    print(f"Created folder: {folder_path}")
+else:
+    print(f"Folder already exists: {folder_path}")
+
+
+#save data
+
+header = ['length_px', 'diameter_px', 'depth', 'ratio_pixel_length','ratio_pixel_diameter']
+
+file_path = 'results/calibration_data.csv'
+
+with open(file_path, 'w', newline='') as csv_file:
+    writer = csv.writer(csv_file)
+
+    # Write the header row
+    writer.writerow(header)
+
+    # Write data columns
+    for data in zip(L_, D_, Z_all,RRLLL,RRDDD ):
+        writer.writerow(data)
+
+print(f"CSV file '{file_path}' created successfully.")
+
+#save results
+
+header = ['m', 'm_uncert', 'b', 'b_uncert','RMSE','R_squared' ]
+
+file_path = 'results/calibration_results.csv'
+
+with open(file_path, 'w', newline='') as csv_file:
+    writer = csv.writer(csv_file)
+
+    # Write the header row
+    writer.writerow(header)
+
+    # Write data columns
+    data = [mrr, dm, brr, db,RMSE, r_squared]
+    writer.writerow(data)
+
+print(f"CSV file '{file_path}' created successfully.")
 
 
 

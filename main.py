@@ -32,6 +32,22 @@ sudo pip3 install pypylon
 
 /usr/bin/python3 -m pip install --upgrade pip
 
+
+#_____________DISABLE GUI: 
+If you want to disable the Desktop GUI only temporarily run the following command.
+sudo init 3 
+
+To enable the desktop when you finish, run the following command.
+sudo init 5 
+
+If you wish to stop Desktop GUI on every reboot, run the following command.
+sudo systemctl set-default multi-user.target
+
+To enable GUI again, run the following command.
+sudo systemctl set-default graphical.target
+
+
+
 '''
 
 #
@@ -40,10 +56,13 @@ T265_MANDATORY = False
 SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = True
 now = datetime.now()
-date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
+date_time = now.strftime("%Y_%m_%d_%H_%M_%_SUM")
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
 DISPLAY_RGB = False
+FRAMES_TO_ACQUIRE = 60
+
+
 
 
 
@@ -318,11 +337,10 @@ def RS_capture(queue,status):
     else:
         print("NO SAVE VIDEO D435 MODE")
     frame = 0
-    now = datetime.now()
-    time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
+
     print("START LOOP")
 
-    while True:
+    for i in range(FRAMES_TO_ACQUIRE):
         if enable_T265 or enable_D435i:
             start = time.time()
             frame += 1
@@ -363,8 +381,9 @@ def RS_capture(queue,status):
                     # print("Acceleration: {}\n".format(data.acceleration))
                     now = datetime.now()
                     time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
-                    writeCSVdata(time1, [frame, time_st, data.translation, data.velocity, anglePRY])
+                    writeCSVdata(date_time, [frame, time_st, data.translation, data.velocity, anglePRY])
                     if not enable_D435i:
+                        #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                         time.sleep(0.067)
 
             if enable_D435i:
@@ -454,6 +473,14 @@ def RS_capture(queue,status):
 
 
 def main(q,status):
+
+    """
+    functioon to acquire images from basler dart camera with pylon
+
+    :param q: queue where to put the images extracted
+    :param status: status to control the events of the process
+    :return: nothing
+    """
     config_file = "cfg_file.txt"
 
 
@@ -526,11 +553,10 @@ def main(q,status):
 
 
     frame = 0
-    now = datetime.now()
-    time1 = now.strftime("%d-%m-%Y|%H:%M:%S")
+
     print("START LOOP")
 
-    while True:
+    for i in range(FRAMES_TO_ACQUIRE):
         start = time.time()
         if USE_PYLON_CAMERA:
             if  status.value == 0:
@@ -587,6 +613,15 @@ def main(q,status):
         cv2.destroyAllWindows()
 
 def image_saver(q,basler_status):
+    """
+
+    :param q: multiprocessing queue, here there are all the image , one by one, aquired by the basler dart pylon process
+    :param basler_status: status associated with the process event
+    :return: nothing
+
+    """
+
+
     time.sleep(1)
     if USE_PYLON_CAMERA:
         while True:

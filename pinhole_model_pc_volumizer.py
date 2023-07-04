@@ -210,7 +210,7 @@ def convert_u8_img_to_u16_d435_depth_image(u8_image):
     return u16_image_off_mm
 
 
-def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbframe, mask):
+def distance_cylinder_single(pointcloud,depth_frame, intrinsics, box, rgbframe, mask):
 
 
     #  tl *--------------tltr------------------* tr
@@ -254,8 +254,7 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
     mask = cv2.dilate(mask, kernel)
     cv2.imshow("post proc mask 4 depth", mask)
     zvec = []
-    yvec = []
-    xvec = []
+
 
     for x in range(pointcloud.shape[0]):
         for y in range(pointcloud.shape[1]):
@@ -264,12 +263,10 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
             if point_mask == 0:
                 if point[0] > 501:
                     #cv2.circle(rgbframe, (y + int(w/2), x), 1, (255, 0, 255), -1)
-                    yyy = int(point[2])
-                    xxx = int(point[1]) #ATTENZIONE CHE SONO INVERTITI!!!!!!!!
+
                     zzz = int(point[0])
                     zvec.append(zzz)
-                    xvec.append(xxx)
-                    yvec.append(yyy)
+
 
 
 
@@ -279,8 +276,6 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
 
 
     zvec = []
-    yvec = []
-    xvec = []
     filter_alpha = 1
     for x in range(pointcloud.shape[0]):
         for y in range(pointcloud.shape[1]):
@@ -291,89 +286,16 @@ def real_volume_from_pointcloud(pointcloud,depth_frame, intrinsics, box, rgbfram
                 if int(point[0]) > 501:
 
                     #cv2.circle(rgbframe, (y + int(w/2), x), 1, (255, 0, 255), -1)
-                    yyy = int(point[2])
-                    xxx = int(point[1])
+
                     zzz = int(point[0])
                     if zzz < meanz + stdz * filter_alpha and zzz > meanz - stdz * filter_alpha:
                         cv2.circle(rgbframe, (y , x), 1, (255, 0, 255), -1)
                         zvec.append(zzz)
-                        xvec.append(xxx)
-                        yvec.append(yyy)
-
-    #ORA CALCOLIAMO SOLO IL DELTA X MA DOVRAI FARE PITAGORA E CALCOLARE LA DIAGONALE (I TRALCI SONO STRETTI QUINDI LA DIAGONALE VERA DOVREBBE CONTARE POCO, PENSALA
-    # SE IL PEZZO E INCLINATO 45 LA POINTCLOUD DEVE PRESENTARE I VALORI X E Y
-
-    perc_max95_x = np.percentile(xvec, 99)
-    perc_max05_x = np.percentile(xvec, 1)
-    perc_max95_y = np.percentile(yvec, 99)
-    perc_max05_y = np.percentile(yvec, 1)
-
-    delta_percx = perc_max95_x - perc_max05_x
-    delta_percy = perc_max95_y - perc_max05_y
 
 
+    filtered_mean_z = np.mean(zvec)
 
-    #R = mm/px
-    #real = R * pi
-
-    #CALCOLIAMO IL DIAMETRO APPARENTE, RICOSTRUITO A PARTIRE DALL AREA TOTALE IN PIXEL E DALLA LUNGHEZZA
-    # Retrieve the number of rows and columns
-    rows, cols = mask.shape
-
-
-    # Calculate the total number of binary image pixels
-    all_pixel_count = rows * cols
-    #cut gray border 50/50
-
-    #converto in binario perche e in grayscale
-    _, binary_image = cv2.threshold(mask, 220, 255, cv2.THRESH_BINARY)
-    white_pixel = cv2.countNonZero(binary_image) # bianchi
-    black_pixels = all_pixel_count-white_pixel
-    apparent_diameter = black_pixels / length
-
-
-
-    current_ratio = (float(ML)*float(meanz)) + float(BL)
-    current_ratio_diameter = (float(MD) * float(meanz)) + float(BD)
-    #print("current R", current_ratio, " mz", meanz, " m", ML)
-    real_L = length * current_ratio
-    real_D = apparent_diameter * current_ratio_diameter
-    print("L_p=", length, " L_r=", real_L," d_app=", apparent_diameter, " D_REAL=",real_D)
-    cv2.imshow("bbbbbb", binary_image)
-
-
-
-
-    string1 = str("l_mm = " + str(int(real_L)) + " r:" + str(round(current_ratio, 3)) + " dmm:" + str(int(real_D)))
-    cv2.putText(orig, string1, (4, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1, cv2.LINE_AA)
-    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)), (255, 0, 0), 1)
-    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)), (255, 255, 0), 1)
-    cv2.circle(orig, (int(tltrX), int(tltrY)), 6, (0, 255, 0), 1)
-    cv2.circle(orig, (int(blbrX), int(blbrY)), 6, (0, 255, 0), 1)
-    cv2.circle(orig, (int(tlblX), int(tlblY)), 6, (0, 255, 0), 1)
-    cv2.circle(orig,  (int(trbrX), int(trbrY)), 6, (0, 255, 0), 1)
-    #cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)), (0, 255, 0), 1)
-    # cv2.circle(orig, (int(tlblX), int(tlblY)), 2, (255, 0, 0), 1)
-    # cv2.circle(orig, (int(trbrX), int(trbrY)), 2, (0, 255, 0), 1)
-    #cv2.circle(orig, (int(tltrX), int(tltrY)), 2, (255, 0, 0), 1)
-    #cv2.circle(orig, (int(blbrX), int(blbrY)), 2, (0, 255, 0), 1)
-
-
-    if POINT_CLOUD_GRAPH:
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-        ax1.hist(zvec, bins=50)
-        ax1.set_title('Z value')
-        ax2.hist(xvec, bins=50)
-        ax2.axvline(x=perc_max95_x, color='r', linestyle='-')
-        ax2.axvline(x=perc_max05_x, color='r', linestyle='-')
-        ax2.set_title('X, dim:' + str(delta_percx))
-        ax3.hist(yvec, bins=50)
-        ax3.axvline(x=perc_max95_y, color='r', linestyle='-')
-        ax3.axvline(x=perc_max05_y, color='r', linestyle='-')
-        ax3.set_title('Y, dim:' + str(delta_percy))
-        fig.suptitle("len:" + str(len(zvec))  + " mean:" +  str(meanz) + " sdt:" + str(stdz) + " dim" + str(perc_tot) + "mm")
-
-    return real_L,real_D, current_ratio, meanz
+    return filtered_mean_z
 
 
 
@@ -690,13 +612,11 @@ def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics,point
             boxc = calc_box_for_subcylinder_recognition(maskr)
 
 
-            L,D, R, Z = real_volume_from_pointcloud(pc,depthr, intrinsics, boxc,
+            filtered_depth = distance_cylinder_single(pc,depthr, intrinsics, boxc,
                                                               rgb, maskr)
 
-            LLL.append(L)
-            DDD.append(D)
-            RRL.append(R)
-            ZZZ.append(Z)
+
+
 
         except Exception as e:
             print("e", e)
