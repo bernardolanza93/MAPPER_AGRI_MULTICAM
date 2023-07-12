@@ -29,11 +29,83 @@ L_real = 315
 D_real = 73
 CONTINOUS_STREAM = 0
 
-ML = 0.00075867178
-BL = 0.0333853017
-MD = 0.000788289686
-BD = -0.010275683330683
+# ML = 0.00075867178
+# BL = 0.0333853017
+# MD = 0.000788289686
+# BD = -0.010275683330683
 
+
+def simple_geometrical_analisys(allx,ally,allz):
+    # Calculate percentiles
+    x_01 = np.percentile(allx, 1)
+    x_99 = np.percentile(allx, 99)
+    y_01 = np.percentile(ally, 1)
+    y_99 = np.percentile(ally, 99)
+    z_01 = np.percentile(allz, 1)
+    z_99 = np.percentile(allz, 99)
+    z_50 = np.percentile(allz, 50)
+
+    # Calculate differences
+    print("x1 ", x_01, ", x2 ", x_99)
+    diff_x = x_99 - x_01
+    diff_y = y_99 - y_01
+    diff_z = z_99 - z_01
+
+    # plt.hist(allx, bins=50)
+    # plt.show()
+
+    # Calculate the sum vector using the Pythagorean theorem
+    sum_vector = np.sqrt(diff_x ** 2 + diff_y ** 2 + diff_z ** 2)
+
+    # Print the results
+    print("Difference for X:", diff_x)
+    print("Difference for Y:", diff_y)
+    print("Difference for Z:", diff_z)
+    print("Sum Vector:", sum_vector)
+    print("perc1z", z_01)
+    print("perc99z", z_99)
+    print("perc50z", z_50)
+
+
+
+
+def clear_image_outer_box(box,mask):
+    # Get image dimensions
+    height, width = mask.shape[:2]
+
+    # Create a mask with the same dimensions as the image
+    backgorund = np.zeros((height, width), dtype=np.uint8)
+    # Fill the mask with white pixels inside the box region
+    cv2.rectangle(backgorund, (box[0], box[1]), (box[2], box[3]), 255, -1)
+    # Bitwise AND the image with the mask to set pixels outside the box to white
+    result = cv2.bitwise_and(mask, mask, mask=backgorund)
+    return result
+
+
+def detect_rotated_box(mask,frame):
+    cnt1, completion = second_layer_accurate_cnt_estimator_and_draw(mask)
+    rect = cv2.minAreaRect(cnt1)
+
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+
+    (tl, tr, br, bl) = box
+
+    (tltrX, tltrY) = midpoint(tl, tr)
+    (blbrX, blbrY) = midpoint(bl, br)
+    # compute the midpoint between the top-left and top-right points,
+    # followed by the midpoint between the top-righ and bottom-right
+    (tlblX, tlblY) = midpoint(tl, bl)
+    (trbrX, trbrY) = midpoint(tr, br)
+
+    cv2.line(frame, tl, tr, (0, 255, 0), 1)
+    cv2.line(frame, bl, br, (0, 255, 0), 1)
+    cv2.line(frame, tl, bl, (0, 255, 0), 1)
+    cv2.line(frame, tr, br, (0, 255, 0), 1)
+
+
+
+    return rect, cnt1
 
 
 def volume(L,d):
@@ -154,52 +226,53 @@ def obtain_intrinsics():
 
 
 
-def medium_points_of_box_for_dimension_extraction(box, orig):
-    # unpack the ordered bounding box, then compute the midpoint
-    # between the top-left and top-right coordinates, followed by
-    # the midpoint bet ween bottom-left and bottom-right coordinates
 
-
-    (tl, tr, br, bl) = box
-
-
-
-    (tltrX, tltrY) = midpoint(tl, tr)
-    (blbrX, blbrY) = midpoint(bl, br)
-    # compute the midpoint between the top-left and top-right points,
-    # followed by the midpoint between the top-righ and bottom-right
-    (tlblX, tlblY) = midpoint(tl, bl)
-    (trbrX, trbrY) = midpoint(tr, br)
-
-    #  tl *--------------tltr------------------* tr
-    #     |                                    |
-    #     |-  tlbl                             |-  tlbr
-    #     |                                    |
-    #  bl *----------------blbr----------------* br
-    # compute the Euclidean distance between the midpoints
-
-
-    return (tltrX, tltrY), (blbrX, blbrY), (tlblX, tlblY), (trbrX, trbrY)
-
-
-def convert_depth_image_to_pointcloud(depth_image, intrinsics):
+def convert_depth_image_to_pointcloud(depth_image, intrinsics, frame):
     h, w = depth_image.shape
 
     pointcloud = np.zeros((h, w, 3), np.float32)
+    allz = []
+    allx = []
+    ally = []
 
     for r in range(h): #y
         for c in range(w): #x
-            distance = float(depth_image[r, c]) # [y, x]
+            distance = float((depth_image[r, c] + 50 ) * 10) # [y, x]
 
-            result = rs.rs2_deproject_pixel_to_point(intrinsics, [c, r], distance)  # [c,r] = [x,y]
-            # result[0]: right, result[1]: down, result[2]: forward
+            if distance > 600:
+                # if distance > 1110:
+                # else:
+                #     cv2.circle(frame, (c, r), 1, (0, 0, 255), 1)
 
-            # if abs(result[0]) > 1000.0 or abs(result[1]) > 1000.0 or abs(result[2]) > 1000.0:
-            # print(result)
-            # z,x,y
-            pointcloud[r, c] = [int(result[2]), int(-result[0]), int(-result[1])] #z,x,y
-            #z,x,y
-    return pointcloud
+                result = rs.rs2_deproject_pixel_to_point(intrinsics, [c, r], distance)  # [c,r] = [x,y]
+                # result[0]: right, result[1]: down, result[2]: forward
+
+
+                # if abs(result[0]) > 1000.0 or255 abs(result[1]) > 1000.0 or abs(result[2]) > 1000.0:
+                # print(result)
+                # z,x,y
+                pointcloud[r, c] = [int(result[2]), int(-result[0]), int(-result[1])] #z,x,y
+                if int(-result[0]) % 10 == 0:
+                    cv2.circle(frame, (c, r), 1, (255, 0, 0), 1)
+
+                if int(-result[1]) % 10 == 0:
+                    cv2.circle(frame, (c, r), 1, (0, 255, 0), 1)
+                if abs(int(-result[0]) ) > 400:
+                    cv2.circle(frame, (c, r), 1, (0, 0, 255), 1)
+
+
+
+
+
+                allz.append(int(result[2]))
+                allx.append(int(-result[0]))
+                ally.append(int(-result[1]))
+
+
+
+                #z,x,y
+                #pointcloud[r,c] = [0,0,0]
+    return pointcloud, allz, allx, ally
 
 def convert_u8_img_to_u16_d435_depth_image(u8_image):
 
@@ -210,120 +283,6 @@ def convert_u8_img_to_u16_d435_depth_image(u8_image):
     return u16_image_off_mm
 
 
-def distance_cylinder_single(pointcloud,depth_frame, intrinsics, box, rgbframe, mask):
-
-
-    #  tl *--------------tltr------------------* tr
-    #     |                                    |
-    #     |-  tlbl                             |-  tlbr
-    #     |                                    |
-    #  bl *----------------blbr----------------* br
-    #
-    (tltrX, tltrY), (blbrX, blbrY), (tlblX, tlblY), (trbrX, trbrY) = medium_points_of_box_for_dimension_extraction(box,
-                                                                                                                   rgbframe)
-    A = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
-    B = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
-
-    (tl, tr, br, bl) = box
-
-    if A > B:
-        dB = A
-        dA = B
-        (tlblX, tlblY), (trbrX, trbrY), (tltrX, tltrY), (blbrX, blbrY) = medium_points_of_box_for_dimension_extraction(
-            box,
-            rgbframe)
-        (tl, bl,br, tr) = box
-        print("rotated")
-    else:
-        dA = A
-        dB = B
-
-    orig = rgbframe
-    length = dB
-
-    mask_copy_rect = mask.copy()
-    cv2.line(orig, tl, tr, (0, 255, 0), 1)
-    cv2.line(orig, bl, br, (0, 255, 0), 1)
-
-    #erodiamo un pelo la maschera per tralasciare i valori estremi
-    # Creating kernel
-    kernel = np.ones((KERNEL, KERNEL), np.uint8)
-
-    # Using cv2.erode() method
-
-    mask = cv2.dilate(mask, kernel)
-    cv2.imshow("post proc mask 4 depth", mask)
-    zvec = []
-
-
-    for x in range(pointcloud.shape[0]):
-        for y in range(pointcloud.shape[1]):
-            point = pointcloud[x, y]
-            point_mask = mask[x, y]
-            if point_mask == 0:
-                if point[0] > 501:
-                    #cv2.circle(rgbframe, (y + int(w/2), x), 1, (255, 0, 255), -1)
-
-                    zzz = int(point[0])
-                    zvec.append(zzz)
-
-
-
-
-
-    meanz = round(statistics.mean(list(zvec)),2)
-    stdz = round(statistics.stdev(list(zvec)),2)
-
-
-    zvec = []
-    filter_alpha = 1
-    for x in range(pointcloud.shape[0]):
-        for y in range(pointcloud.shape[1]):
-            point = pointcloud[x, y]
-            point_mask = mask[x, y]
-
-            if point_mask == 0:
-                if int(point[0]) > 501:
-
-                    #cv2.circle(rgbframe, (y + int(w/2), x), 1, (255, 0, 255), -1)
-
-                    zzz = int(point[0])
-                    if zzz < meanz + stdz * filter_alpha and zzz > meanz - stdz * filter_alpha:
-                        cv2.circle(rgbframe, (y , x), 1, (255, 0, 255), -1)
-                        zvec.append(zzz)
-
-
-    filtered_mean_z = np.mean(zvec)
-
-    return filtered_mean_z
-
-
-
-def calc_box_for_subcylinder_recognition(mask):
-    mask = (255 - mask)
-    #cv2.imshow("mcdo", imagem1)
-    h = mask.shape[0]
-    w = mask.shape[1]
-    cnt = []
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-    for cnt_i in contours:
-        area = cv2.contourArea(cnt_i)
-        area_image = h * w
-        ratio = area / area_image
-
-        # print("ratio", ratio)
-        # print("ratio", ratio)
-        if ratio > 0.001:
-            cnt = cnt_i
-
-
-    rect = cv2.minAreaRect(cnt)
-
-
-    box = cv2.boxPoints(rect)
-    box = np.int0(box)
-    return box
 
 def rotate_image_width_horizontal_max(image):
     h = image.shape[0]
@@ -334,29 +293,6 @@ def rotate_image_width_horizontal_max(image):
         image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
     return image
-
-def image_splitter(frame):
-
-    h = frame.shape[0]
-    w = frame.shape[1]
-    # channels = frame.shape[2]
-
-    # decido se tagliare in altezza o larghezza
-    if h > w:
-        # top bottom
-        half2 = h // 2
-
-        img1 = frame[:half2, :]
-        img2 = frame[half2:, :]
-
-    else:
-        # left right
-        half = w // 2
-
-        img1 = frame[:, :half]
-        img2 = frame[:, half:]
-
-    return img1, img2
 
 def rotated_box_cropper(mask, depth, rgb, pointcloud):
 
@@ -478,180 +414,6 @@ def rotated_box_cropper(mask, depth, rgb, pointcloud):
 def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
-def calc_box_legth(box, orig, draw):
-
-
-    #  tl *--------------tltr------------------* tr
-    #     |                                    |
-    #     |-  tlbl                             |-  tlbr
-    #     |                                    |
-    #  bl *----------------blbr----------------* br
-    #
-
-    # unpack the ordered bounding box, then compute the midpoint
-    # between the top-left and top-right coordinates, followed by
-    # the midpoint bet ween bottom-left and bottom-right coordinates
-    (tl, tr, br, bl) = box
-    (tltrX, tltrY) = midpoint(tl, tr)
-    (blbrX, blbrY) = midpoint(bl, br)
-    # compute the midpoint between the top-left and top-right points,
-    # followed by the midpoint between the top-righ and bottom-right
-    (tlblX, tlblY) = midpoint(tl, bl)
-    (trbrX, trbrY) = midpoint(tr, br)
-    # compute the Euclidean distance between the midpoints
-
-    A = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
-    B = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
-    if A < B:
-        dA = A
-        dB = B
-    else:
-        dB = A
-        dA = B
-
-    return dA, dB, orig
-
-def sub_box_iteration_cylindrificator(box1, frame, mask, depth, intrinsics,pointcloud):
-    imagem1 = (255 - mask)
-    diametro, lunghezza = 0, 0
-
-
-    draw = False
-    dA, dB, frame = calc_box_legth(box1, frame, draw)
-
-    rgb_images_collector = []
-    images_collector = []
-    depth_images_collector = []
-    pointcloud_collector = []
-
-
-    if iteration == 0:
-        rot_pointcloud, rot_mask, rot_mask_depth, rot_rgb, box, succesful = rotated_box_cropper(mask,depth,frame, pointcloud)
-        rgb_images_collector.append(rot_rgb)
-        images_collector.append(rot_mask)
-        depth_images_collector.append(rot_mask_depth)
-        pointcloud_collector.append(rot_pointcloud)
-
-    else:
-
-        rgb_images_collector.append(frame)
-        images_collector.append(mask)
-        depth_images_collector.append(depth)
-        pointcloud_collector.append(pointcloud)
-
-        all_images_in_loop = []
-        all_images_in_loop.append(images_collector)
-
-
-        for it in range(iteration):
-
-            # prima ruoto e taglio
-            new_collector_images = []
-            new_collector_depth_images = []
-            new_collector_RGB_images = []
-            new_collector_pointcloud =[]
-
-            for im_num in range(len(images_collector)):
-
-                rot_pointcloud, rot_mask, rot_mask_depth, rot_rgb, box, succesful = rotated_box_cropper(images_collector[im_num],
-                                                                                        depth_images_collector[im_num],
-                                                                                       rgb_images_collector[im_num],pointcloud_collector[im_num])
-
-                if succesful != False:
-
-                    # poi splitto
-
-                    img1, img2 = image_splitter(rot_mask)
-                    img_d1, img_d2 = image_splitter(rot_mask_depth)
-                    img_rgb1, img_rgb2 = image_splitter(rot_rgb)
-                    img_pc1, img_pc2 = image_splitter(rot_pointcloud)
-
-                    new_collector_images.append(img1)
-                    new_collector_images.append(img2)
-
-                    new_collector_depth_images.append(img_d1)
-                    new_collector_depth_images.append(img_d2)
-
-                    new_collector_RGB_images.append(img_rgb1)
-                    new_collector_RGB_images.append(img_rgb2)
-
-                    new_collector_pointcloud.append(img_pc1)
-                    new_collector_pointcloud.append(img_pc2)
-
-                else:
-                    breaking_point = True
-                    print(" not succesful cylkindricization, termiate frame")
-                    return 0, 0
-            images_collector = new_collector_images
-            depth_images_collector = new_collector_depth_images
-            rgb_images_collector = new_collector_RGB_images
-            pointcloud_collector = new_collector_pointcloud
-
-            all_images_in_loop.append(images_collector)
-
-        # print("images : ",len(images_collector))
-
-#_________________fine iterazioni 1 step
-
-    LLL = []
-    DDD = []
-    RRL = []
-    ZZZ = []
-
-    for x in range(len(images_collector)):
-
-        rgb = rgb_images_collector[x]
-        depthr = depth_images_collector[x]
-        maskr = images_collector[x]
-        pc = pointcloud_collector[x]
-
-
-        # print("distancce")
-        try:
-
-            boxc = calc_box_for_subcylinder_recognition(maskr)
-
-
-            filtered_depth = distance_cylinder_single(pc,depthr, intrinsics, boxc,
-                                                              rgb, maskr)
-
-
-
-
-        except Exception as e:
-            print("e", e)
-        # depth #mask #dpth mASKED #RGB
-        h, w, c = rgb.shape
-        ax = 0
-        if w < h:
-            ax = 1
-
-        visible_pointcloud = (
-                    (pc - pc.min()) * (1 / (pc.max() - pc.min()) * 255)).astype('uint8')
-
-
-        vis = np.concatenate((rgb,cv2.cvtColor(depthr, cv2.COLOR_GRAY2BGR),cv2.cvtColor(maskr, cv2.COLOR_GRAY2BGR),visible_pointcloud), axis=ax)
-        cv2.imshow("im" + str(x), resize_image(vis,ZOOM))
-        cv2.moveWindow("im" + str(x), 150 * x, 150 * x)
-
-    if len(LLL) > 0:
-
-        print(DDD)
-        l_tot = round(sum(LLL),2)
-        d_med = round(statistics.mean(DDD),2)
-        r_L_real_med = round(statistics.mean(RRL),4)
-        dep_med = round(statistics.mean(ZZZ),2)
-    else:
-        l_tot = 0
-        d_med = 0
-        r_L_real_med = 0
-        dep_med = 0
-
-
-
-
-    return  l_tot, d_med, r_L_real_med, dep_med
-
 def draw_and_calculate_rotated_box(cnt, frame):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
@@ -660,7 +422,7 @@ def draw_and_calculate_rotated_box(cnt, frame):
     return box
 
 
-def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
+def second_layer_accurate_cnt_estimator_and_draw(mask_bu):
     imagem1 = (255 - mask_bu)
 
     contours1, hierarchy1 = cv2.findContours(imagem1, cv2.RETR_EXTERNAL,
@@ -717,7 +479,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
                                                           "ratio", round(ratio, 5), " solidity", round(solidity, 4))
                                                     cv2.drawContours(frame, [cnt1], 0, (200, 200, 50), 1)
 
-                                                    return cnt1, frame, True
+                                                    return cnt1, True
     print("________!!!!____________advanced shoots not detected")
     print("len contours", len(contours1))
     cv2.imshow("eee", mask_bu)
@@ -750,7 +512,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
             print("__|RATIO|__:", ratio)
 
     # time.sleep(1000)
-    return 0, frame, False
+    return 0, False
 
 
 
@@ -820,64 +582,87 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
             if ret == True and ret2 == True:
 
-                try:
-                    #gestionn depth
-                    frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
 
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    ret, mask = cv2.threshold(gray, THRES_VALUE, 255, cv2.THRESH_BINARY)
-                    cv2.imshow("initial mask", resize_image(mask,50))
+                #gestionn depthimg
+                frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+                kernel = np.ones((5, 5), np.float32) / 25
+                #frame2of = cv2.filter2D(frame2, -1, kernel)
+                #frame2of = cv2.GaussianBlur(frame2,(31,31),0) #medio
+                #frame2of = cv2.blur(frame2, (51, 51)) #buono
+                #frame2of = cv2.medianBlur(frame2, 51) #ottimo ####
+                #frame2of = cv2.bilateralFilter(frame2, 15, 75, 75)
+                frame2of = frame2
 
+                ###!!!! BLURRA SOLO I VALORI INTERNI ALLA MASCHERA:
+                #prendi i valori dentro la maschera (media o simile) ed estendili a tutta l immagine
 
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                ret, mask = cv2.threshold(gray, THRES_VALUE, 255, cv2.THRESH_BINARY)
+                rect_point_of_interest, cnt = detect_rotated_box(mask,frame)
 
-                    #try:
+                #make white out of the bounfing refct
+                x, y, w, h = cv2.boundingRect(cnt)
+                white_bg = 255 * np.ones_like(mask)
+                roi = mask[y:y + h, x:x + w]
+                white_bg[y:y + h, x:x + w] = roi
 
-
-
-
-                    cnt1, frame, completion = second_layer_accurate_cnt_estimator_and_draw(mask, frame)
-
-                    rect = cv2.minAreaRect(cnt1)
-
-                    frame = crop_with_rect_rot(frame,rect)
-                    frame2 = crop_with_rect_rot(frame2,rect)
-                    mask = crop_with_rect_rot(mask,rect)
-
-
-
-
-
+                mask = white_bg
 
 
-                    frame2_u16 = convert_u8_img_to_u16_d435_depth_image(frame2)
-                    pointcloud = convert_depth_image_to_pointcloud(frame2_u16, intrinsics)
+
+                mask_inverted = cv2.bitwise_not(mask)
+                #pulisco da grigi nuova maschera
+                #ret, mask_inverted = cv2.threshold(mask_inverted, 120, 255, cv2.THRESH_BINARY)
+                #mask_inverted[mask_inverted > 0] = 255
+
+                #maschero il depth con la maschera rgb
+                black_out_depth_in = cv2.bitwise_and(frame2of, frame2of, mask=mask_inverted)
+                #calcolo valore medio interno alla maschera
+                avg_masked_value =  int(cv2.mean(frame2of, mask=mask_inverted) [0])
+                print("depth avarage", avg_masked_value)
+                #riempi l esterno con il valore medio
+                black_out_depth_in_AVARAGED = black_out_depth_in.copy()
+                #copio l immagine per editarla
+                black_out_depth_in_AVARAGED[np.where((black_out_depth_in_AVARAGED == [0]))] = [avg_masked_value]
+                #ora blurriamo e poi riaplicchiamo la maschera
+                black_out_depth_in_blurred = cv2.medianBlur(black_out_depth_in_AVARAGED, 21)
+                #riapplico la maschera sull immagine blurrata di depth con background stabile
+                black_out_depth_in_remasked = cv2.bitwise_and(black_out_depth_in_blurred, black_out_depth_in_blurred, mask=mask_inverted)
 
 
-                    box1 = draw_and_calculate_rotated_box(cnt1, frame)
-                    l_tot, d_med, r_L_real_med, dep_med  = sub_box_iteration_cylindrificator(box1, frame, mask, frame2, intrinsics,pointcloud)
-                    # L e D dovrebbero essere costanti
-                    print("L:",l_tot, " d:", d_med, " z:",dep_med)
+                #extract only the pixels inside the ,ask:
+                #qui stiamo cercando di visualizzare quanti pixel neri ci sono all interno della maschera che corrispondono al rumore TO DO
+                pixels = frame2of[[mask_inverted]]
+                arr = np.array(pixels)
 
 
-                    L_.append(l_tot)
-                    D_.append(d_med)
-                    RRLLL.append(r_L_real_med)
-                    Z_all.append(dep_med)
-
-                except Exception as e:
-                     print("processing error:", e)
+                #black_out_dapth_in = frame2of * mask_inverted
 
 
-                if POINT_CLOUD_GRAPH:
-                    plt.draw()
-                    plt.pause(0.001)
-                #cv2.imshow("cdscsdc", mask)
-                cv2.imshow("or", resize_image(frame,100))
+                pc, allz,allx,ally = convert_depth_image_to_pointcloud(black_out_depth_in_remasked,intrinsics,frame)
+                visible_pointcloud = ((pc - pc.min()) * (1 / (pc.max() - pc.min()) * 255)).astype('uint8')
+                simple_geometrical_analisys(allx,ally,allz)
+
+                #crop for imaging
+                cropped_masked_depth = crop_with_rect_rot(black_out_depth_in_AVARAGED,rect_point_of_interest)
+                cropped_frame = crop_with_rect_rot(frame, rect_point_of_interest)
+                mask_inverted_crop = crop_with_rect_rot(mask_inverted, rect_point_of_interest)
+
+                plt.hist(arr, bins=25)
+                plt.show()
+
+                cv2.imshow("or", resize_image(cropped_frame,300))
+                cv2.imshow("initial mask", resize_image(black_out_depth_in_remasked,60))
+
+                cv2.imshow("initial frame2", resize_image(cropped_masked_depth, 300))
+
+
 
                 key = cv2.waitKey(CONTINOUS_STREAM)
                 if key == ord('q') or key == 27:
                     sys.exit()
-                    break
+
+
             else:
                 break
         else:
@@ -891,10 +676,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
 
 plt.close('all')
 
-L_.append(l_tot)
-D_.append(d_med)
-RRLLL.append(r_L_real_med)
-Z_all.append(dep_med)
+
 
 
 

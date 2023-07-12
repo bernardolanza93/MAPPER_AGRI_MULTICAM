@@ -2,6 +2,7 @@
 
 import cv2
 import numpy as np
+import os
 
 
 def resize_image(img, percentage):
@@ -19,7 +20,18 @@ def resize_image(img, percentage):
 
 # Create a VideoCapture object and read from input file
 # If the input is the camera, pass 0 instead of the video file name
-cap = cv2.VideoCapture('test.h264')
+video1_path = 'video_dave/F3_6-FN3_ev0.h264'
+cap = cv2.VideoCapture(video1_path)
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+size = (width, height)
+fps = float(cap.get(cv2.CAP_PROP_FPS))
+video_name = os.path.basename(video1_path)  # Get the file name with extension
+video_name_without_ext = os.path.splitext(video_name)[0]  # Remove the extension
+print(video_name_without_ext)
+fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
+out = cv2.VideoWriter(str(video_name_without_ext) + "_converted.avi", fourcc, fps,
+                      size)  # setta la giusta risoluzionw e fps
 
 # Check if camera opened successfully
 if (cap.isOpened() == False):
@@ -30,15 +42,11 @@ while (cap.isOpened()):
     # Capture frame-by-frame
     ret, frame = cap.read()
     if ret == True:
-        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #print(frame)
-        #frame = resize_image(frame, 200)
-
-        # Display the resulting frame
-        #frame = resize_image(frame,50)
+        print(frame.shape)
         cv2.imshow('Frame', frame)
 
         # Press Q on keyboard to  exit
+        out.write(frame)
         if cv2.waitKey(0) & 0xFF == ord('q'):
             break
 
@@ -47,6 +55,8 @@ while (cap.isOpened()):
         break
 
 # When everything done, release the video capture object
+out.release()
 cap.release()
+cv2.destroyAllWindows()
 
 # Closes all the frames
