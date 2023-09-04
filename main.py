@@ -335,14 +335,14 @@ def RS_capture(queue,status):
 
     else:
         print("NO SAVE VIDEO D435 MODE")
-    frame = 0
+    frame_c = 0
 
     print("START LOOP")
 
     for i in range(FRAMES_TO_ACQUIRE):
         if enable_T265 or enable_D435i:
             start = time.time()
-            frame += 1
+            frame_c += 1
 
             if enable_T265:
                 try:
@@ -380,7 +380,7 @@ def RS_capture(queue,status):
                     # print("Acceleration: {}\n".format(data.acceleration))
                     now = datetime.now()
                     time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
-                    writeCSVdata(date_time, [frame, time_st, data.translation, data.velocity, anglePRY])
+                    writeCSVdata(date_time, [frame_c, time_st, data.translation, data.velocity, anglePRY])
                     if not enable_D435i:
                         #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                         time.sleep(0.067)
@@ -399,7 +399,7 @@ def RS_capture(queue,status):
                 aligned_frames = align.process(frames)
                 depth_frame = aligned_frames.get_depth_frame()
                 color_frame = aligned_frames.get_color_frame()
-                if frames < 3:
+                if frame_c < 3:
                     depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
                     color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
                     calculate_and_save_intrinsics(depth_intrin)
@@ -560,7 +560,7 @@ def main(q,status):
 
 
 
-    frame = 0
+    frame_c = 0
 
     print("START LOOP")
 
@@ -570,7 +570,7 @@ def main(q,status):
             if  status.value == 0:
                 break
             else:
-                frame += 1
+                frame_c += 1
 
                 # T265
 
