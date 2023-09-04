@@ -471,8 +471,17 @@ def RS_capture(queue,status):
 
     if enable_D435i:
         pipeline.stop()
-        out.release()
-        out_depth.release()
+        try:
+            out.release()
+        except Exception as e:
+            print("ERROR RELEASE RGB: %s", str(e))
+        try:
+            out_depth.release()
+        except Exception as e:
+            print(out_depth)
+            print(intcm.shape)
+            print("ERROR RELEASE DEPTH: %s", str(e))
+
         cv2.destroyAllWindows()
         print("closing object...")
         time.sleep(2)
