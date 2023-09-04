@@ -276,7 +276,7 @@ def RS_capture(queue,status):
         print("serial : ", type(seriald435))
         config.enable_device(seriald435)
         config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
-        config.enable_stream(rs.stream.depth, 1920, 1080, rs.format.z16, 30)
+        config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
 
         # We'll use the colorizer to generate texture for our PLY
 
@@ -290,9 +290,9 @@ def RS_capture(queue,status):
             # Start streaming
             pipeline.start(config)
             # colorizer = rs.colorizer()
-            print("D435I PIPELINE MODE started")
+            print("D435I START OK ___________")
         except Exception as e:
-            print("error pipeline D435 starting:||||:: %s", str(e))
+            print("ERROR ON START D435:||||:: %s", str(e))
         # _________________________________________________
 
     if enable_T265:
