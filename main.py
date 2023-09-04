@@ -59,7 +59,7 @@ now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%_SUM")
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
-DISPLAY_RGB = False
+DISPLAY_RGB = True
 FRAMES_TO_ACQUIRE = 30
 
 
@@ -399,11 +399,13 @@ def RS_capture(queue,status):
                 aligned_frames = align.process(frames)
                 depth_frame = aligned_frames.get_depth_frame()
                 color_frame = aligned_frames.get_color_frame()
-                depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
-                color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
-                calculate_and_save_intrinsics(depth_intrin)
+                if frames < 3:
+                    depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+                    color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
+                    calculate_and_save_intrinsics(depth_intrin)
                 color_image = np.asanyarray(color_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
+                print("PRE-DEPTH",depth_image.shape)
 
 
                 # width = int(1920)
