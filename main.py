@@ -404,8 +404,7 @@ def RS_capture(queue,status):
                 calculate_and_save_intrinsics(depth_intrin)
                 color_image = np.asanyarray(color_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
-                print("RGB", color_image.shape)
-                print("DEPTH", depth_image.shape)
+
 
                 # width = int(1920)
                 # height = int(1080)
@@ -423,6 +422,9 @@ def RS_capture(queue,status):
                 maxi = np.clip(resized, 0, 255)
                 # convert to 8 bit
                 intcm = maxi.astype('uint8')
+
+                print("RGB", color_image.shape)
+                print("DEPTH", intcm.shape)
 
                 if SAVE_VIDEO_TIME != 0:
                     try:
