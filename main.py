@@ -413,7 +413,7 @@ def RS_capture(queue,status):
                 dim = (width, height)
 
                 # resize image depth to fit rgb
-                print("DEPTH before", resized.shape)
+                print("DEPTH before", depth_image.shape)
                 resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
                 print("DEPTH after", resized.shape)
                 # convert u16 mm bw image to u16 cm bw
