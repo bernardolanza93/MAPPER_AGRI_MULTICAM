@@ -60,7 +60,8 @@ date_time = now.strftime("%Y_%m_%d_%H_%M_%_SUM")
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
 DISPLAY_RGB = False
-FRAMES_TO_ACQUIRE = 60
+FRAMES_TO_ACQUIRE = 30
+
 
 
 
@@ -119,12 +120,15 @@ def calculate_and_save_intrinsics(intrinsics):
         writeCSVdata_generic(title, int)
         print("new file intrinsics written")
         print(int)
+    else:
+        print("intrinsics loaded, file found, all ok.")
 
 def organize_video_from_last_acquisition():
     try:
         path_dir = "aquisition_raw/"
         if not os.path.exists(path_dir):
             # Create the folder if it doesn't exist
+            print("path not present:",path_dir, ", created!")
             os.makedirs(path_dir)
 
         #create directory to contain file
