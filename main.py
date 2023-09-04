@@ -59,7 +59,7 @@ now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%_SUM")
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
-DISPLAY_RGB = True
+DISPLAY_RGB = 0
 FRAMES_TO_ACQUIRE = 30
 
 
@@ -328,7 +328,7 @@ def RS_capture(queue,status):
             gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
             #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
             #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '' videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
-            out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080),0)
+            out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), 0)
 
 
 
@@ -405,7 +405,7 @@ def RS_capture(queue,status):
                     calculate_and_save_intrinsics(depth_intrin)
                 color_image = np.asanyarray(color_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
-                print("PRE-DEPTH",depth_image.shape)
+
 
 
                 # width = int(1920)
@@ -425,8 +425,8 @@ def RS_capture(queue,status):
                 # convert to 8 bit
                 intcm = maxi.astype('uint8')
 
-                print("RGB", color_image.shape)
-                print("DEPTH", intcm.shape)
+                # print("RGB", color_image.shape)
+                # print("DEPTH", intcm.shape)
 
                 if SAVE_VIDEO_TIME != 0:
                     try:
@@ -472,10 +472,13 @@ def RS_capture(queue,status):
         out.release()
         out_depth.release()
         cv2.destroyAllWindows()
+        print("closing object...")
+        time.sleep(2)
     if enable_T265:
         pipelineT265.stop()
     print("TERMINATING RS CAPTURE")
-    time.sleep(3)
+    status.value = 0
+    time.sleep(2)
     sys.exit()
 
 
