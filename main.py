@@ -120,8 +120,7 @@ def calculate_and_save_intrinsics(intrinsics):
         writeCSVdata_generic(title, int)
         print("new file intrinsics written")
         print(int)
-    else:
-        print("intrinsics loaded, file found, all ok.")
+
 
 def organize_video_from_last_acquisition():
     try:
@@ -408,15 +407,15 @@ def RS_capture(queue,status):
                 print("RGB", color_image.shape)
                 print("DEPTH", depth_image.shape)
 
-                width = int(1920)
-                height = int(1080)
-                dim = (width, height)
-
-                # resize image depth to fit rgb
-                resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+                # width = int(1920)
+                # height = int(1080)
+                # dim = (width, height)resized
+                #
+                # # resize image depth to fit rgb
+                # resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
 
                 # convert u16 mm bw image to u16 cm bw
-                resized = resized / 10
+                resized = depth_image / 10
                 # rescale without first 50 cm of offset unwanted
                 resized = resized - offset
 
