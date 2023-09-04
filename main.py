@@ -59,7 +59,7 @@ now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%_SUM")
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
-DISPLAY_RGB = 0
+DISPLAY_RGB = 1
 FRAMES_TO_ACQUIRE = 30
 
 
@@ -276,7 +276,7 @@ def RS_capture(queue,status):
         print("serial : ", type(seriald435))
         config.enable_device(seriald435)
         config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
-        config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
+        config.enable_stream(rs.stream.depth, 1920, 1080, rs.format.z16, 30)
 
         # We'll use the colorizer to generate texture for our PLY
 
@@ -328,7 +328,7 @@ def RS_capture(queue,status):
             gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
             #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
             #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '' videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
-            out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1080, 1920), 0)
+            out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), 0)
 
 
 
@@ -405,19 +405,20 @@ def RS_capture(queue,status):
                     calculate_and_save_intrinsics(depth_intrin)
                 color_image = np.asanyarray(color_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
-
-
-
-                width = int(1920)
-                height = int(1080)
-                dim = (width, height)
-
-                # resize image depth to fit rgb
                 print("DEPTH before", depth_image.shape)
-                resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
-                print("DEPTH after", resized.shape)
+
+
+
+                # width = int(1920)
+                # height = int(1080)
+                # dim = (width, height)
+                #
+                # # resize image depth to fit rgb
+                # print("DEPTH before", depth_image.shape)
+                # resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+                # print("DEPTH after", resized.shape)
                 # convert u16 mm bw image to u16 cm bw
-                resized = resized / 10
+                resized = depth_image / 10
                 # rescale without first 50 cm of offset unwanted
                 resized = resized - offset
 
@@ -427,7 +428,7 @@ def RS_capture(queue,status):
                 intcm = maxi.astype('uint8')
 
                 # print("RGB", color_image.shape)
-                # print("DEPTH", intcm.shape)
+                print("DEPTH", intcm.shape)
 
                 if SAVE_VIDEO_TIME != 0:
                     try:
