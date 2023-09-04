@@ -325,10 +325,6 @@ def RS_capture(queue,status):
             gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
             out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1920, 1080))
 
-
-
-
-        if enable_D435i:
             #gst_out_depth   = "appsrc ! video/x-raw, format=GRAY ! queue ! videoconvert ! video/x-raw,format=GRAY ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
             gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
             #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
@@ -409,6 +405,9 @@ def RS_capture(queue,status):
                 calculate_and_save_intrinsics(depth_intrin)
                 color_image = np.asanyarray(color_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
+                print("RGB", color_image.shape)
+                print("DEPTH", depth_image.shape)
+
                 width = int(1920)
                 height = int(1080)
                 dim = (width, height)
@@ -420,7 +419,6 @@ def RS_capture(queue,status):
                 resized = resized / 10
                 # rescale without first 50 cm of offset unwanted
                 resized = resized - offset
-                # tolgo tutto sotto i 30 cm
 
                 # stretchin all in the 0-255 cm interval
                 maxi = np.clip(resized, 0, 255)
@@ -473,6 +471,9 @@ def RS_capture(queue,status):
         cv2.destroyAllWindows()
     if enable_T265:
         pipelineT265.stop()
+    print("TERMINATING RS CAPTURE")
+    time.sleep(3)
+    sys.exit()
 
 
 
