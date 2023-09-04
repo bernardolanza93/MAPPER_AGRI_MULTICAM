@@ -408,15 +408,16 @@ def RS_capture(queue,status):
 
 
 
-                # width = int(1920)
-                # height = int(1080)
-                # dim = (width, height)resized
-                #
-                # # resize image depth to fit rgb
-                # resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+                width = int(1920)
+                height = int(1080)
+                dim = (width, height)
 
+                # resize image depth to fit rgb
+                print("DEPTH before", resized.shape)
+                resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
+                print("DEPTH after", resized.shape)
                 # convert u16 mm bw image to u16 cm bw
-                resized = depth_image / 10
+                resized = resized / 10
                 # rescale without first 50 cm of offset unwanted
                 resized = resized - offset
 
