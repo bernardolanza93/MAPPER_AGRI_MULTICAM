@@ -27,24 +27,254 @@ print(sys.version)
 
 print("PATH! ", PATH_EXAMPLE)
 
-
-def remove_far_points(point_cloud, std_threshold=1.0):
-    # Calculate the mean and standard deviation of x, y, and z coordinates
-    means = np.mean(point_cloud, axis=0)
-    stds = np.std(point_cloud, axis=0)
-
-    # Define a mask to filter out points that are far from the mean
-    mask = np.all(np.abs((point_cloud - means) / stds) <= std_threshold, axis=1)
-
-    # Apply the mask to keep points that are not far from the mean
-    filtered_cloud = point_cloud[mask]
-
-    print("removed: ", len(point_cloud) - len(filtered_cloud), "/",len(point_cloud), " far points")
-
-    return filtered_cloud
+def dimension_evaluator(points_mm):
+    # Create a point cloud from the input lists
+    #points_mm = z_score_normalization(points_mm,5)
 
 
-def radius_outlier_removal(point_cloud, radius_threshold = 3, min_neighbors =8):
+    # Calculate the centroid
+    centroid = np.mean(points_mm, axis=0)
+    z_mean = centroid[2]
+
+
+
+    # Create an Open3D point cloud object
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points_mm)
+
+    # Set the centroid color
+    centroid_color = [1.0, 0.0, 0.0]  # Red color
+    # Add a new point at (centroid_x, centroid_y, centroid_z + 1)
+    new_point = [centroid[0], centroid[1], centroid[2] + 1.0]
+    pcd.points.append(new_point)  # Append the new point to the point cloud
+
+    # Calculate the oriented bounding box
+    obb = pcd.get_oriented_bounding_box()
+
+    # Get the dimensions and transformation matrix of the oriented bounding box
+    dimensions = obb.extent
+    transformation_matrix = obb.R
+
+    # Extract dimensions along x, y, and z
+    length = dimensions[0]
+    width = dimensions[1]
+    height = dimensions[2]
+
+
+
+
+
+
+    if SHOW_PC_WITH_BOX:
+        print("box Dimensions (length, width, height):", length, width, height)
+
+
+        # Create a visualization object
+        vis = o3d.visualization.Visualizer()
+
+        # Add the point clouds and oriented bounding box
+        vis.create_window()
+        vis.add_geometry(pcd)
+        # vis.add_geometry(pcd_or)
+        vis.add_geometry(obb)
+
+        # Add the grid point cloud
+        # vis.add_geometry(grid_pcd)
+
+        # Set background color (light gray)
+        opt = vis.get_render_option()
+        opt.background_color = np.asarray([0.6, 0.6, 0.6])
+
+        # Visualize the scene
+        vis.run()
+        vis.destroy_window()
+
+    return length,width, z_mean
+
+
+
+
+def split_PC(points_mm):
+
+
+    # Create a point cloud from the input lists
+    point_cloud = o3d.geometry.PointCloud()
+    point_cloud.points = o3d.utility.Vector3dVector(points_mm)
+
+    # Compute the mean of the point cloud to find the centroid
+    centroid = np.mean(points_mm, axis=0)
+    # Compute the mean of the point cloud
+    mean = np.mean(points_mm, axis=0)
+
+    # Calculate the covariance matrix
+    cov_matrix = np.cov((points_mm - centroid).T)
+
+    # Compute the eigenvalues and eigenvectors of the covariance matrix
+    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+    # Sort eigenvalues and eigenvectors in descending order
+    sorted_indices = eigenvalues.argsort()[::-1]
+    eigenvalues = eigenvalues[sorted_indices]
+    eigenvectors = eigenvectors[:, sorted_indices]
+
+    # Define the normal vector of the plane as the first principal component
+    normal = eigenvectors[:, 0]  # First principal component
+
+    # Define a point on the plane as the centroid
+    point_on_plane = centroid
+
+    ## Calculate the projection of each point onto the PCA normal vector
+    distances = np.dot(points_mm - point_on_plane, normal)
+
+    # Define a threshold to split the point cloud
+    split_threshold = 0.0  # Adjust the threshold as needed
+
+    # Classify points as belonging to one half or the other based on the projection
+    half1_indices = np.where(distances >= split_threshold)
+    half2_indices = np.where(distances < split_threshold)
+
+    # Create two point clouds: one for each half with different colors
+    half1_colors = np.array([[1.0, 0.0, 0.0] for _ in range(len(half1_indices[0]))])  # Red color for half1
+    half1_cloud = point_cloud.select_by_index(half1_indices[0].tolist())
+    half1_cloud.colors = o3d.utility.Vector3dVector(half1_colors)
+
+    half2_colors = np.array([[0.0, 0.0, 1.0] for _ in range(len(half2_indices[0]))])  # Blue color for half2
+    half2_cloud = point_cloud.select_by_index(half2_indices[0].tolist())
+    half2_cloud.colors = o3d.utility.Vector3dVector(half2_colors)
+
+    half1_points = np.asarray(half1_cloud.points)
+    half2_points = np.asarray(half2_cloud.points)
+
+
+    if VISUALIZE_SPLITTING_OP:
+
+        # Define the size of the plane
+        plane_size = 50.0  # Adjust the size as needed
+
+        # Calculate two vectors orthogonal to the normal vector
+        v1 = np.cross(normal, [0, 0, 1])  # Assuming [0, 0, 1] as an arbitrary reference vector
+        v1 = v1 / np.linalg.norm(v1)  # Normalize v1
+        v2 = np.cross(normal, v1)  # Calculate v2 orthogonal to normal and v1
+
+        # Define points to represent the larger orthogonal plane
+        plane_points = [
+            centroid + plane_size * (v1 + v2),
+            centroid + plane_size * (-v1 + v2),
+            centroid + plane_size * (-v1 - v2),
+            centroid + plane_size * (v1 - v2),
+        ]
+
+        # Create a line set to represent the orthogonal plane
+        plane_line_set = o3d.geometry.LineSet()
+        plane_line_set.points = o3d.utility.Vector3dVector(plane_points)
+        lines = [[0, 1], [1, 2], [2, 3], [3, 0]]
+        plane_line_set.lines = o3d.utility.Vector2iVector(lines)
+
+        # Visualize the splits and the splitting plane
+        o3d.visualization.draw_geometries([half1_cloud,half2_cloud, plane_line_set])
+
+    return half1_points,half2_points
+
+def visualize_3D_list_pointcloud(points_mm):
+
+
+
+
+    # Stack the arrays horizontally to create the final matrix
+
+
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points_mm)
+
+
+
+    # Create a visualization object
+    vis = o3d.visualization.Visualizer()
+
+    # Add the point clouds and oriented bounding box
+    vis.create_window()
+    vis.add_geometry(pcd)
+    #vis.add_geometry(pcd_or)
+
+    # Add the grid point cloud
+    #vis.add_geometry(grid_pcd)
+
+    # Set background color (light gray)
+    opt = vis.get_render_option()
+    opt.background_color = np.asarray([0.6, 0.6, 0.6])
+
+    # Visualize the scene
+    vis.run()
+    vis.destroy_window()
+
+
+
+def clean_measurements(diameter_list, length_list, threshold_multiplier=2):
+    # Calculate the mean and standard deviation of the measurements
+    mean_diameter = np.mean(diameter_list)
+    std_dev_diameter = np.std(diameter_list)
+    mean_length = np.mean(length_list)
+    std_dev_length = np.std(length_list)
+
+    # Identify potential outliers based on the threshold
+    diameter_outliers = [i for i, diameter in enumerate(diameter_list) if abs(diameter - mean_diameter) > threshold_multiplier * std_dev_diameter]
+    length_outliers = [i for i, length in enumerate(length_list) if abs(length - mean_length) > threshold_multiplier * std_dev_length]
+
+    # Print the indices of potential outliers
+    print("removing length:", length_outliers , "total:", len(length_list))
+    print("Potential diameter outliers (index):", diameter_outliers)
+
+    # Replace outliers with the mean of nearby measurements
+    for outlier_index in diameter_outliers:
+        # Replace the diameter measurement with the mean of nearby measurements
+        if outlier_index > 0 and outlier_index < len(diameter_list) - 1:
+            diameter_list[outlier_index] = np.mean([diameter_list[outlier_index - 1], diameter_list[outlier_index + 1]])
+
+    for outlier_index in length_outliers:
+        # Replace the length measurement with the mean of nearby measurements
+        if outlier_index > 0 and outlier_index < len(length_list) - 1:
+            length_list[outlier_index] = np.mean([length_list[outlier_index - 1], length_list[outlier_index + 1]])
+
+    # Return the cleaned lists of diameters and lengths
+    return diameter_list, length_list
+
+
+def remove_points_not_in_plane(point_cloud, distance_threshold=0.5):
+    # Create an Open3D point cloud object
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(point_cloud)
+
+    # Perform plane segmentation using RANSAC
+    plane_model, inliers = pcd.segment_plane(distance_threshold=distance_threshold, ransac_n=3, num_iterations=1000)
+
+    # Get inlier and outlier point clouds
+    inlier_cloud = pcd.select_by_index(inliers)
+    outlier_cloud = pcd.select_by_index(inliers, invert=True)
+
+    # Convert the inlier cloud to a numpy array
+    inlier_points = np.asarray(inlier_cloud.points)
+    print("removed RANSAC p: ", len(point_cloud) - len(inlier_points), "/", len(point_cloud), "  points")
+
+    return inlier_points
+
+#
+# def remove_far_points(point_cloud, std_threshold=1.5):
+#     # Calculate the mean and standard deviation of x, y, and z coordinates
+#     means = np.mean(point_cloud, axis=0)
+#     stds = np.std(point_cloud, axis=0)
+#
+#     # Define a mask to filter out points that are far from the mean
+#     mask = np.all(np.abs((point_cloud - means) / stds) <= std_threshold, axis=1)
+#
+#     # Apply the mask to keep points that are not far from the mean
+#     filtered_cloud = point_cloud[mask]
+#
+#     print("removed far p: ", len(point_cloud) - len(filtered_cloud), "/",len(point_cloud), " far points")
+#
+#     return filtered_cloud
+
+
+def radius_outlier_removal(point_cloud, radius_threshold = 4, min_neighbors =4):
     # Calculate the distance to the k-nearest neighbors
     kdtree = cKDTree(point_cloud)
     distances, _ = kdtree.query(point_cloud, k=min_neighbors + 1)
@@ -62,7 +292,7 @@ def radius_outlier_removal(point_cloud, radius_threshold = 3, min_neighbors =8):
     return filtered_cloud
 
 
-def z_score_normalization(point_cloud, threshold_factor=0.01):
+def z_score_normalization(point_cloud, threshold_factor=0.05):
     # Extract z-values
     z_values = point_cloud[:, 2]
 
@@ -103,8 +333,10 @@ def show_PCA(x,y,z):
     #
 
     points_mm = radius_outlier_removal(points_mm)
-    points_mm = remove_far_points(points_mm)
     points_mm = z_score_normalization(points_mm)
+    #points_mm = remove_points_not_in_plane(points_mm)
+
+
 
     #plot_histogram(points_mm[:,2])
 
@@ -114,6 +346,8 @@ def show_PCA(x,y,z):
 
     # Calculate the centroid
     centroid = np.mean(points_mm, axis=0)
+    z_mean = centroid[2]
+
 
     # Set the centroid color
     centroid_color = [1.0, 0.0, 0.0]  # Red color
@@ -174,20 +408,20 @@ def show_PCA(x,y,z):
         #vis.add_geometry(grid_pcd)
 
         # Add a sphere to represent the centroid
-        centroid_sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1)
+        centroid_sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.5)
         centroid_sphere.translate(centroid)
         centroid_sphere.paint_uniform_color(centroid_color)
         vis.add_geometry(centroid_sphere)
 
         # Set background color (light gray)
         opt = vis.get_render_option()
-        opt.background_color = np.asarray([0.8, 0.8, 0.8])
+        opt.background_color = np.asarray([0.6, 0.6, 0.6])
 
         # Visualize the scene
         vis.run()
         vis.destroy_window()
 
-    return length,width
+    return length,width, z_mean
 
 
 
@@ -245,7 +479,7 @@ def plot_histogram(values):
 def save_to_csv_recursive(value, file_path):
     with open(file_path, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([value])
+        writer.writerow(value)
 
 
 
@@ -328,6 +562,7 @@ def dimension_image_list_analyzer(image_list, RGB_list):
 
     dxx = []
     dyy = []
+    dzz = []
     vol_all = []
     dyy_expected = []
     vol_expected_from_RGB = []
@@ -386,31 +621,42 @@ def dimension_image_list_analyzer(image_list, RGB_list):
         dx, dy, dz, z_med = draw_histograms_and_calc_dimension(x, y, z, False)
 
         try:
-            l,w = show_PCA(x,y,z)
+            l,w,z_m = show_PCA(x,y,z)
 
         except Exception as e:
             print(e)
             l,w = 0,0
         # print("expected",expected_from_rgb_contours_dy_diameter,' real',dy, " length", dx)
 
+        write_number_at_center(imageRGB, l)
         dxx.append(l)  # lungheezaa
         dyy.append(w)  # diametro
+        dzz.append(z_m)
+
+    w_clean, l_clean = clean_measurements(dyy, dxx)
+
+    # Initialize the total volume
+    volumes_all = []
+
+    # Calculate sub-volumes iteratively
+    for i in range(len(w_clean)):
+        sub_volume = volume(l_clean[i], w_clean[i])
+        volumes_all.append(sub_volume)
 
 
 
-        vol = volume(l, w)
-
-        vol_all.append(vol)
-        write_number_at_center(imageRGB, l)
 
 
 
-    volume_tot = sum(vol_all)
-    length = sum(dxx)
-    diam_med = np.mean(dyy)
-    std_len = np.std(dxx)
-    std_dia = np.std(dyy)
-    std_vol = np.std(vol_all)
+
+
+    volume_tot = sum(volumes_all)
+    length = sum(l_clean)
+    diam_med = np.mean(w_clean)
+    z_med = np.mean(dzz)
+    std_len = np.std(l_clean)
+    std_dia = np.std(w_clean)
+    std_vol = np.std(volumes_all)
 
     print("length: ", length, "STDlen:", std_len, "diam med", diam_med, "STDdiam", std_dia)
     # print("diam: ", dyy)
@@ -430,7 +676,7 @@ def dimension_image_list_analyzer(image_list, RGB_list):
 
         plt.show()
 
-    save_to_csv_recursive(volume_tot, csv_file_path)
+    save_to_csv_recursive([volume_tot,z_med], csv_file_path)
         #saved :
 
 
@@ -523,7 +769,7 @@ def advanced_cylindricator_v2(mask_inverted_crop, pc_cropped, cropped_frame, bla
 
     volume_tot_all_cyl = dimension_image_list_analyzer(final_collector_pc, final_collector_RGB)
 
-    if SHOW_CYLINDRIFICATION  or volume_tot_all_cyl > 60000:
+    if SHOW_CYLINDRIFICATION:
         final_collector = resize_image_imperfection_for_vconcaten(final_collector)
         final_collector_pc = resize_image_imperfection_for_vconcaten(final_collector_pc)
         final_collector_depth = resize_image_imperfection_for_vconcaten(final_collector_depth)
@@ -544,7 +790,7 @@ def advanced_cylindricator_v2(mask_inverted_crop, pc_cropped, cropped_frame, bla
         cv2.imshow("processing_pc", resize_image(cylinders_pc, 300))
         cv2.imshow("processing_depth", resize_image(cylinders_depth, 300))
 
-    if SHOW_CYLINDRIFICATION_RGB or volume_tot_all_cyl > 60000:
+    if SHOW_CYLINDRIFICATION_RGB:
         max_height = max(image.shape[0] for image in final_collector_RGB)
         # Resize all images to have the same height
         resized_images = []
@@ -824,6 +1070,7 @@ def convert_depth_image_to_pointcloud(depth_image, intrinsics, frame, x, y, w_r,
     allx = []
     ally = []
 
+
     for r in range(new_y, end_point[1]):  # y
         for c in range(new_x, end_point[0]):  # x
             distance = float((depth_image[r, c] + 50) * 10)  # [y, x]
@@ -844,12 +1091,18 @@ def convert_depth_image_to_pointcloud(depth_image, intrinsics, frame, x, y, w_r,
                 allx.append(int(-result[0]))
                 ally.append(int(-result[1]))
 
-            else:
 
-                pointcloud[r, c] = [0, 0, 0]
+
+
+
 
                 # z,x,y
                 # pointcloud[r,c] = [0,0,0]
+
+    #visualize_3D_list_pointcloud(allx,ally, allz)
+
+
+
 
     return pointcloud, allz, allx, ally
 
@@ -903,7 +1156,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu):
             solidity = float(area1) / hull_area
 
             if perimeter1 > 200 and perimeter1 < 7000:  # 1200
-                if circularity1 > 0.01 and circularity1 < 0.6:  # 0.05 / 0.1, 0.02
+                if circularity1 > 0.01 and circularity1 < 0.3:  # 0.05 / 0.1, 0.02
                     if area1 > 800 and area1 < 150000:  # 2200
                         if M0 > 1.00 and M0 < 130:  # 2200
                             if M01 > 0.01 and M01 < 70:  # 2200
@@ -927,6 +1180,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu):
     print("________!!!!____________advanced shoots not detected")
     print("len contours", len(contours1))
     cv2.imshow("eee", mask_bu)
+    time.sleep(3)
     for cnt1 in contours1:
         # calcolo area e perimetro
         area1 = cv2.contourArea(cnt1)
@@ -957,6 +1211,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu):
 
     # time.sleep(1000)
     return 0, False
+
 
 
 intrinsics = obtain_intrinsics()
@@ -1022,7 +1277,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
         ret, frame = video1.read()
         ret2, frame2 = video2.read()
         nrfr = nrfr + 1
-        if nrfr > 5:
+        if nrfr > 2:
 
             if ret and ret2:
 
@@ -1052,6 +1307,10 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 # maschero il depth con la maschera rgb
                 black_out_depth_in = cv2.bitwise_and(frame2of_no_noise, frame2of_no_noise, mask=mask_inverted)
 
+                #icostruisco con una dilation i punti di noise all interno del depth
+                kernel_denoising = np.ones((3, 3), np.uint8)
+                black_out_depth_in_denoised = cv2.dilate(black_out_depth_in, kernel, iterations=3)
+
                 # rendo la maschera più sottile per non includere gli effetti di birdo nella computazione della media
                 kernel_mask_erosion = np.ones((5, 5), np.uint8)
                 eroded_mask_inverted = cv2.erode(mask_inverted, kernel_mask_erosion, iterations=1)
@@ -1067,7 +1326,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 avg_masked_value = int(np.mean(pixels_OI_l))
                 print("depth avarage", avg_masked_value)
                 # riempi l esterno con il valore medio
-                black_out_depth_in_AVARAGED = black_out_depth_in.copy()
+                black_out_depth_in_AVARAGED = black_out_depth_in_denoised.copy()
                 # copio l immagine per editarla
                 black_out_depth_in_AVARAGED[np.where((black_out_depth_in_AVARAGED == [0]))] = [avg_masked_value]
                 length_branch = np.sqrt(w ** 2 + h ** 2)
@@ -1081,18 +1340,7 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 black_out_depth_in_remasked = cv2.bitwise_and(black_out_depth_in_blurred, black_out_depth_in_blurred,
                                                               mask=mask_inverted)
 
-                # # Convert the 2D grayscale image to a 1D array
-                # one_dimension_array = black_out_depth_in_remasked.flatten()
-                #
-                # # Remove zero values from the array
-                # one_dimension_array_without_zero = one_dimension_array[one_dimension_array != 0]
-                #
-                # # Display the resulting one-dimensional array without zero values
-                # print(one_dimension_array_without_zero)
-                # plt.hist(one_dimension_array_without_zero, bins=30)
-                # plt.show()
 
-                # extract only the pixels inside the ,ask:
                 # qui stiamo cercando di visualizzare quanti pixel neri ci sono all interno della maschera che corrispondono al rumore TO DO
                 pixels = frame2of[[mask_inverted]]
 
@@ -1101,7 +1349,76 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 # maschero anche la pointcloud prendendo in considerazione solo la mask
                 pc, allz, allx, ally = convert_depth_image_to_pointcloud(black_out_depth_in_remasked, intrinsics, frame,
                                                                          x, y, w, h)
+
+                #visualize_3D_list_pointcloud(allx, ally, allz)
                 simple_geometrical_analisys(allx, ally, allz)
+
+                pointc = np.column_stack((allx, ally, allz))
+                global_pc = z_score_normalization(pointc, 0.01)
+                #visualize_3D_list_pointcloud(global_pc)
+
+
+
+
+                collector = []
+                collector.append(global_pc)
+                next_iteration_collector = []
+                for i in range(iteration):
+
+                    #print("iteration:", i, " n PC:", len(collector))
+                    for p in range(len(collector)):
+                        #print("splittin image n", p+1 , " /", len(collector))
+
+                        half1, half2 = split_PC(collector[p])
+                        next_iteration_collector.append(half1)
+                        next_iteration_collector.append(half2)
+
+
+
+
+                    collector = next_iteration_collector
+                    #svuoto il contenitore temporaneo da portare all iterazione dopo
+                    next_iteration_collector = []
+
+                zzs = []
+                lls = []
+                dds = []
+                print("images:", len(collector))
+                for mp in range(len(collector)):
+                    #visualize_3D_list_pointcloud(collector[mp])
+
+                    length,width, z_mean = dimension_evaluator(collector[mp])
+
+
+                    lls.append(length)  # lungheezaa
+                    dds.append(width)  # diametro
+                    zzs.append(z_mean)
+
+                w_clean, l_clean = clean_measurements(dds, lls)
+
+                # Initialize the total volume
+                volumes_all = []
+
+                # Calculate sub-volumes iteratively
+                for i in range(len(w_clean)):
+                    sub_volume = volume(l_clean[i], w_clean[i])
+                    volumes_all.append(sub_volume)
+
+                volume_tot = sum(volumes_all)
+                length = sum(l_clean)
+                diam_med = np.mean(w_clean)
+                z_med = np.mean(zzs)
+                std_len = np.std(l_clean)
+                std_dia = np.std(w_clean)
+                std_vol = np.std(volumes_all)
+
+                print("length: ", length, "STDlen:", std_len, "diam med", diam_med, "STDdiam", std_dia)
+                # print("diam: ", dyy)
+                print("volume: ", volume_tot, " STD:", std_vol, "real", volume(320, 8))
+
+                save_to_csv_recursive([volume_tot, z_med], csv_file_path)
+
+
 
                 #cv2.imshow("depthhh", black_out_depth_in_remasked)
                 #display3Dpointcloud(allx, ally , allz)
@@ -1112,49 +1429,50 @@ for folders in os.listdir(PATH_HERE + PATH_2_AQUIS):
                 # mask_inverted_pc = cv2.erode(mask_inverted, kernel_pc, iterations=1)
 
                 # pc = cv2.bitwise_and(pc, pc, mask=mask_inverted)
-
-                pc_cropped = crop_with_rect_rot(pc, rect_point_of_interest)
-
-                # visible_pointcloud = ((pc_cropped - pc_cropped.min()) * (1 / (pc_cropped.max() - pc_cropped.min()) * 255)).astype('uint8')
-
-                # END _ ONLY DISPLAY
-
-                # crop for imaging
-                black_out_depth_in_cropped = crop_with_rect_rot(black_out_depth_in, rect_point_of_interest)
-                black_out_depth_in_AVARAGED_cropped = crop_with_rect_rot(black_out_depth_in_AVARAGED,
-                                                                         rect_point_of_interest)
-                cropped_frame = crop_with_rect_rot(frame, rect_point_of_interest)
-                mask_inverted_crop = crop_with_rect_rot(mask_inverted, rect_point_of_interest)
-                black_out_depth_in_blurred_cropped = crop_with_rect_rot(black_out_depth_in_blurred,
-                                                                        rect_point_of_interest)
-                black_out_depth_in_remasked_cropped = crop_with_rect_rot(black_out_depth_in_remasked,
-                                                                         rect_point_of_interest)
-                frame2of_no_noise_cropped = crop_with_rect_rot(frame2of_no_noise, rect_point_of_interest)
-
-                frame2of_cropped = crop_with_rect_rot(frame2of, rect_point_of_interest)
-
-                # plt.hist(mask_inverted.tolist(),bins=25)
-                # plt.show()
-
-                volume_tot_cylinders = advanced_cylindricator_v2(mask_inverted_crop, pc_cropped, cropped_frame,
-                                                                 black_out_depth_in_remasked_cropped)
-
-                # plt.hist(allz, bins=300)
-                # plt.show()
-                if SHOW_FILTERING_PROCESS:
-                    processing = cv2.vconcat([frame2of_cropped, frame2of_no_noise_cropped, black_out_depth_in_cropped,
-                                              black_out_depth_in_AVARAGED_cropped, black_out_depth_in_blurred_cropped,
-                                              black_out_depth_in_remasked_cropped, mask_inverted_crop])
-                    # print("frame2of_cropped, frame2of_no_noise_cropped,black_out_depth_in_cropped, black_out_depth_in_AVARAGED_cropped, black_out_depth_in_blurred_cropped,black_out_depth_in_remasked_cropped")
-
-                    cv2.imshow("processing", resize_image(processing, 300))
-
-                # cv2.imshow("or", resize_image(cropped_frame,300))
-                # cv2.imshow("pc mask", resize_image(visible_pointcloud,300))
-
-                key = cv2.waitKey(CONTINOUS_STREAM)
-                if key == ord('q') or key == 27:
-                    break
+                #
+                # pc_cropped = crop_with_rect_rot(pc, rect_point_of_interest)
+                #
+                #
+                # # visible_pointcloud = ((pc_cropped - pc_cropped.min()) * (1 / (pc_cropped.max() - pc_cropped.min()) * 255)).astype('uint8')
+                #
+                # # END _ ONLY DISPLAY
+                #
+                # # crop for imaging
+                # black_out_depth_in_denoised_cropped = crop_with_rect_rot(black_out_depth_in_denoised, rect_point_of_interest)
+                # black_out_depth_in_cropped = crop_with_rect_rot(black_out_depth_in, rect_point_of_interest)
+                # black_out_depth_in_AVARAGED_cropped = crop_with_rect_rot(black_out_depth_in_AVARAGED,
+                #                                                          rect_point_of_interest)
+                # cropped_frame = crop_with_rect_rot(frame, rect_point_of_interest)
+                # mask_inverted_crop = crop_with_rect_rot(mask_inverted, rect_point_of_interest)
+                # black_out_depth_in_blurred_cropped = crop_with_rect_rot(black_out_depth_in_blurred,
+                #                                                         rect_point_of_interest)
+                # black_out_depth_in_remasked_cropped = crop_with_rect_rot(black_out_depth_in_remasked,
+                #                                                          rect_point_of_interest)
+                # frame2of_no_noise_cropped = crop_with_rect_rot(frame2of_no_noise, rect_point_of_interest)
+                #
+                # frame2of_cropped = crop_with_rect_rot(frame2of, rect_point_of_interest)
+                #
+                # # plt.hist(mask_inverted.tolist(),bins=25)
+                # # plt.show()
+                #
+                # #volume_tot_cylinders = advanced_cylindricator_v2(mask_inverted_crop, pc_cropped, cropped_frame,black_out_depth_in_remasked_cropped)
+                #
+                # # plt.hist(allz, bins=300)
+                # # plt.show()
+                # if SHOW_FILTERING_PROCESS:
+                #     processing = cv2.vconcat([frame2of_cropped, frame2of_no_noise_cropped, black_out_depth_in_cropped,black_out_depth_in_denoised_cropped,
+                #                               black_out_depth_in_AVARAGED_cropped, black_out_depth_in_blurred_cropped,
+                #                               black_out_depth_in_remasked_cropped, mask_inverted_crop])
+                #     # print("frame2of_cropped, frame2of_no_noise_cropped,black_out_depth_in_cropped, black_out_depth_in_AVARAGED_cropped, black_out_depth_in_blurred_cropped,black_out_depth_in_remasked_cropped")
+                #
+                #     cv2.imshow("processing", resize_image(processing, 300))
+                #
+                # # cv2.imshow("or", resize_image(cropped_frame,300))
+                # # cv2.imshow("pc mask", resize_image(visible_pointcloud,300))
+                #
+                # key = cv2.waitKey(CONTINOUS_STREAM)
+                # if key == ord('q') or key == 27:
+                #     break
 
 
             else:

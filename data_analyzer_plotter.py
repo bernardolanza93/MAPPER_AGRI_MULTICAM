@@ -3,11 +3,23 @@ import csv
 import numpy as np
 from configuration_path import *
 
+
+
+
 def read_from_csv(file_path):
+    volumes = []
+    distances = []
+
     with open(file_path, 'r') as csvfile:
         reader = csv.reader(csvfile)
-        values = [float(row[0]) for row in reader]  # Assuming the values are numeric
-    return values
+        for row in reader:
+            if len(row) >= 2:  # Ensure there are at least two columns in the row
+                volume = float(row[0])
+                distance = float(row[1])
+                volumes.append(volume)
+                distances.append(distance)
+
+    return volumes, distances
 
 
 def plot_histogram(values):
@@ -24,7 +36,22 @@ def plot_histogram(values):
 
 print("reading volumes...")
 # Read values from the CSV file
-values_from_csv = read_from_csv(csv_file_path)
+volumes,distances = read_from_csv(csv_file_path)
 
 # Plot histogram from the values read from the CSV file
-plot_histogram(values_from_csv)
+plot_histogram(volumes)
+
+# Create a scatter plot
+plt.scatter(distances, volumes, label='Volume vs. Distance', color='blue', marker='o')
+
+# Add labels and a title
+plt.xlabel('Distances')
+plt.ylabel('Volumes')
+plt.title('Volume vs. Distance')
+
+# Add a legend
+plt.legend()
+
+# Show the plot
+plt.grid(True)
+plt.show()
