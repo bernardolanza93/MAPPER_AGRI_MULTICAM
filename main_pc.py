@@ -322,7 +322,7 @@ def RS_capture(queue,status):
     if SAVE_VIDEO_TIME != 0:
         if enable_D435i:
             fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-            out = cv2.VideoWriter("RGB.mkv", fourcc,  20.0, (1900, 1080))
+            out = cv2.VideoWriter("RGB.mkv", fourcc,  20.0, (1920, 1080))
             out_depth = cv2.VideoWriter("DEPTH.mkv", fourcc,  20.0, (1920, 1080), 0)
 
 
@@ -330,6 +330,7 @@ def RS_capture(queue,status):
 
     else:
         print("NO SAVE VIDEO D435 MODE")
+
     frame_c = 0
 
     print("START LOOP")
@@ -400,7 +401,7 @@ def RS_capture(queue,status):
                     calculate_and_save_intrinsics(depth_intrin)
                 color_image = np.asanyarray(color_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
-                print("DEPTH before", depth_image.shape)
+                # print("DEPTH before", depth_image.shape)
 
 
 
@@ -424,6 +425,7 @@ def RS_capture(queue,status):
 
                 # print("RGB", color_image.shape)
                 print("DEPTH", intcm.shape)
+                print("RGB", color_image.shape)
 
                 if SAVE_VIDEO_TIME != 0:
                     try:
@@ -448,7 +450,7 @@ def RS_capture(queue,status):
 
             if DISPLAY_RGB:
                 # cv2.imshow('depth Stream', color_image)
-                cv2.imshow('dept!!!h Stream', intcm)
+                cv2.imshow('dept!!!h Stream', color_image)
 
                 key = cv2.waitKey(1)
                 if key == 27:

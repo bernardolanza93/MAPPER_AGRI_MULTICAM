@@ -3,10 +3,11 @@ import  os
 
 PATH_EXAMPLE = "/home/mmt-ben/Desktop"
 
-csv_file_path = 'volume_from_pointcloud_cylindificated.csv'
+
 ZOOM = 100
-iteration = 3
-THRES_VALUE = 70
+iteration = 5
+#aumenta per includere piu roba
+THRES_VALUE = 90
 ALPHA_FILTER = 1
 PATH_2_AQUIS = "/aquisition/"
 PATH_HERE = os.getcwd()
@@ -15,7 +16,7 @@ KERNEL = 5
 POINT_CLOUD_GRAPH = False
 L_real = 315
 D_real = 73
-CONTINOUS_STREAM = 0
+CONTINOUS_STREAM = 1
 #processo di filtraggio dell immagine depth prima della conversione in pointcloud
 SHOW_FILTERING_PROCESS = 0
 MIN_DEPTH = 503
@@ -25,4 +26,20 @@ SHOW_CYLINDRIFICATION_RGB = 0
 SHOW_HIST_OF_DIAMETERS = 0
 SHOW_PC_WITH_BOX = 0
 VISUALIZE_SPLITTING_OP = 0
+SHOW_MASK_ONLY = 0
+POINTCLOUD_EVALUATION_VOLUME = 1
+SHOW_DEPTH_ONLY = 0
+KERNEL_VALUE_DILATION = 3
+DILATION_ITERATION = 4
+
+#tutto il legno con boxx
+VISUALIZE_CYLINDRIFICATED_WOOD = 0
+csv_file_path = 'data_volume_iteration_' +str(iteration) +  '.csv'
+
+#visdualizza o no i volumi troppo grandi / usare solo se non si attiva il visualizzatore costante
+
+SHOW_VOLUME_TOO_BIG = 0
+#valore di trehold dei valori troppo grandi
+OUTLIER_VOLUME = 26000
+
 
