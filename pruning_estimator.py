@@ -17,26 +17,28 @@ import shutil
 from misc_utility_library import *
 
 
-
+#SETTARE QUI I PARAMETRI PER LA TUA MACCHINA
+#________________________________________
+#FOLDER DOVE VENGONO SALVATI I DATI DENTRO LA DIRECTORY DEL CODICE
+folder_data = "tesi"
+# DEFINIRE LA POSIZIONE DELLA CARTELLA CONTENETE I FILE DELLE ACQUISIZIONI (mettere solo la cartella padre omnicomprensiva)
+root_folder = '/home/mmt-ben/Documents/MAIN'
+#DATI REALI DEL CARTONCINO IN MM
+L_real = 315.0
+D_real = 72.2
 
 print(sys.version)
 
-ZOOM = 100
-iteration = 0
-THRES_VALUE = 40
-ALPHA_FILTER = 1
-#modifica con il tuo percorso dove ci sono i video salvati
-#con slash finale, questo path deve contenere le cartelle delle singole acquisizioni
+
+
+THRES_VALUE = 70
 PATH_2_AQUIS = "/home/mmt-ben/Documents/calibration_video/"
 PATH_HERE = os.getcwd()
 OFFSET_CM_COMPRESSION = 50
-KERNEL = 5
-POINT_CLOUD_GRAPH = False
-L_real = 337
-D_real = 73
+
 
 def save_video_geometrical_data(csv_file,data_frame):
-    header = ["nrfr","Z_val","cx","cy","l","d","ar","alpha"]
+    header = ["nrfr","Z_val","cx","cy","rl","rd","ar","alpha"]
     # Specify the CSV file name
 
 
@@ -52,7 +54,7 @@ def save_video_geometrical_data(csv_file,data_frame):
             writer.writerow(row)
     print(f"Data has been saved to {csv_file}.")
 
-def geometry_evaluator(mask):
+def geometry_evaluator(mask,frame):
     # Find contours in the binary mask
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -64,17 +66,24 @@ def geometry_evaluator(mask):
         # Get the rotated rectangle that bounds the contour
         rect = cv2.minAreaRect(largest_contour)
 
+        box = cv2.boxPoints(rect)  # cv2.cv.BoxPoints(rect) for OpenCV <3.x
+        box = np.int0(box)
+        cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+
         # Extract dimensions, center, and angle of rotation
         (center_x, center_y), (width, height), angle = rect
 
         # Calculate the aspect ratio
-        aspect_ratio = width / height
+
 
         # Calculate the orientation angle in degrees with respect to the x-axis
         if width > height:
             orientation_degrees = angle
+            aspect_ratio = height/width
+
         else:
             orientation_degrees = 90 + angle
+            aspect_ratio = width / height
 
         if orientation_degrees >= 180:
             orientation_degrees = orientation_degrees-180
@@ -87,15 +96,21 @@ def geometry_evaluator(mask):
         ar = aspect_ratio
         alpha = orientation_degrees
 
+        ratio_l = L_real / l
+        ratio_d = D_real / d
+
+        #print("dim:", l,d,"real", L_real,D_real, "ratio", ratio_l,ratio_d)
+
 
         # print(f"Center (X, Y): ({center_x}, {center_y})")
         # print(f"Major Dimension: {max(width, height)}")
         # print(f"Minor Dimension: {min(width, height)}")
         # print(f"Aspect Ratio: {aspect_ratio}")
         # print(f"Orientation (degrees): {orientation_degrees}")
-        return cx,cy,l,d,ar,alpha
+        return cx,cy,ratio_l,ratio_d,ar,alpha
 
     else:
+
         print("No contours found in the mask.")
 
 
@@ -266,7 +281,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
             solidity = float(area1) / hull_area
 
             if perimeter1 > 200 and perimeter1 < 7000:  # 1200
-                if circularity1 > 0.25 and circularity1 < 0.6:  # 0.05 / 0.1, 0.02
+                if circularity1 > 0.20 and circularity1 < 0.6:  # 0.05 / 0.1, 0.02
                     if area1 > 800 and area1 < 150000:  # 2200
                         if M0 > 1.15 and M0 < 130:  # 2200
                             if M01 > 0.40 and M01 < 70:  # 2200
@@ -328,8 +343,7 @@ def second_layer_accurate_cnt_estimator_and_draw(mask_bu, frame):
 #testing system
 
 
-# Define the root folder to start the search
-root_folder = '/home/mmt-ben/Documents/MAIN'
+
 
 # Function to find .mkv files in a folder
 def find_mkv_files(folder):
@@ -344,7 +358,7 @@ def find_mkv_files(folder):
 
 
 # Specify the folder name you want to create
-folder_data = "tesi_data"
+
 
 # Check if the folder doesn't exist, then create it
 if not os.path.exists(folder_data):
@@ -410,18 +424,19 @@ for root, dirs, files in os.walk(root_folder):
                 ret, mask = cv2.threshold(gray, THRES_VALUE, 255, cv2.THRESH_BINARY)
                 # try:
                 cnt1, frame, completion = second_layer_accurate_cnt_estimator_and_draw(mask, frame)
-                rect = cv2.minAreaRect(cnt1)
+
+                inverted_mask = 255 - mask
+                cx,cy,ratio_l,ratio_d,ar,alpha = geometry_evaluator(inverted_mask,frame)
+
 
                 #3 spazi immagine
-                frame = crop_with_rect_rot(frame, rect)
-                gray = crop_with_rect_rot(gray, rect)
-                frame2 = crop_with_rect_rot(frame2, rect)
-                mask = crop_with_rect_rot(mask, rect)
-
-                cx,cy,l,d,ar,alpha = geometry_evaluator(mask)
+                # frame = crop_with_rect_rot(frame, rect)
+                # gray = crop_with_rect_rot(gray, rect)
+                # frame2 = crop_with_rect_rot(frame2, rect)
+                # mask = crop_with_rect_rot(mask, rect)
 
                 # Ensure that both images have the same dimensions
-                inverted_mask = 255 - mask
+
 
                 # Create a mask where black pixels in the binary mask are False
                 mask_proc = inverted_mask != 0
@@ -431,17 +446,18 @@ for root, dirs, files in os.walk(root_folder):
 
                 # Calculate the mean value of the masked grayscale image
                 Z_raw = np.mean(masked_image[masked_image != 0])
-                Z_val = 50 + Z_raw
+                Z_val = OFFSET_CM_COMPRESSION + Z_raw
 
-                data = [nrfr,Z_val,cx,cy,l,d,ar,alpha]
+                data = [nrfr,Z_val,cx,cy,ratio_l,ratio_d,ar,alpha]
                 dataframe.append(data)
                 print(data)
 
 
 
-                if gray.shape[0] == frame2.shape[0] == mask.shape[0]:
-                    concatenated_image = np.hstack((gray, frame2, mask))
+                if frame.shape[0] == frame2.shape[0] == mask.shape[0]:
+                    concatenated_image = np.hstack([frame, cv2.cvtColor(frame2, cv2.COLOR_GRAY2BGR), cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)])
                     cv2.imshow("or", resize_image(concatenated_image, 50))
+                    #cv2.imshow("fr",resize_image(frame,50))
 
                 key = cv2.waitKey(1)
                 if key == ord('q') or key == 27:
