@@ -107,7 +107,7 @@ def geometry_evaluator(mask,frame):
         # print(f"Minor Dimension: {min(width, height)}")
         # print(f"Aspect Ratio: {aspect_ratio}")
         # print(f"Orientation (degrees): {orientation_degrees}")
-        return cx,cy,ratio_l,ratio_d,ar,alpha
+        return int(cx),int(cy),ratio_l,ratio_d,ar,alpha
 
     else:
 
