@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-file_to_read = csv_file_path
+#file_to_read = csv_file_path
 REAL_VOLUME =  15.74 * 1000 / 0.72
 print(REAL_VOLUME)
-#file_to_read = "data/run3_iter_4/data_volume_iteration_4.csv"
+file_to_read = "/home/mmt-ben/MAPPER_AGRI_MULTICAM/data/run6_iter4/data_volume_iteration_5.csv"
 
 
 
@@ -267,7 +267,7 @@ def plot_histogram(values):
 
 
 
-density_determination()
+#density_determination()
 
 
 

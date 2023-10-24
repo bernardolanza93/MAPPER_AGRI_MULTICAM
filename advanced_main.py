@@ -1,0 +1,94 @@
+import Jetson.GPIO as GPIO
+import time
+
+
+
+
+#install GPIO library:
+# sudo pip install Jetson.GPIO
+
+
+# Set the GPIO pin numbers
+button_pin = 6  # Replace with the actual pin number
+led_green_pin = 13  # Replace with the actual pin number
+led_red_pin = 19  # Replace with the actual pin number
+status = 0
+
+# Initial state and LED mapping
+led_state = 0  # 0 for led1, 1 for led2
+led_pins = [led_green_pin, led_red_pin]
+
+
+def toggle_led_state():
+    global led_state
+    if led_state == 0:
+        GPIO.output(led_green_pin, GPIO.HIGH)
+        GPIO.output(led_red_pin, GPIO.LOW)
+        led_state = 1
+    else:
+        GPIO.output(led_green_pin, GPIO.LOW)
+        GPIO.output(led_red_pin, GPIO.HIGH)
+        led_state = 0
+
+
+
+def process_1_GPIO(status):
+
+
+
+    # Configure the GPIO pins
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(button_pin, GPIO.IN)
+    for pin in led_pins:
+        GPIO.setup(pin, GPIO.OUT)
+        GPIO.output(pin, GPIO.LOW)
+
+    try:
+        while True:
+            button_state = GPIO.input(button_pin)
+
+            if button_state == GPIO.HIGH:
+                toggle_led_state()
+
+            time.sleep(0.1)
+
+    except KeyboardInterrupt:
+        pass
+
+    GPIO.cleanup()
+
+
+process_1_GPIO(status)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
