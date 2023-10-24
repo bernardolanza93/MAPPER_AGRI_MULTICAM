@@ -30,7 +30,7 @@ def process_1_GPIO(st):
 
     # Configure the GPIO pins
     GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     for pin in led_pins:
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, GPIO.LOW)
