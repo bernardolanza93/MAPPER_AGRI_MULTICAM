@@ -40,7 +40,7 @@ def process_1_GPIO(st):
         while True:
             i = i+1
 
-            button_state = GPIO.input(button_pin)
+
             print(i)
             if status == 0:
                 GPIO.output(led_red_pin, GPIO.HIGH)
@@ -49,10 +49,8 @@ def process_1_GPIO(st):
                 GPIO.output(led_red_pin, GPIO.LOW)
                 GPIO.output(led_green_pin, GPIO.HIGH)
 
-
-
-
-            if button_state == GPIO.HIGH:
+            button_state = GPIO.input(button_pin)
+            if button_state == False:
                 print("button premuto!!!")
                 # Toggle the value
                 if status == 0:
