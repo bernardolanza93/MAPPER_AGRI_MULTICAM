@@ -9,9 +9,9 @@ import time
 
 
 # Set the GPIO pin numbers
-button_pin = 6  # Replace with the actual pin number
-led_green_pin = 13  # Replace with the actual pin number
-led_red_pin = 19  # Replace with the actual pin number
+button_pin = 31  # Replace with the actual pin number
+led_green_pin = 33  # Replace with the actual pin number
+led_red_pin = 35  # Replace with the actual pin number
 status = 0
 
 # Initial state and LED mapping
