@@ -35,6 +35,7 @@ def toggle_led_state():
 
 
 def process_1_GPIO(status):
+    print("start")
 
 
 
