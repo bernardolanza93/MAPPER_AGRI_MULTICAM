@@ -22,15 +22,9 @@ led_state = 0  # 0 for led1, 1 for led2
 led_pins = [led_green_pin, led_red_pin]
 
 
-def toggle_led_state():
-    global led_state
-    GPIO.output(led_pins[led_state], not GPIO.input(led_pins[led_state]))
-    led_state = 1 - led_state
-
-
-
-def process_1_GPIO(status):
+def process_1_GPIO(st):
     print("start")
+    status = 0
 
 
 
@@ -42,18 +36,35 @@ def process_1_GPIO(status):
         GPIO.output(pin, GPIO.LOW)
 
     try:
-        i  = 0
+        i = 0
         while True:
             i = i+1
 
             button_state = GPIO.input(button_pin)
-            print(i," button state:",button_state)
+            print(i)
+            if status == 0:
+                GPIO.output(led_red_pin, GPIO.HIGH)
+                GPIO.output(led_green_pin, GPIO.LOW)
+            if status ==1:
+                GPIO.output(led_red_pin, GPIO.LOW)
+                GPIO.output(led_green_pin, GPIO.HIGH)
+
+
+
 
             if button_state == GPIO.HIGH:
                 print("button premuto!!!")
-                toggle_led_state()
+                # Toggle the value
+                if status == 0:
+                    print("TO GREEN")
+                    status = 1
+                else:
+                    print("TO RED")
+                    status = 0
 
-            time.sleep(0.1)
+
+
+            time.sleep(0.2)
 
     except KeyboardInterrupt:
         pass
