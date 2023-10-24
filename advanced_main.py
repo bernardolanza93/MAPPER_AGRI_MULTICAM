@@ -48,6 +48,7 @@ def process_1_GPIO(status):
     try:
         while True:
             button_state = GPIO.input(button_pin)
+            print("button state:",button_state)
 
             if button_state == GPIO.HIGH:
                 print("button premuto!!!")
