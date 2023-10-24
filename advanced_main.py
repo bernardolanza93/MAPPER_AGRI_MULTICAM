@@ -6,6 +6,9 @@ import time
 
 #install GPIO library:
 # sudo pip install Jetson.GPIO
+# sudo groupadd -f -r gpio
+#
+# sudo usermod -a -G gpio your_user_name
 
 
 # Set the GPIO pin numbers
@@ -33,7 +36,7 @@ def process_1_GPIO(status):
 
     # Configure the GPIO pins
     GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     for pin in led_pins:
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, GPIO.LOW)
