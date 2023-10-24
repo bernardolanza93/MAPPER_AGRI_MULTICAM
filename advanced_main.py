@@ -21,16 +21,8 @@ led_pins = [led_green_pin, led_red_pin]
 
 def toggle_led_state():
     global led_state
-    if led_state == 0:
-        print("accendo verde")
-        GPIO.output(led_green_pin, GPIO.HIGH)
-        GPIO.output(led_red_pin, GPIO.LOW)
-        led_state = 1
-    else:
-        print("accendo rosso")
-        GPIO.output(led_green_pin, GPIO.LOW)
-        GPIO.output(led_red_pin, GPIO.HIGH)
-        led_state = 0
+    GPIO.output(led_pins[led_state], not GPIO.input(led_pins[led_state]))
+    led_state = 1 - led_state
 
 
 
