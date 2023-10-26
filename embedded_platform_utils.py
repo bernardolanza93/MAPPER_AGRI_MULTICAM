@@ -87,7 +87,6 @@ def process_1_GPIO(status):
 
 
 
-            #controllo se e arrivato un evento
             button_state = GPIO.input(button_pin)
             if button_state == GPIO.LOW:
                 print("button premuto!!!")
