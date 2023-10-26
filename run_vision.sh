@@ -1,6 +1,6 @@
 cd
 cd MAPPER_AGRI_MULTICAM/
-#git pull
+git pull
 
 echo  "AGRI MAPPER UPDATED SUCCESFULLY"
 echo "STARTING VISION SYSTEM "
