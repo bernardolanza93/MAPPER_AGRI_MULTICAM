@@ -10,13 +10,6 @@ from embedded_platform_realsese import *
 
 
 
-process_1_GPIO(status)
-
-#rscapture d435rgb + d435D + T265(saver)
-#rssaver save image
-#baslercapture capture basler
-#baslersaver capture saver
-#handler pinout
 
 def processor():
     try:
@@ -27,9 +20,8 @@ def processor():
         organize_video_from_last_acquisition()
 
         global_status = multiprocessing.Value("i", 0)
-        print("current status main:",global_status)
 
-        print("current status main VALUE:", global_status.value)
+
 
         q_RS = multiprocessing.Queue(maxsize=100)
         q_BS = multiprocessing.Queue(maxsize=100)
