@@ -1,78 +1,87 @@
-import Jetson.GPIO as GPIO
-import time
+
+from embedded_platform_utils import *
+from embedded_platform_basler import *
+from embedded_platform_realsese import *
 
 
 
 
-#install GPIO library:
-# sudo pip install Jetson.GPIO
-# sudo groupadd -f -r gpio
-#
-# sudo usermod -a -G gpio your_user_name
 
 
-# Set the GPIO pin numbers
-button_pin = 31  # Replace with the actual pin number
-led_green_pin = 33  # Replace with the actual pin number
-led_red_pin = 35  # Replace with the actual pin number
-status = 0
-
-# Initial state and LED mapping
-led_state = 0  # 0 for led1, 1 for led2
-led_pins = [led_green_pin, led_red_pin]
-
-
-def process_1_GPIO(st):
-    print("start")
-    status = 0
-
-
-
-    # Configure the GPIO pins
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    for pin in led_pins:
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.LOW)
-
-    try:
-        i = 0
-        while True:
-            i = i+1
-
-
-            print(i)
-            if status == 0:
-                GPIO.output(led_red_pin, GPIO.HIGH)
-                GPIO.output(led_green_pin, GPIO.LOW)
-            if status ==1:
-                GPIO.output(led_red_pin, GPIO.LOW)
-                GPIO.output(led_green_pin, GPIO.HIGH)
-
-            button_state = GPIO.input(button_pin)
-            if button_state == GPIO.LOW:
-                print("button premuto!!!")
-                # Toggle the value
-                if status == 0:
-                    print("TO GREEN")
-                    status = 1
-                else:
-                    print("TO RED")
-                    status = 0
-
-
-
-            time.sleep(0.2)
-
-    except KeyboardInterrupt:
-        pass
-
-    GPIO.cleanup()
 
 
 process_1_GPIO(status)
 
+#rscapture d435rgb + d435D + T265(saver)
+#rssaver save image
+#baslercapture capture basler
+#baslersaver capture saver
+#handler pinout
 
+def processor():
+    try:
+
+        basler = True
+        realsense = True
+
+        organize_video_from_last_acquisition()
+
+        global_status = multiprocessing.Value("i", 0)
+        q_RS = multiprocessing.Queue(maxsize=100)
+        q_BS = multiprocessing.Queue(maxsize=100)
+        status_basler = multiprocessing.Value("i", 0)
+
+        p0 = multiprocessing.Process(target=process_1_GPIO, args=(global_status,))
+        p1 = multiprocessing.Process(target=BASLER_capture, args=(q_BS,status_basler,global_status))
+        p2 = multiprocessing.Process(target=basler_saver, args=(q_BS,status_basler,global_status))
+        p3 = multiprocessing.Process(target=RS_capture, args=(q_RS,global_status))
+        p4 = multiprocessing.Process(target=RS_saver, args=(q_RS,global_status))
+
+
+
+        p0.start()
+        if basler:
+            p1.start()
+            p2.start()
+        if realsense:
+            p3.start()
+            p4.start()
+            print("Basler cap? -> {}".format(p1.is_alive()))
+            print("Basler save?    -> {}".format(p2.is_alive()))
+
+
+        p0.join()
+        if basler:
+            p1.join()
+            p2.join()
+        if realsense:
+            p3.join()
+            p4.join()
+            print("Realsense cap? -> {}".format(p3.is_alive()))
+            print("Realsense save?    -> {}".format(p4.is_alive()))
+
+
+        # both processes finished
+        print("Both processes finished execution!")
+
+        # check if processes are alive
+        # controllo se sono ancora vivi o se sono terminati e ne printo lo status
+        print("MAIN is alive? -> {}".format(p1.is_alive()))
+        print("SAVER is alive?    -> {}".format(p2.is_alive()))
+        print("REALSENSE is alive?    -> {}".format(p4.is_alive()))
+    except KeyboardInterrupt:
+        print(' KILLED ..{} '.format(datetime.now()))
+        print("STATUS PROCESSOR ZERO")
+        time.sleep(1)
+        status.value = 0
+        sys.exit()
+
+
+
+
+
+
+processor()
 
 
 

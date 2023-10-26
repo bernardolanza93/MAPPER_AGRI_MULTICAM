@@ -505,20 +505,6 @@ def main(q,status):
     config_file = "cfg_file.txt"
 
 
-
-
-
-
-
-
-
-    if SEARCH_USB_CAMERAS:
-
-        cameras_array = returnCameraIndexes()
-        print(cameras_array)
-        if len(cameras_array) < 2:
-            print("one camera system")
-
     if USE_PYLON_CAMERA:
         # conecting to the first available camera
         try:
