@@ -7,6 +7,7 @@ source ~/.bashrc
 cd
 
 cd MAPPER_AGRI_MULTICAM/
+
 git pull
 
 echo  "AGRI MAPPER UPDATED SUCCESFULLY"
@@ -26,4 +27,4 @@ echo ""
 
 
 
-python advanced_main.py
+python3 advanced_main.py
