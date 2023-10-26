@@ -65,11 +65,6 @@ def processor():
         # both processes finished
         print("Both processes finished execution!")
 
-        # check if processes are alive
-        # controllo se sono ancora vivi o se sono terminati e ne printo lo status
-        print("MAIN is alive? -> {}".format(p1.is_alive()))
-        print("SAVER is alive?    -> {}".format(p2.is_alive()))
-        print("REALSENSE is alive?    -> {}".format(p4.is_alive()))
     except KeyboardInterrupt:
         print(' KILLED ..{} '.format(datetime.now()))
         print("STATUS PROCESSOR ZERO")
