@@ -1,4 +1,11 @@
 cd
+
+
+export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.6/pyrealsense2
+source ~/.bashrc
+
+cd
+
 cd MAPPER_AGRI_MULTICAM/
 git pull
 
