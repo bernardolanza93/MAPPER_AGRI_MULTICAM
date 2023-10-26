@@ -1,5 +1,5 @@
 
-from embedded_platform_utils import *
+
 from embedded_platform_basler import *
 from embedded_platform_realsese import *
 
@@ -21,8 +21,8 @@ process_1_GPIO(status)
 def processor():
     try:
 
-        basler = True
-        realsense = True
+        basler = False
+        realsense = False
 
         organize_video_from_last_acquisition()
 
@@ -46,14 +46,15 @@ def processor():
         if realsense:
             p3.start()
             p4.start()
-            print("Basler cap? -> {}".format(p1.is_alive()))
-            print("Basler save?    -> {}".format(p2.is_alive()))
+
 
 
         p0.join()
         if basler:
             p1.join()
             p2.join()
+            print("Basler cap? -> {}".format(p1.is_alive()))
+            print("Basler save?    -> {}".format(p2.is_alive()))
         if realsense:
             p3.join()
             p4.join()
