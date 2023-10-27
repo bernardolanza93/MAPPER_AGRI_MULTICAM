@@ -1,7 +1,40 @@
 
 from embedded_platform_utils import *
 from embedded_platform_realsese import *
-DIVIDER_FPS_REDUCTION = 0.067
+import aruco_library as ARUCO
+
+
+
+
+
+
+
+def search_aruco_in_frames(frames):
+    f1 = frames.get_fisheye_frame(1)
+    f2 = frames.get_fisheye_frame(2)
+
+
+    image1 = np.asanyarray(f1.get_data())
+
+    gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+
+    pose = ARUCO.aruco_detection(gray)
+
+
+    cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
+    cv2.imshow('RealSense', image1)
+    key = cv2.waitKey(1)
+    if key == 27:  # ESC
+        return
+    if key == ord('s'):
+        cv2.imwrite("a.jpg", image1)
+    print("search aruco")
+    return pose
+
+
+
+
+
 
 
 
@@ -11,6 +44,8 @@ def odometry_capture(global_status):
 
         check_folder("/data/")
         timing = now.strftime("%Y_%m_%d_%H_%M_%S")
+        writeCSVdata_odometry("_ARUCO_" + timing, ["frame","id_marker","x","y","z","roll", "pitch", "yaw"])
+        writeCSVdata_odometry(timing,[ "frame","x","y","z","vx","vy","vz","roll", "pitch", "yaw"])
 
 
 
@@ -56,12 +91,15 @@ def odometry_capture(global_status):
             time.sleep(0.5)
             print(".", end="")
         print("started!")
-
         while global_status.value == 1:
+
             if enable_T265 or enable_D435i:
+
+                now = datetime.now()
+                time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
+
                 start = time.time()
                 frame_c += 1
-
 
 
                 if enable_T265:
@@ -71,9 +109,6 @@ def odometry_capture(global_status):
                         print("ERROR T265 wait4fr: %s", e, "object ideally not present",started)
                         #started = pipelineT265.start(configT265)
                         #tframes = pipelineT265.wait_for_frames()
-
-
-
                         pose = 0
                     try:
                         pose = tframes.get_pose_frame()
@@ -83,24 +118,44 @@ def odometry_capture(global_status):
                         pose = 0
 
                     if pose:
+
+                        if DETECT_MARKER:
+
+
+                            try:
+                                f1 = tframes.get_fisheye_frame(1)
+                                if not f1:
+                                    print("FISHEYE CAMERA 1 ERROR")
+                                image1 = np.asanyarray(f1.get_data())
+                                pose_aruco = search_aruco_in_frames(image1)
+                                pose_aruco.insert(0, frame_c)
+
+
+                            except Exception as e:
+                                print("ARUCO ERROR",e)
+                                pose_aruco = [0]
+
+
+                            writeCSVdata_odometry("_ARUCO_" + timing, pose_aruco)
+
                         data = pose.get_pose_data()
                         w = data.rotation.w
                         x = -data.rotation.z
                         y = data.rotation.x
                         z = -data.rotation.y
 
-                        pitch = -m.asin(2.0 * (x * z - w * y)) * 180.0 / m.pi;
                         roll = m.atan2(2.0 * (w * x + y * z), w * w - x * x - y * y + z * z) * 180.0 / m.pi;
+                        pitch = -m.asin(2.0 * (x * z - w * y)) * 180.0 / m.pi;
                         yaw = m.atan2(2.0 * (w * z + x * y), w * w + x * x - y * y - z * z) * 180.0 / m.pi;
-                        anglePRY = [pitch, roll, yaw]
+                        pose_list = [data.translation.x, data.translation.y, data.translation.z, data.velocity.x, data.velocity.y,data.velocity.z, roll, pitch, yaw]
+                        pose_list.insert(0, frame_c)
 
                         # print("Frame #{}".format(pose.frame_number))
                         # print("Position: {}".format(data.translation))
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
-                        now = datetime.now()
-                        time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
-                        writeCSVdata(timing, [frame_c, time_st, data.translation, data.velocity, anglePRY])
+
+                        writeCSVdata_odometry(timing, pose_list)
                         if not enable_D435i:
                             #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                             time.sleep(DIVIDER_FPS_REDUCTION)

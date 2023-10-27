@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import time
-
+from CONFIG_ODOMETRY_SYSTEM import *
 import pyrealsense2 as rs
 import cv2
 import numpy as np
@@ -15,6 +15,7 @@ from pypylon import pylon
 import multiprocessing
 import os
 import Jetson.GPIO as GPIO
+from cv2 import aruco
 import time
 
 
@@ -90,18 +91,18 @@ def process_1_GPIO(status):
 
             button_state = GPIO.input(button_pin)
             if button_state == GPIO.LOW:
-                print("button premuto!!!")
+                print("|o|____BUTTON_TRIGGER___")
                 # Toggle the value
                 if status.value == 0:
-                    print("TO GREEN")
+                    print("TO GREEN, status:", status.value)
                     status.value = 1
                     time.sleep(0.2)
                 elif status.value == 1:
-                    print("TO RED")
+                    print("TO RED, status:", status.value)
                     status.value = 0
                     time.sleep(0.2)
                 else:
-                    print("ERROR")
+                    print("ERROR, status:", status.value)
                     sys.exit()
 
 
@@ -226,7 +227,21 @@ def check_folder(relative_path):
         print('directory ok:', path)
 
 
-def writeCSVdata(time,data):
+def writeCSVdata_odometry(time,data):
+    """
+    write data 2 CSV
+    :param data: write to a csv file input data (append to the end)
+    :return: nothing
+    """
+    # scrive su un file csv i dati estratti dalla rete Neurale
+    name = "POSE_DATA_"
+
+    file = open('./data/' + name + '_'+ time +'.csv', 'a')
+    writer = csv.writer(file)
+    writer.writerow(data)
+    file.close()
+
+def writeCSVdata(time, data):
     """
     write data 2 CSV
     :param data: write to a csv file input data (append to the end)
@@ -235,7 +250,7 @@ def writeCSVdata(time,data):
     # scrive su un file csv i dati estratti dalla rete Neurale
     name = "odometry"
 
-    file = open('./data/' + name + '_'+ time +'.csv', 'a')
+    file = open('./data/' + name + '_' + time + '.csv', 'a')
     writer = csv.writer(file)
     writer.writerow(data)
     file.close()
