@@ -23,15 +23,16 @@ def calibrate_v2():
                 image = cv2.imread(image_path)
                 if image is not None:
                     calibration_images.append(image)
-                    print("Loaded image: ", image_path)
+                    print("Loaded image: ", image_path, end = "")
                 else:
                     print("Unable to load image: ", image_path)
+                print("ALL IMAGES LOADED")
 
         if not calibration_images:
             print("No images found in ", IMAGE_CALIBRATION_PATH)
 
 
-
+    print("CALIBRATION...")
     # Define the calibration board size (e.g., chessboard)
       # Change this to your board's dimensions
 
