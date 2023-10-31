@@ -1,5 +1,6 @@
 cd
 cd MAPPER_AGRI_MULTICAM/
+
 git pull
 
 echo  "AGRI MAPPER UPDATED SUCCESFULLY"
