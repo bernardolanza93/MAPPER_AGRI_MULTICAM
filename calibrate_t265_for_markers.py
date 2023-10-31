@@ -13,7 +13,7 @@ from CONFIG_ODOMETRY_SYSTEM import *
 def calibrate_v2():
     # Ensure the folder exists
     if not os.path.exists(IMAGE_CALIBRATION_PATH):
-        print(f"The folder '{IMAGE_CALIBRATION_PATH}' does not exist.")
+        print("The folder ", IMAGE_CALIBRATION_PATH , " does not exist.")
     else:
         calibration_images = []  # List to store loaded images
 
