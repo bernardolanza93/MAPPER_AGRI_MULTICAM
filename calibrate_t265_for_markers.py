@@ -26,12 +26,12 @@ def calibrate_v2():
                     print("Loaded image: ", image_path, end = "")
                 else:
                     print("Unable to load image: ", image_path)
-                print("ALL IMAGES LOADED")
+
 
         if not calibration_images:
             print("No images found in ", IMAGE_CALIBRATION_PATH)
 
-
+    print("ALL IMAGES LOADED")
     print("CALIBRATION...")
     # Define the calibration board size (e.g., chessboard)
       # Change this to your board's dimensions
@@ -190,7 +190,7 @@ if __name__ == "__main__":
             print("CALIBRATION ALREADY COMPLETED")
         else:
             print("CALIBRATION STARTING....")
-            calibrate_v2()
+            calibrate()
     else:
         print("Error: Only", jpg_count ,"JPG images found in the folder. You need at least 20.")
         print("CAPTURING....")
