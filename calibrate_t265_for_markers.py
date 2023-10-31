@@ -190,7 +190,7 @@ if __name__ == "__main__":
             print("CALIBRATION ALREADY COMPLETED")
         else:
             print("CALIBRATION STARTING....")
-            calibrate()
+            calibrate_v2()
     else:
         print("Error: Only", jpg_count ,"JPG images found in the folder. You need at least 20.")
         print("CAPTURING....")
