@@ -23,12 +23,12 @@ def calibrate_v2():
                 image = cv2.imread(image_path)
                 if image is not None:
                     calibration_images.append(image)
-                    print(f"Loaded image: {image_path}")
+                    print("Loaded image: ", image_path)
                 else:
-                    print(f"Unable to load image: {image_path}")
+                    print("Unable to load image: ", image_path)
 
         if not calibration_images:
-            print(f"No images found in '{IMAGE_CALIBRATION_PATH}'.")
+            print("No images found in ", IMAGE_CALIBRATION_PATH)
 
 
 
@@ -120,9 +120,9 @@ def calibrate():
 def capture_frames():
     if not os.path.exists(IMAGE_CALIBRATION_PATH):
         os.makedirs(IMAGE_CALIBRATION_PATH)
-        print(f"Folder '{IMAGE_CALIBRATION_PATH}' created.")
+        print("Folder ", IMAGE_CALIBRATION_PATH, "created.")
     else:
-        print(f"Folder '{IMAGE_CALIBRATION_PATH}' already exists.")
+        print("Folder ",IMAGE_CALIBRATION_PATH, " already exists.")
     pipeline = rs.pipeline()
     pipeline.start()
     print(" S - key for save, ESC key to terminate")
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     # Check if at least 20 JPG images are present
     if jpg_count >= 20:
-        print(f"{jpg_count} JPG images found in the folder. IMAGE FOR CALIBRATION OK")
+        print(jpg_count, " JPG images found in the folder. IMAGE FOR CALIBRATION OK")
         if os.path.exists(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy")) and os.path.exists(
                 os.path.join(FOLDER_CALIBRATION_CAMERA, "dist_coeffs.npy")):
             print("CALIBRATION ALREADY COMPLETED")
@@ -175,7 +175,7 @@ if __name__ == "__main__":
             print("CALIBRATION STARTING....")
             calibrate_v2()
     else:
-        print(f"Error: Only {jpg_count} JPG images found in the folder. You need at least 20.")
+        print("Error: Only", jpg_count ,"JPG images found in the folder. You need at least 20.")
         capture_frames()
         print("FRAMES CAPTURED... RELAUNCH THIS FILE TO CALIBRATE...")
 
