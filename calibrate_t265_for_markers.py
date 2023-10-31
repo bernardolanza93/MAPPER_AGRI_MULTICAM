@@ -33,7 +33,7 @@ def calibrate_v2():
 
 
     # Define the calibration board size (e.g., chessboard)
-    board_size = (9, 6)  # Change this to your board's dimensions
+      # Change this to your board's dimensions
 
     # Arrays to store object points and image points
     obj_points = []  # 3D points in real-world space
@@ -50,6 +50,7 @@ def calibrate_v2():
         if ret:
             obj_points.append(objp)
             img_points.append(corners)
+        print("|_| ", end = '')
 
     # Calibrate the camera
     ret, K, D, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None,
@@ -62,10 +63,12 @@ def calibrate_v2():
     # Save the data as .npy files in the specified folder
     np.save(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy"), K)
     np.save(os.path.join(FOLDER_CALIBRATION_CAMERA, "dist_coeffs.npy"), D)
+    print("CALIBRATION COMPLETED")
+
 
 
 def calibrate():
-    CHECKERBOARD = (6, 9)
+    CHECKERBOARD = board_size
     subpix_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.1)
     calibration_flags = cv2.fisheye.CALIB_RECOMPUTE_EXTRINSIC + cv2.fisheye.CALIB_CHECK_COND + cv2.fisheye.CALIB_FIX_SKEW
     objp = np.zeros((1, CHECKERBOARD[0] * CHECKERBOARD[1], 3), np.float32)
