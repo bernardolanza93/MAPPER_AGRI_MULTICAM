@@ -157,11 +157,10 @@ def capture_frames():
 if __name__ == "__main__":
     #mi assicuri che questo file runni come principale
 
-    # Specify the folder path
-    folder_path = "IMAGE_CALIBRATION_PATH"
+
 
     # List all files in the folder
-    file_list = os.listdir(folder_path)
+    file_list = os.listdir(IMAGE_CALIBRATION_PATH)
 
     # Count the number of JPG images in the folder
     jpg_count = sum(1 for file in file_list if file.lower().endswith(".jpg"))
