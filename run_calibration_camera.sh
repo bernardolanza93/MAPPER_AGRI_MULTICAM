@@ -19,4 +19,4 @@ echo ""
 
 
 
-python cali.py
+python calibrate_t265_for_markers.py
