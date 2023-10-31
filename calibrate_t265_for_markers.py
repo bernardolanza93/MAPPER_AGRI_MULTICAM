@@ -157,6 +157,19 @@ def capture_frames():
 if __name__ == "__main__":
     #mi assicuri che questo file runni come principale
 
+    # Specify the folder path
+
+
+    # Check if the folder exists, and create it if not
+    if not os.path.exists(IMAGE_CALIBRATION_PATH):
+        os.makedirs(IMAGE_CALIBRATION_PATH)
+        print("Folder  has been created:",IMAGE_CALIBRATION_PATH)
+
+    # Check if the folder exists, and create it if not
+    if not os.path.exists(FOLDER_CALIBRATION_CAMERA):
+        os.makedirs(FOLDER_CALIBRATION_CAMERA)
+        print("Folder  has been created:",FOLDER_CALIBRATION_CAMERA)
+
 
 
     # List all files in the folder
@@ -176,6 +189,7 @@ if __name__ == "__main__":
             calibrate_v2()
     else:
         print("Error: Only", jpg_count ,"JPG images found in the folder. You need at least 20.")
+        print("CAPTURING....")
         capture_frames()
         print("FRAMES CAPTURED... RELAUNCH THIS FILE TO CALIBRATE...")
 
