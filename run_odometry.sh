@@ -24,4 +24,4 @@ echo ""
 
 
 
-python3 calibrate_t265_for_markers.py
+python3 embedded_odometry.py
