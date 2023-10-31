@@ -1,9 +1,9 @@
 cd
 cd MAPPER_AGRI_MULTICAM/
-#git pull
+git pull
 
 echo  "AGRI MAPPER UPDATED SUCCESFULLY"
-echo "STARTING STANDALONE ODOMETRY SYSTEM "
+echo "STARTING STANDALONE CALIBRATION CAMERA SYSTEM "
 
 
 echo "MMT - LAB"
@@ -19,4 +19,4 @@ echo ""
 
 
 
-python calibrate_t265_for_markers.py
+python cali.py

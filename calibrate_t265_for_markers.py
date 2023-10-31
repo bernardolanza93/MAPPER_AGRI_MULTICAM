@@ -5,22 +5,21 @@ import time
 import numpy as np
 import os
 import glob
+from CONFIG_ODOMETRY_SYSTEM import *
 
-
-folder_path = "CALIB_IMAGES"  # Replace with the desired folder name or path
 
 
 
 def calibrate_v2():
     # Ensure the folder exists
-    if not os.path.exists(folder_path):
-        print(f"The folder '{folder_path}' does not exist.")
+    if not os.path.exists(IMAGE_CALIBRATION_PATH):
+        print(f"The folder '{IMAGE_CALIBRATION_PATH}' does not exist.")
     else:
         calibration_images = []  # List to store loaded images
 
-        for filename in os.listdir(folder_path):
+        for filename in os.listdir(IMAGE_CALIBRATION_PATH):
             if filename.endswith((".jpg", ".png", ".jpeg")):  # Adjust file extensions as needed
-                image_path = os.path.join(folder_path, filename)
+                image_path = os.path.join(IMAGE_CALIBRATION_PATH, filename)
                 image = cv2.imread(image_path)
                 if image is not None:
                     calibration_images.append(image)
@@ -29,7 +28,7 @@ def calibrate_v2():
                     print(f"Unable to load image: {image_path}")
 
         if not calibration_images:
-            print(f"No images found in '{folder_path}'.")
+            print(f"No images found in '{IMAGE_CALIBRATION_PATH}'.")
 
 
 
@@ -53,12 +52,16 @@ def calibrate_v2():
             img_points.append(corners)
 
     # Calibrate the camera
-    ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None,
+    ret, K, D, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None,
                                                                         None)
 
-    # Save the camera matrix and distortion coefficients for later use
-    np.save("camera_matrix.npy", camera_matrix)
-    np.save("dist_coeffs.npy", dist_coeffs)
+
+    if not os.path.exists(FOLDER_CALIBRATION_CAMERA):
+        os.makedirs(FOLDER_CALIBRATION_CAMERA)
+
+    # Save the data as .npy files in the specified folder
+    np.save(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy"), K)
+    np.save(os.path.join(FOLDER_CALIBRATION_CAMERA, "dist_coeffs.npy"), D)
 
 
 def calibrate():
@@ -70,7 +73,7 @@ def calibrate():
     _img_shape = None
     objpoints = []  # 3d point in real world space
     imgpoints = []  # 2d points in image plane.
-    images = glob.glob(folder_path + "/"+'*.jpg')
+    images = glob.glob(IMAGE_CALIBRATION_PATH + "/"+'*.jpg')
     print(len(images))
 
     for fname in images:
@@ -103,29 +106,36 @@ def calibrate():
     print("K=np.array(" + str(K.tolist()) + ")")
     print("D=np.array(" + str(D.tolist()) + ")")
 
-    np.save("camera_matrix.npy", K)
-    np.save("dist_coeffs.npy", D)
+    if not os.path.exists(FOLDER_CALIBRATION_CAMERA):
+        os.makedirs(FOLDER_CALIBRATION_CAMERA)
+
+    # Save the data as .npy files in the specified folder
+    np.save(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy"), K)
+    np.save(os.path.join(FOLDER_CALIBRATION_CAMERA, "dist_coeffs.npy"), D)
 
 
 # You should replace these 3 lines with the output in calibration step
 
 
 def capture_frames():
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        print(f"Folder '{folder_path}' created.")
+    if not os.path.exists(IMAGE_CALIBRATION_PATH):
+        os.makedirs(IMAGE_CALIBRATION_PATH)
+        print(f"Folder '{IMAGE_CALIBRATION_PATH}' created.")
     else:
-        print(f"Folder '{folder_path}' already exists.")
+        print(f"Folder '{IMAGE_CALIBRATION_PATH}' already exists.")
     pipeline = rs.pipeline()
     pipeline.start()
+    print(" S - key for save, ESC key to terminate")
+    time.sleep(2)
+    print("GO!")
     try:
         while True:
             frames = pipeline.wait_for_frames()
             f1 = frames.get_fisheye_frame(1)
-            f2 = frames.get_fisheye_frame(2)
+
             if not f1:
                 continue
-            assert f1 and f2
+
             image1 = np.asanyarray(f1.get_data())
 
             cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
@@ -145,4 +155,36 @@ def capture_frames():
         pipeline.stop()
 
 if __name__ == "__main__":
-    capture_frames()
+    #mi assicuri che questo file runni come principale
+
+    # Specify the folder path
+    folder_path = "IMAGE_CALIBRATION_PATH"
+
+    # List all files in the folder
+    file_list = os.listdir(folder_path)
+
+    # Count the number of JPG images in the folder
+    jpg_count = sum(1 for file in file_list if file.lower().endswith(".jpg"))
+
+    # Check if at least 20 JPG images are present
+    if jpg_count >= 20:
+        print(f"{jpg_count} JPG images found in the folder. IMAGE FOR CALIBRATION OK")
+        if os.path.exists(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy")) and os.path.exists(
+                os.path.join(FOLDER_CALIBRATION_CAMERA, "dist_coeffs.npy")):
+            print("CALIBRATION ALREADY COMPLETED")
+        else:
+            print("CALIBRATION STARTING....")
+            calibrate_v2()
+    else:
+        print(f"Error: Only {jpg_count} JPG images found in the folder. You need at least 20.")
+        capture_frames()
+        print("FRAMES CAPTURED... RELAUNCH THIS FILE TO CALIBRATE...")
+
+
+
+
+
+
+
+
+
