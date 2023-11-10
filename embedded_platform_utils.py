@@ -55,6 +55,7 @@ led_pins = [led_green_pin, led_red_pin]
 
 def process_1_GPIO(status):
     print("current status:",status)
+    print("current status,value:", status.value)
     print("start")
     status.value = 0
 

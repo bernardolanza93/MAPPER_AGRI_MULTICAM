@@ -6,7 +6,9 @@ source ~/.bashrc
 cd
 cd MAPPER_AGRI_MULTICAM/
 git pull
-echo "ARUCO MODULE INCLUDED"
+
+
+echo "NO ARUCO MODULE || ONLY T265"
 echo  "AGRI MAPPER UPDATED SUCCESFULLY"
 echo "STARTING STANDALONE ODOMETRY SYSTEM "
 
@@ -22,6 +24,7 @@ echo " \__,_|_.__/ \__,_|_| |_|\__|\__,_|"
 
 echo ""
 
-echo "RUNNING:  embedded_odometry.py"
+echo "RUNNING:  embedded_odometry_NO_ARUCO.py"
 
-python3 embedded_odometry.py
+
+python3 embedded_odometry_NO_ARUCO.py
