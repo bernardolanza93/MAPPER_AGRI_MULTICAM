@@ -15,6 +15,7 @@ def odometry_capture(global_status):
         time.sleep(1)
 
         check_folder("/data/")
+        now = datetime.now()
         timing = now.strftime("%Y_%m_%d_%H_%M_%S")
         writeCSVdata_odometry("_ARUCO_" + timing, ["frame", "id_marker", "x", "y", "z", "roll", "pitch", "yaw"])
         writeCSVdata_odometry(timing, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
