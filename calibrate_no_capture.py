@@ -138,6 +138,7 @@ if __name__ == "__main__":
 
     # List all files in the folder
     file_list = os.listdir(IMAGE_CALIBRATION_PATH)
+    print(file_list)
 
     # Count the number of JPG images in the folder
     jpg_count = sum(1 for file in file_list if file.lower().endswith(".jpg"))
