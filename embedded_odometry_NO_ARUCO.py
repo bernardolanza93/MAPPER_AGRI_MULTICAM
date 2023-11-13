@@ -136,7 +136,7 @@ def processor():
         global_status = multiprocessing.Value("i", 0)
 
         p0 = multiprocessing.Process(target=process_1_GPIO, args=(global_status,))
-        p1 = multiprocessing.Process(target=odometry_capture(), args=(global_status,))
+        p1 = multiprocessing.Process(target=odometry_capture, args=(global_status,))
 
         p0.start()
         p1.start()
