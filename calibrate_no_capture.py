@@ -154,7 +154,7 @@ if __name__ == "__main__":
             calibrate_v2()
     else:
         print("Error: Only", jpg_count ,"JPG images found in the folder. You need at least 20.")
-        print("ERROR CAPTURING IMAGES.... NO IMAGE IN PATH :", IMAGE_CALIBRATION_PATH)
+        print("ERROR CAPTURING IMAGES.... NO IMAGE IN PATH  :", IMAGE_CALIBRATION_PATH)
 
 
 
