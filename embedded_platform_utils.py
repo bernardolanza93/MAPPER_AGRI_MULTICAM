@@ -25,8 +25,7 @@ offset = np.tile(50, (1080,1920))
 T265_MANDATORY = False
 SEARCH_USB_CAMERAS = False
 USE_PYLON_CAMERA = True
-now = datetime.now()
-date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
+
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
 DISPLAY_RGB = 1
@@ -129,7 +128,8 @@ def organize_video_from_last_acquisition():
 
 
         # convert to string
-
+        now = datetime.now()
+        date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
         folder_name = path_dir  + name1 + date_time
 
         print("folder dest:", folder_name)

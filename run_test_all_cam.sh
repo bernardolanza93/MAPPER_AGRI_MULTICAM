@@ -21,6 +21,6 @@ echo " \__,_|_.__/ \__,_|_| |_|\__|\__,_|"
 
 echo ""
 
-echo "RUNNING:  TEST_ALL_CAM.py"
+echo "RUNNING:  embbeded_simple_camera_display.py"
 
-python3 TEST_ALL_CAM.py
+python3 embbeded_simple_camera_display.py
