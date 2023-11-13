@@ -141,7 +141,7 @@ if __name__ == "__main__":
     print(file_list)
 
     # Count the number of JPG images in the folder
-    jpg_count = sum(1 for file in file_list if file.lower().endswith(".jpg"))
+    jpg_count = sum(1 for file in file_list if file.lower().endswith(".jpg") or file.lower().endswith(".png"))
 
     # Check if at least 20 JPG images are present
     if jpg_count >= 20:
