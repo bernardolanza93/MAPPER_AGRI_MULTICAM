@@ -1,5 +1,6 @@
 from embedded_platform_utils import *
 from embedded_platform_realsese import *
+print(" CV2  version: ",cv2.__version__)
 
 
 local_status = 0
