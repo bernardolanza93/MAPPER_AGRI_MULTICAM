@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # Check if at least 20 JPG images are present
     if jpg_count >= 20:
-        print(jpg_count, " JPG images found in the folder. IMAGE FOR CALIBRATION OK")
+        print(jpg_count, " JPG images found in the f older. IMAGE FOR CALIBRATION OK")
         if os.path.exists(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy")) and os.path.exists(
                 os.path.join(FOLDER_CALIBRATION_CAMERA, "dist_coeffs.npy")):
             print("CALIBRATION ALREADY COMPLETED")
