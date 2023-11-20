@@ -40,10 +40,10 @@ def odometry_capture(global_status):
         time.sleep(1)
 
         check_folder("/data/")
-        now = datetime.now()
-        timing = now.strftime("%Y_%m_%d_%H_%M_%S")
-        writeCSVdata_odometry("_ARUCO_" + timing, ["frame","id_marker","x","y","z","roll", "pitch", "yaw"])
-        writeCSVdata_odometry(timing,[ "frame","x","y","z","vx","vy","vz","roll", "pitch", "yaw"])
+        now_file_ar = datetime.now()
+        timing_abs_ar = now_file_ar.strftime("%Y_%m_%d_%H_%M_%S")
+        writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, ["frame","id_marker","x","y","z","roll", "pitch", "yaw"])
+        writeCSVdata_odometry(timing_abs_ar,[ "frame","x","y","z","vx","vy","vz","roll", "pitch", "yaw"])
 
 
 
@@ -104,15 +104,16 @@ def odometry_capture(global_status):
                         if DETECT_MARKER:
 
 
-                            f1 = tframes.get_fisheye_frame(1)
-                            if not f1:
-                                continue
 
-                            image1 = np.asanyarray(f1.get_data())
-                            pose_aruco = search_aruco_in_frames(image1)
 
 
                             try:
+                                f1 = tframes.get_fisheye_frame(1)
+                                if not f1:
+                                    continue
+
+                                image1 = np.asanyarray(f1.get_data())
+                                pose_aruco = search_aruco_in_frames(image1)
 
 
 
@@ -125,7 +126,7 @@ def odometry_capture(global_status):
                                 pose_aruco = [0]
 
 
-                            writeCSVdata_odometry("_ARUCO_" + timing, pose_aruco)
+                            writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)
 
                         data = pose.get_pose_data()
                         w = data.rotation.w
@@ -144,7 +145,7 @@ def odometry_capture(global_status):
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
 
-                        writeCSVdata_odometry(timing, pose_list)
+                        writeCSVdata_odometry(timing_abs_ar, pose_list)
                         if not enable_D435i:
                             #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                             time.sleep(DIVIDER_FPS_REDUCTION)
