@@ -37,7 +37,7 @@ def odometry_capture_no_aruco(global_status):
         now_file = datetime.now()
         timing_abs = now_file.strftime("%Y_%m_%d_%H_%M_%S")
         #writeCSVdata_odometry("_ARUCO_" + timing_abs, ["frame", "id_marker", "x", "y", "z", "roll", "pitch", "yaw"])
-        writeCSVdata_odometry(timing_abs, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
+        writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
 
         ##config.enable_device('947122110515')
         print("PIPELINE CONFIG T265...")
@@ -124,7 +124,7 @@ def odometry_capture_no_aruco(global_status):
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
 
-                        writeCSVdata_odometry(timing_abs, pose_list)
+                        writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, pose_list)
                         if not enable_D435i:
                             # converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                             time.sleep(DIVIDER_FPS_REDUCTION)

@@ -75,6 +75,7 @@ def odometry_capture(global_status):
         print(".")
         print("|_> STATUS LOOP EXIT, STARTING!, local_status:", local_status)
         while local_status == 1:
+            print("LOOOPING IMAGES")
 
             if enable_T265 or enable_D435i:
 
@@ -92,6 +93,7 @@ def odometry_capture(global_status):
                         pose = 0
                     try:
                         pose = tframes.get_pose_frame()
+                        print("POSE EXTRACTED")
 
                     except Exception as e:
                         print("ERROR T265 getFr: %s", e)
