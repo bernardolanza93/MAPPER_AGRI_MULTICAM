@@ -8,7 +8,7 @@ local_status = 0
 
 
 
-def odometry_capture(global_status):
+def odometry_capture_no_aruco(global_status):
 
     print("one shot INIZIALIZATION T265")
     ctx = rs.context()
@@ -65,15 +65,13 @@ def odometry_capture(global_status):
             local_status = global_status.value
             time.sleep(0.5)
             print(".", end="")
+        print(".")
         print("|_> LOOP EXIT, STARTED ACQUISITION!, local_status", local_status)
         while local_status == 1:
 
             if enable_T265 or enable_D435i:
 
-                now = datetime.now()
-                time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
 
-                start = time.time()
                 frame_c += 1
 
                 if enable_T265:
@@ -145,7 +143,7 @@ def processor():
         global_status = multiprocessing.Value("i", 0)
 
         p0 = multiprocessing.Process(target=process_1_GPIO, args=(global_status,))
-        p1 = multiprocessing.Process(target=odometry_capture, args=(global_status,))
+        p1 = multiprocessing.Process(target=odometry_capture_no_aruco, args=(global_status,))
 
         p0.start()
         p1.start()

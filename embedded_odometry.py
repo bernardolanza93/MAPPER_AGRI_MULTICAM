@@ -72,15 +72,13 @@ def odometry_capture(global_status):
             local_status = global_status.value
             time.sleep(0.5)
             print(".", end="")
+        print(".")
         print("|_> LOCAL ODOMOETRY STATUS LOOP EXIT, started!, local_status", local_status)
         while local_status == 1:
 
             if enable_T265 or enable_D435i:
 
-                now = datetime.now()
-                time_st = now.strftime("%d-%m-%Y|%H:%M:%S")
 
-                start = time.time()
                 frame_c += 1
 
 
