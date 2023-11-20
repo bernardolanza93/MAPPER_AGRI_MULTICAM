@@ -15,7 +15,7 @@ from pypylon import pylon
 import multiprocessing
 import os
 import Jetson.GPIO as GPIO
-from cv2 import aruco
+
 import time
 
 

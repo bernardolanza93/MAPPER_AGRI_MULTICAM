@@ -1,5 +1,5 @@
 from embedded_platform_utils import *
-
+import cv2.aruco as aruco
 
 
 def aruco_detection(image1):
