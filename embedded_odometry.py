@@ -114,6 +114,7 @@ def odometry_capture(global_status):
 
                                 image1 = np.asanyarray(f1.get_data())
                                 pose_aruco = search_aruco_in_frames(image1)
+                                print("ARUCOOO: ",pose_aruco)
 
 
 
@@ -129,6 +130,7 @@ def odometry_capture(global_status):
                             writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)
 
                         data = pose.get_pose_data()
+                        print(data)
                         w = data.rotation.w
                         x = -data.rotation.z
                         y = data.rotation.x
