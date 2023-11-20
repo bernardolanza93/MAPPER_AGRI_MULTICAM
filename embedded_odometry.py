@@ -6,26 +6,13 @@ print(" CV2  version: ",cv2.__version__)
 
 local_status = 0
 
-def search_aruco_in_frames(frames):
-    f1 = frames.get_fisheye_frame(1)
-    #f2 = frames.get_fisheye_frame(2)
+def search_aruco_in_frames(image):
 
 
-    image1 = np.asanyarray(f1.get_data())
-
-    gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     pose = ARUCO.aruco_detection(gray)
 
-
-    cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
-    cv2.imshow('RealSense', image1)
-    key = cv2.waitKey(1)
-    if key == 27:  # ESC
-        return
-    if key == ord('s'):
-        cv2.imwrite("a.jpg", image1)
-    print("search aruco")
     return pose
 
 
@@ -116,7 +103,11 @@ def odometry_capture(global_status):
 
                         if DETECT_MARKER:
 
-                            pose_aruco = search_aruco_in_frames(tframes)
+
+                            f1 = tframes.get_fisheye_frame(1)
+
+                            image1 = np.asanyarray(f1.get_data())
+                            pose_aruco = search_aruco_in_frames(image1)
 
 
                             try:
