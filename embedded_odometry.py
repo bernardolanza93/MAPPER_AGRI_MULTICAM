@@ -156,12 +156,15 @@ def odometry_capture(global_status):
                             #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                             time.sleep(DIVIDER_FPS_REDUCTION)
                     local_status = global_status.value
+                    if local_status == 0:
+                        print("TERMINATION SIGNAL DETECTED")
 
 
 
 
 
         if enable_T265:
+            print("PIPELINE STOPPED!")
             pipelineT265.stop()
 
 
