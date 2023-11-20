@@ -8,7 +8,7 @@ local_status = 0
 
 def search_aruco_in_frames(frames):
     f1 = frames.get_fisheye_frame(1)
-    f2 = frames.get_fisheye_frame(2)
+    #f2 = frames.get_fisheye_frame(2)
 
 
     image1 = np.asanyarray(f1.get_data())
@@ -118,11 +118,10 @@ def odometry_capture(global_status):
 
 
                             try:
-                                f1 = tframes.get_fisheye_frame(1)
-                                if not f1:
-                                    print("FISHEYE CAMERA 1 ERROR")
-                                image1 = np.asanyarray(f1.get_data())
-                                pose_aruco = search_aruco_in_frames(image1)
+
+
+
+                                pose_aruco = search_aruco_in_frames(tframes)
                                 pose_aruco.insert(0, frame_c)
 
 

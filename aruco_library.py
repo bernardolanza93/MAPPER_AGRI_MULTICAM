@@ -132,6 +132,8 @@ def aruco_detection(image1):
 
             # Convert the rotation matrix to Euler angles (roll, pitch, yaw)
             inv_roll, inv_pitch, inv_yaw = cv2.RQDecomp3x3(inv_rotation_matrix)
+        else:
+            pose = 0
 
         return pose
     else:
