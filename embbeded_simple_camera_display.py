@@ -10,7 +10,7 @@ def display_t265():
 
     pipeline = rs.pipeline()
     pipeline.start()
-    print(" S - key for save, ESC key to terminate")
+    print(" ESC key to terminate")
     time.sleep(2)
     print("GO!")
     try:

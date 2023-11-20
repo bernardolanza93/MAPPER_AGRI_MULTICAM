@@ -105,6 +105,8 @@ def odometry_capture(global_status):
 
 
                             f1 = tframes.get_fisheye_frame(1)
+                            if not f1:
+                                continue
 
                             image1 = np.asanyarray(f1.get_data())
                             pose_aruco = search_aruco_in_frames(image1)
