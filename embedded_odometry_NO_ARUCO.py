@@ -1,7 +1,7 @@
-from embedded_platform_utils import *
+
 from embedded_platform_realsese import *
 print(" CV2  version: ",cv2.__version__)
-
+#import aruco_library as ARUCO
 
 local_status = 0
 
@@ -34,10 +34,10 @@ def odometry_capture(global_status):
         time.sleep(1)
 
         check_folder("/data/")
-        now = datetime.now()
-        timing = now.strftime("%Y_%m_%d_%H_%M_%S")
-        writeCSVdata_odometry("_ARUCO_" + timing, ["frame", "id_marker", "x", "y", "z", "roll", "pitch", "yaw"])
-        writeCSVdata_odometry(timing, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
+        now_file = datetime.now()
+        timing_abs = now_file.strftime("%Y_%m_%d_%H_%M_%S")
+        #writeCSVdata_odometry("_ARUCO_" + timing_abs, ["frame", "id_marker", "x", "y", "z", "roll", "pitch", "yaw"])
+        writeCSVdata_odometry(timing_abs, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
 
         ##config.enable_device('947122110515')
         print("PIPELINE CONFIG T265...")
@@ -65,7 +65,7 @@ def odometry_capture(global_status):
             local_status = global_status.value
             time.sleep(0.5)
             print(".", end="")
-        print("|_> LOCAL ODOMOETRY STATUS LOOP EXIT, started!, local_status", local_status)
+        print("|_> LOOP EXIT, STARTED ACQUISITION!, local_status", local_status)
         while local_status == 1:
 
             if enable_T265 or enable_D435i:
@@ -93,13 +93,14 @@ def odometry_capture(global_status):
 
                     if pose:
 
-                        if DETECT_MARKER:
+                        #if DETECT_MARKER:
+                        if False:
 
                             try:
                                 f1 = tframes.get_fisheye_frame(1)
                                 if not f1:
                                     print("FISHEYE CAMERA 1 ERROR")
-                                image1 = np.asanyarray(f1.get_data())
+                                #image1 = np.asanyarray(f1.get_data())
 
 
 
@@ -125,7 +126,7 @@ def odometry_capture(global_status):
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
 
-                        writeCSVdata_odometry(timing, pose_list)
+                        writeCSVdata_odometry(timing_abs, pose_list)
                         if not enable_D435i:
                             # converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                             time.sleep(DIVIDER_FPS_REDUCTION)
