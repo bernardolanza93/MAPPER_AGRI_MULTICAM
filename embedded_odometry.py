@@ -168,15 +168,13 @@ def odometry_capture(global_status):
 
 
 
-
 def processor():
     try:
-
 
         global_status = multiprocessing.Value("i", 0)
 
         p0 = multiprocessing.Process(target=process_1_GPIO, args=(global_status,))
-        p1 = multiprocessing.Process(target=odometry_capture(), args=(global_status,))
+        p1 = multiprocessing.Process(target=odometry_capture, args=(global_status,))
 
         p0.start()
         p1.start()
@@ -186,7 +184,6 @@ def processor():
 
         print("pinout cap? -> {}".format(p0.is_alive()))
         print("odometry save?    -> {}".format(p1.is_alive()))
-
 
         # both processes finished
         print("Both processes finished execution!")
@@ -199,11 +196,9 @@ def processor():
         sys.exit()
 
 
-
-
-
-
 processor()
+
+
 
 
 
