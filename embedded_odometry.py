@@ -116,12 +116,14 @@ def odometry_capture(global_status):
 
                         if DETECT_MARKER:
 
+                            pose_aruco = search_aruco_in_frames(tframes)
+
 
                             try:
 
 
 
-                                pose_aruco = search_aruco_in_frames(tframes)
+
                                 pose_aruco.insert(0, frame_c)
 
 
