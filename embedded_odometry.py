@@ -105,6 +105,7 @@ def odometry_capture(global_status):
 
 
                             try:
+                                print("extracrting frames...")
 
                                 f1 = tframes.get_fisheye_frame(1)
                                 if not f1:
