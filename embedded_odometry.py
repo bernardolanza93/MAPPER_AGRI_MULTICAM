@@ -11,6 +11,7 @@ def search_aruco_in_frames(image):
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+
     pose = ARUCO.aruco_detection(gray)
 
     return pose
@@ -86,7 +87,6 @@ def odometry_capture(global_status):
                 if enable_T265:
                     try:
                         tframes = pipelineT265.wait_for_frames()
-                        print("EXTRACTED FRAME")
                     except Exception as e:
                         print("ERROR T265 wait4fr: %s", e, "object ideally not present",started)
                         #started = pipelineT265.start(configT265)
@@ -94,18 +94,14 @@ def odometry_capture(global_status):
                         pose = 0
                     try:
                         pose = tframes.get_pose_frame()
-                        print("EXTRACTED POSE FRAME")
 
 
                     except Exception as e:
                         print("ERROR T265 getFr: %s", e)
                         pose = 0
-                    print("check..")
                     if pose:
-                        print("pose ok")
 
                         if DETECT_MARKER:
-                            print("detect marker...")
 
 
                             try:
@@ -115,7 +111,7 @@ def odometry_capture(global_status):
 
                                 image1 = np.asanyarray(f1.get_data())
                                 pose_aruco = search_aruco_in_frames(image1)
-                                print("ARUCOOO: ",pose_aruco)
+
 
 
 
@@ -130,8 +126,7 @@ def odometry_capture(global_status):
                             writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)
 
                         data = pose.get_pose_data()
-                        print("get data from pose")
-                        print(data)
+
                         w = data.rotation.w
                         x = -data.rotation.z
                         y = data.rotation.x
