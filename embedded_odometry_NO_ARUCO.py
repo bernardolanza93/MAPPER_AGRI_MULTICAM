@@ -9,6 +9,25 @@ local_status = 0
 
 
 def odometry_capture(global_status):
+
+    print("one shot INIZIALIZATION T265")
+    ctx = rs.context()
+    enable_D435i, enable_T265, device_aviable = search_device(ctx)
+
+    print(" | T265:", enable_T265)
+
+    if enable_T265:
+        # T265_________________________________________________
+
+        pipelineT265 = rs.pipeline(ctx)
+        configT265 = rs.config()
+        serialt265 = str(device_aviable['T265'][0])
+        print(serialt265)
+        configT265.enable_device(serialt265)
+        configT265.enable_stream(rs.stream.pose)
+        configT265.enable_stream(rs.stream.gyro)
+        print("configured succesfully T265...")
+
     while 1:
         local_status = global_status.value
         print("LOCAL STAT INI = ", local_status)
@@ -21,24 +40,9 @@ def odometry_capture(global_status):
         writeCSVdata_odometry(timing, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
 
         ##config.enable_device('947122110515')
-        print("CONFIGURING T265...")
-
-        ctx = rs.context()
-        enable_D435i, enable_T265, device_aviable = search_device(ctx)
-
-        print(" | T265:", enable_T265)
+        print("PIPELINE CONFIG T265...")
 
         if enable_T265:
-            # T265_________________________________________________
-
-            pipelineT265 = rs.pipeline(ctx)
-            configT265 = rs.config()
-            serialt265 = str(device_aviable['T265'][0])
-            print(serialt265)
-            configT265.enable_device(serialt265)
-            configT265.enable_stream(rs.stream.pose)
-            configT265.enable_stream(rs.stream.gyro)
-            print("configured succesfully T265...")
 
             # saver.set_option()
 

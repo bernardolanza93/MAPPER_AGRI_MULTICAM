@@ -594,6 +594,7 @@ def main(q,status):
                                 # Access the image data
                                 image = converter.Convert(grabResult)
                                 img_basler = image.GetArray()
+                                cv2.imshow("d", img_basler)
 
                                 if SAVE_VIDEO_TIME != 0:
                                     try:
@@ -615,11 +616,8 @@ def main(q,status):
                     status.value = 0
 
 
-            key = cv2.waitKey(1)
-            if key == 27:
-                #result.release()
-                #cv2.destroyAllWindows()
-                break
+                cv2.waitKey(1)
+
 
 
         if basler_presence == False:
@@ -654,12 +652,12 @@ def image_saver(q,basler_status):
 
 
                 gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-                out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
+                #out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
                 while True:
                     qsize = q.qsize()
                     print("size: ", qsize)
                     img_basler = q.get()
-                    out_BASLER.write(img_basler)
+                    #out_BASLER.write(img_basler)
 
 
                 out_BASLER.release()
