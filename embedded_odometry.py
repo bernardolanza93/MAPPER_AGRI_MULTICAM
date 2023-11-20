@@ -86,6 +86,7 @@ def odometry_capture(global_status):
                 if enable_T265:
                     try:
                         tframes = pipelineT265.wait_for_frames()
+                        print("EXTRACTED FRAME")
                     except Exception as e:
                         print("ERROR T265 wait4fr: %s", e, "object ideally not present",started)
                         #started = pipelineT265.start(configT265)
@@ -93,15 +94,18 @@ def odometry_capture(global_status):
                         pose = 0
                     try:
                         pose = tframes.get_pose_frame()
+                        print("EXTRACTED POSE FRAME")
 
 
                     except Exception as e:
                         print("ERROR T265 getFr: %s", e)
                         pose = 0
-
+                    print("check..")
                     if pose:
+                        print("pose ok")
 
                         if DETECT_MARKER:
+                            print("detect marker...")
 
 
                             try:
@@ -123,10 +127,10 @@ def odometry_capture(global_status):
                                 print("ARUCO ERROR",e)
                                 pose_aruco = [0]
 
-                            print("WRITING a")
                             writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)
 
                         data = pose.get_pose_data()
+                        print("get data from pose")
                         print(data)
                         w = data.rotation.w
                         x = -data.rotation.z
@@ -143,7 +147,6 @@ def odometry_capture(global_status):
                         # print("Position: {}".format(data.translation))
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
-                        print("writing pose")
                         writeCSVdata_odometry(timing_abs_ar, pose_list)
                         if not enable_D435i:
                             #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
