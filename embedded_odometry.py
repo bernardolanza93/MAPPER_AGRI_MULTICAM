@@ -11,7 +11,7 @@ def search_aruco_in_frames(image):
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-
+    print("starting aruco detection")
     pose = ARUCO.aruco_detection(gray)
 
     return pose
@@ -105,6 +105,7 @@ def odometry_capture(global_status):
 
 
                             try:
+                                print("extracting image")
                                 f1 = tframes.get_fisheye_frame(1)
                                 if not f1:
                                     continue
