@@ -75,7 +75,7 @@ def odometry_capture(global_status):
         print(".")
         print("|_> STATUS LOOP EXIT, STARTING!, local_status:", local_status)
         while local_status == 1:
-            print("LOOOPING IMAGES")
+
 
             if enable_T265 or enable_D435i:
 
@@ -93,7 +93,7 @@ def odometry_capture(global_status):
                         pose = 0
                     try:
                         pose = tframes.get_pose_frame()
-                        print("POSE EXTRACTED")
+
 
                     except Exception as e:
                         print("ERROR T265 getFr: %s", e)
@@ -102,9 +102,6 @@ def odometry_capture(global_status):
                     if pose:
 
                         if DETECT_MARKER:
-
-
-
 
 
                             try:
@@ -126,7 +123,7 @@ def odometry_capture(global_status):
                                 print("ARUCO ERROR",e)
                                 pose_aruco = [0]
 
-
+                            print("WRITING a")
                             writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)
 
                         data = pose.get_pose_data()
@@ -146,7 +143,7 @@ def odometry_capture(global_status):
                         # print("Position: {}".format(data.translation))
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
-
+                        print("writing pose")
                         writeCSVdata_odometry(timing_abs_ar, pose_list)
                         if not enable_D435i:
                             #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
