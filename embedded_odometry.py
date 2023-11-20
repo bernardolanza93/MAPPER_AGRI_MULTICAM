@@ -113,7 +113,7 @@ def odometry_capture(global_status):
                                 image1 = np.asanyarray(f1.get_data())
                                 print("start research aruco....")
                                 pose_aruco = search_aruco_in_frames(image1)
-                                print("end research")
+                                print("end research", pose_aruco)
 
 
 
