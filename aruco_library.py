@@ -30,6 +30,7 @@ else:
     sys.exit()
 
 def aruco_detection(image1):
+    print("start aruco, detecting...")
 
 
 
@@ -56,6 +57,7 @@ def aruco_detection(image1):
     """
 
     corners, ids, rejectedImgPoints = aruco.detectMarkers(image1, aruco_dict, parameters=parameters)
+    print("found:", ids)
 
     """cameraMatrix and distCoeffs are the camera calibration parameters that were created during the camera calibration process.
     The output parameters rvecs and tvecs are the rotation and translation vectors respectively, for each of the markers in markerCorners.
