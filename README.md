@@ -132,10 +132,20 @@ To enable GUI again, run the following command.
 sudo systemctl set-default graphical.target
 ```
 
+to start Gui session on a system without a current GUI just execute:
+```
+sudo systemctl start gdm3.service
+```
 
-You can the device with:
+
+
+You can test the device with:
 ```
 tegrastats
+```
+or 
+```
+jtop
 ```
 to see if the GPU resources are fully utilized
 
