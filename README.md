@@ -86,6 +86,18 @@ sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 ```
 
+###INSTALL PYREALSENSE FOLLOWING THIS REPO
+```
+https://github.com/35selim/RealSense-Jetson/tree/main
+```
+
+###INSTALL OPENCV:
+```
+sudo apt-get install python3-opencv
+```
+
+
+
 ### Executing program
 
 * How to run the program
