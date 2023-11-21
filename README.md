@@ -81,17 +81,17 @@ Translated with www.DeepL.com/Translator (free version)
 * matlab script are customized to fit my laptop, other script are relative to the working directory, automatically filling the absolute path with your WD.
 
 ```
-pip install pyrealsense2
+
 sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 ```
 
-###INSTALL PYREALSENSE FOLLOWING THIS REPO
+### INSTALL PYREALSENSE FOLLOWING THIS REPO
 ```
 https://github.com/35selim/RealSense-Jetson/tree/main
 ```
 
-###INSTALL OPENCV:
+### INSTALL OPENCV:
 ```
 sudo apt-get install python3-opencv
 ```
