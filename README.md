@@ -87,6 +87,7 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 ```
 
 ### INSTALL PYREALSENSE FOLLOWING THIS REPO
+## install SDK to utilize T265, and instal pyrealsense2 to import RS libraries
 ```
 https://github.com/35selim/RealSense-Jetson/tree/main
 ```
