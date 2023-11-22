@@ -16,7 +16,7 @@ import time
 from configuration_path import *
 import open3d as o3d
 from sklearn.preprocessing import RobustScaler
-import pyntcloud
+
 import pandas as pd
 import random
 from scipy.spatial import Delaunay

@@ -34,6 +34,10 @@ def odometry_capture(global_status):
         configT265.enable_device(serialt265)
         configT265.enable_stream(rs.stream.pose)
         configT265.enable_stream(rs.stream.gyro)
+        print("IMU CONFIG")
+        #FISHEY!
+        configT265.enable_stream(rs.stream.fisheye, 1)
+        print("FISHEYE CONFIG")
         print("configured succesfully T265...")
     while 1:
         local_status = global_status.value
@@ -73,8 +77,8 @@ def odometry_capture(global_status):
             local_status = global_status.value
             time.sleep(0.5)
             print(".", end="")
-        print(".")
-        print("|_> STATUS LOOP EXIT, STARTING!, local_status:", local_status)
+        print(".<-")
+        print("|_> STARTING!, STATUS LOOP EXIT,  local_status:", local_status)
         while local_status == 1:
 
 
@@ -93,6 +97,7 @@ def odometry_capture(global_status):
                         #tframes = pipelineT265.wait_for_frames()
                         pose = 0
                     try:
+                        print("extract pose frame")
                         pose = tframes.get_pose_frame()
 
 
@@ -105,14 +110,16 @@ def odometry_capture(global_status):
 
 
                             try:
-                                print("extracrting frames...")
+                                print("extracrting frames...") #ultima cosa riconosciuta
 
                                 f1 = tframes.get_fisheye_frame(1)
                                 if not f1:
+                                    print("ERROR NO FISHEYE FRAME")
                                     continue
-
+                                print("IMG2ARR:")
                                 image1 = np.asanyarray(f1.get_data())
-                                print(image1)
+                                print("search_op:")
+
 
                                 pose_aruco = search_aruco_in_frames(image1)
 
@@ -125,7 +132,7 @@ def odometry_capture(global_status):
 
 
                             except Exception as e:
-                                print("ARUCO ERROR",e)
+                                print("DETECT ARUCO ERROR",e)
                                 pose_aruco = [0]
 
                             writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)

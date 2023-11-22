@@ -26,7 +26,7 @@ if os.path.exists(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy")) 
     parameters = aruco.DetectorParameters_create()
     print("ARUCO DETECTOR OBJECT CREATED! ")
 else:
-    print("ARUCO MODULE FAIL NO CALIBRATION")
+    print("ARUCO MODULE FAIL // NO CALIBRATION")
     sys.exit()
 
 def aruco_detection(image1):

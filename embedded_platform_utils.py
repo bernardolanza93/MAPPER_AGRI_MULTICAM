@@ -15,7 +15,7 @@ from pypylon import pylon
 import multiprocessing
 import os
 import Jetson.GPIO as GPIO
-
+import subprocess
 import time
 
 
@@ -53,10 +53,11 @@ led_pins = [led_green_pin, led_red_pin]
 
 
 def process_1_GPIO(status):
-    print("current status:",status)
-    print("current status,value:", status.value)
+
+
     print("start")
     status.value = 0
+    print("INI : PIN LOW, current status,value,:", status.value)
 
     # Configure the GPIO pins
     GPIO.setmode(GPIO.BOARD)
@@ -84,7 +85,7 @@ def process_1_GPIO(status):
                     time.sleep(0.2)
                     GPIO.output(led_red_pin, GPIO.LOW)
                     time.sleep(0.2)
-                    print("error comeback")
+                    print("FLASHING error comeback")
 
 
 
@@ -94,11 +95,11 @@ def process_1_GPIO(status):
                 print("|o|____BUTTON_TRIGGER___")
                 # Toggle the value
                 if status.value == 0:
-                    print("TO GREEN, status:", status.value)
+                    print("TO GREEN-PRESSED PLAY, status:", status.value)
                     status.value = 1
                     time.sleep(0.2)
                 elif status.value == 1:
-                    print("TO RED, status:", status.value)
+                    print("TO RED-PRESSED STOP, status:", status.value)
                     status.value = 0
                     time.sleep(0.2)
                 else:

@@ -17,7 +17,6 @@ from configuration_path import *
 from pointcloud_utility_library import *
 import open3d as o3d
 from sklearn.preprocessing import RobustScaler
-import pyntcloud
 import pandas as pd
 import random
 from scipy.spatial import Delaunay
