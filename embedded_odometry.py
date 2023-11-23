@@ -109,28 +109,28 @@ def odometry_capture(global_status):
                         if DETECT_MARKER:
 
 
-                            try:
+                            # try:
 
 
-                                f1 = tframes.get_fisheye_frame(1)
-                                if not f1:
-                                    print("ERROR NO FISHEYE FRAME")
-                                    continue
+                            f1 = tframes.get_fisheye_frame(1)
+                            if not f1:
+                                print("ERROR NO FISHEYE FRAME")
+                                continue
 
-                                image1 = np.asanyarray(f1.get_data())
+                            image1 = np.asanyarray(f1.get_data())
 
-                                pose_aruco = search_aruco_in_frames(image1)
+                            pose_aruco = search_aruco_in_frames(image1)
 
-                                if pose_aruco == 0:
-                                    pose_aruco = [frame_c,0]
-                                else:
+                            if pose_aruco == 0:
+                                pose_aruco = [frame_c,0]
+                            else:
 
-                                    pose_aruco.insert(0, frame_c)
+                                pose_aruco.insert(0, frame_c)
 
 
-                            except Exception as e:
-                                print("DETECT ARUCO ERROR",e)
-                                pose_aruco = [0]
+                            # except Exception as e:
+                            #     print("DETECT ARUCO ERROR",e)
+                            #     pose_aruco = [0]
 
                             writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)
 
