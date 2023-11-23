@@ -9,3 +9,4 @@ MAX_FRAME_TEST = 30
 
 print("TO TERMINATE THIS PROGRAMM PRESS : CTRL + c  ")
 print("if the program is not correctly closed digit : pkill python, and then press RETURN")
+PRINT_FPS_ODOMETRY = 1

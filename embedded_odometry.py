@@ -88,6 +88,9 @@ def odometry_capture(global_status):
         print("|_> STARTING!, STATUS LOOP EXIT,  local_status:", local_status)
         while local_status == 1:
 
+            if  PRINT_FPS_ODOMETRY:
+                start_time = time.time()
+
 
             if enable_T265 or enable_D435i:
 
@@ -165,6 +168,17 @@ def odometry_capture(global_status):
                     local_status = global_status.value
                     if local_status == 0:
                         print("TERMINATION SIGNAL DETECTED")
+            if PRINT_FPS_ODOMETRY:
+                # End time
+                end_time = time.time()
+
+                # Calculate time taken
+                time_taken = end_time - start_time
+
+                # Calculate FPS
+                fps = int(1 / time_taken)
+                print("FPS:", fps)
+
 
 
 
