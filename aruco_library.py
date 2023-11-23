@@ -72,12 +72,12 @@ def aruco_detection(image1):
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, marker_size, camera_matrix, dist_coeffs)
         for i in range(len(ids)):
             marker_id = ids[i]
-            cv2.aruco.drawAxis(image1, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
+            #cv2.aruco.drawAxis(image1, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
             #cv2.aruco.drawDetectedMarkers(image1, corners)
 
             # Extract the center of the ArUco marker
-            center_x = int(np.mean(corners[i][0][:, 0]))
-            center_y = int(np.mean(corners[i][0][:, 1]))
+            # center_x = int(np.mean(corners[i][0][:, 0]))
+            # center_y = int(np.mean(corners[i][0][:, 1]))
 
         # rvecs and tvecs represent the rotation and translation vectors of the marker with respect to the camera.
 
