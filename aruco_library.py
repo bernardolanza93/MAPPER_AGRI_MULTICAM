@@ -120,17 +120,17 @@ def aruco_detection(image1):
 
         """
 
-        retval, rotation_matrix, Qx = cv2.RQDecomp3x3(R)
+        # Convert the rotation matrix to a rotation vector
+        rvec, _ = cv2.Rodrigues(R)
 
-        if retval:
-            # Calculate Euler angles from the rotation matrix
-            roll = m.atan2(rotation_matrix[2][1], rotation_matrix[2][2]) * 180.0 / m.pi
-            pitch = -m.asin(rotation_matrix[2][0]) * 180.0 / m.pi
-            yaw = m.atan2(rotation_matrix[1][0], rotation_matrix[0][0]) * 180.0 / m.pi
+        # Calculate Euler angles from the rotation vector
+        roll, pitch, yaw = rvec.flatten()
 
+        # Convert radians to degrees
+        roll *= 180.0 / m.pi
+        pitch *= 180.0 / m.pi
+        yaw *= 180.0 / m.pi
 
-        else:
-            print("Failed to decompose the rotation matrix.")
         # Extract x, y, and z from tvec
         x, y, z = tvecs[0]
 
