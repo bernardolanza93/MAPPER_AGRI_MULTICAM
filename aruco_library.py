@@ -30,7 +30,7 @@ else:
     sys.exit()
 
 def aruco_detection(image1):
-    print("start aruco, detecting...")
+
 
 
 
@@ -58,6 +58,9 @@ def aruco_detection(image1):
 
     corners, ids, rejectedImgPoints = aruco.detectMarkers(image1, aruco_dict, parameters=parameters)
     print("found:", ids)
+    if ids is not None:
+        print(".", end="")
+
 
     """cameraMatrix and distCoeffs are the camera calibration parameters that were created during the camera calibration process.
     The output parameters rvecs and tvecs are the rotation and translation vectors respectively, for each of the markers in markerCorners.
@@ -69,7 +72,7 @@ def aruco_detection(image1):
         for i in range(len(ids)):
             marker_id = ids[i]
             cv2.aruco.drawAxis(image1, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
-            cv2.aruco.drawDetectedMarkers(image1, corners)
+            #cv2.aruco.drawDetectedMarkers(image1, corners)
 
             # Extract the center of the ArUco marker
             center_x = int(np.mean(corners[i][0][:, 0]))
@@ -131,16 +134,19 @@ def aruco_detection(image1):
 
         """
 
-        inv_rotation_matrix = np.linalg.inv(R)
+        INVERSE = 0
+        if INVERSE:
 
-        # Invert the translation vector
-        inv_tvec = -np.dot(inv_rotation_matrix, tvecs[0])
+            inv_rotation_matrix = np.linalg.inv(R)
 
-        # Extract x, y, and z from inv_tvec
-        x, y, z = inv_tvec
+            # Invert the translation vector
+            inv_tvec = -np.dot(inv_rotation_matrix, tvecs[0])
 
-        # Convert the rotation matrix to Euler angles (roll, pitch, yaw)
-        inv_roll, inv_pitch, inv_yaw = cv2.RQDecomp3x3(inv_rotation_matrix)
+            # Extract x, y, and z from inv_tvec
+            x, y, z = inv_tvec
+
+            # Convert the rotation matrix to Euler angles (roll, pitch, yaw)
+            inv_roll, inv_pitch, inv_yaw = cv2.RQDecomp3x3(inv_rotation_matrix)
 
         print("ARUCO ANALYSIS TERMINATED, return pose")
     else:

@@ -97,7 +97,7 @@ def odometry_capture(global_status):
                         #tframes = pipelineT265.wait_for_frames()
                         pose = 0
                     try:
-                        print("extract pose frame")
+
                         pose = tframes.get_pose_frame()
 
 
