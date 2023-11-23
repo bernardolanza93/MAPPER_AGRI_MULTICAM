@@ -10,7 +10,7 @@ def search_aruco_in_frames(image):
 
 
 
-    print("starting aruco detection")
+
     pose = ARUCO.aruco_detection(image)
 
     return pose
@@ -110,15 +110,15 @@ def odometry_capture(global_status):
 
 
                             try:
-                                print("extracrting frames...") #ultima cosa riconosciuta
+
 
                                 f1 = tframes.get_fisheye_frame(1)
                                 if not f1:
                                     print("ERROR NO FISHEYE FRAME")
                                     continue
-                                print("IMG2ARR:")
+
                                 image1 = np.asanyarray(f1.get_data())
-                                print("search_op:")
+
 
 
                                 pose_aruco = search_aruco_in_frames(image1)
