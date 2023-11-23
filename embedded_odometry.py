@@ -119,16 +119,13 @@ def odometry_capture(global_status):
 
                                 image1 = np.asanyarray(f1.get_data())
 
-
-
                                 pose_aruco = search_aruco_in_frames(image1)
 
+                                if pose_aruco == 0:
+                                    pose_aruco = [frame_c,0]
+                                else:
 
-
-
-
-
-                                pose_aruco.insert(0, frame_c)
+                                    pose_aruco.insert(0, frame_c)
 
 
                             except Exception as e:
