@@ -37,6 +37,7 @@ def odometry_capture(global_status):
         print("IMU CONFIG")
         #FISHEY!
         configT265.enable_stream(rs.stream.fisheye, 1)
+        configT265.enable_stream(rs.stream.fisheye, 2)
         print("FISHEYE CONFIG")
         print("configured succesfully T265...")
     while 1:
