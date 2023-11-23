@@ -132,7 +132,16 @@ def aruco_detection(image1):
         yaw *= 180.0 / m.pi
 
         # Extract x, y, and z from tvec
-        x, y, z = tvecs[0]
+        print(tvecs)
+        if tvecs is not None:
+            for i in range(len(tvecs)):
+                # Ensure the translation vector contains three elements
+                if len(tvecs[i][0]) == 3:
+                    x, y, z = tvecs[i][0]
+                else:
+                    print(f"Translation vector for marker {i} does not contain three values.")
+        else:
+            print("No translation vectors found.")
 
         pose = [marker_id, x, y, z, roll, pitch, yaw]
 
