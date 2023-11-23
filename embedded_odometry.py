@@ -17,6 +17,7 @@ def search_aruco_in_frames(image):
     print(image.shape)
     print(type(image))
 
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     print("starting aruco detection")
