@@ -57,9 +57,9 @@ def aruco_detection(image1):
     """
 
     corners, ids, rejectedImgPoints = aruco.detectMarkers(image1, aruco_dict, parameters=parameters)
-    print("found:", ids)
-    if ids is not None:
-        print(".", end="")
+
+
+
 
 
     """cameraMatrix and distCoeffs are the camera calibration parameters that were created during the camera calibration process.
@@ -67,6 +67,7 @@ def aruco_detection(image1):
     """
 
     if ids is not None:
+        print(".", end="")
         # Draw markers and estimate pose
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, marker_size, camera_matrix, dist_coeffs)
         for i in range(len(ids)):
@@ -151,7 +152,7 @@ def aruco_detection(image1):
         print("ARUCO ANALYSIS TERMINATED, return pose")
     else:
         pose = 0
-        print("no marker detected")
+
 
     return pose
 
