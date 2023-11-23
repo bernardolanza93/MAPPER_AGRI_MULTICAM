@@ -6,6 +6,7 @@ print(" CV2  version: ",cv2.__version__)
 
 local_status = 0
 
+
 def search_aruco_in_frames(image):
 
 
