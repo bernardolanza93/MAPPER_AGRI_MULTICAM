@@ -8,6 +8,14 @@ local_status = 0
 
 def search_aruco_in_frames(image):
 
+    cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
+    cv2.imshow('RealSense', image)
+    key = cv2.waitKey(0)
+    if key == 27:  # ESC
+        return
+    print(image)
+    print(image.shape)
+    print(type(image))
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
