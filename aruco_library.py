@@ -132,7 +132,6 @@ def aruco_detection(image1):
         yaw *= 180.0 / m.pi
 
         # Extract x, y, and z from tvec
-        print(tvecs)
         if tvecs is not None:
             for i in range(len(tvecs)):
                 # Ensure the translation vector contains three elements
@@ -143,7 +142,7 @@ def aruco_detection(image1):
         else:
             print("No translation vectors found.")
 
-        pose = [marker_id, x, y, z, roll, pitch, yaw]
+        pose = [marker_id[0], x, y, z, roll, pitch, yaw]
 
         """
 
@@ -168,7 +167,6 @@ def aruco_detection(image1):
             # Convert the rotation matrix to Euler angles (roll, pitch, yaw)
             inv_roll, inv_pitch, inv_yaw = cv2.RQDecomp3x3(inv_rotation_matrix)
 
-        print("ARUCO ANALYSIS TERMINATED, return pose")
     else:
         pose = 0
 

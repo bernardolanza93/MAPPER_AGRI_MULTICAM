@@ -71,7 +71,13 @@ def odometry_capture(global_status):
         frame_c = 0
 
         print("T265 inizialized, DEVICE READY!")
-        print("STATUS LOOP..., checking buttons...status:", local_status)
+        print("STATUS LOOP, checking buttons status:", local_status)
+        print("=====================================================")
+        print("||                                                 ||")
+        print("||                   CLICK PLAY!                   ||")
+        print("||                                                 ||")
+        print("=====================================================")
+
 
         while local_status == 0:
             local_status = global_status.value
