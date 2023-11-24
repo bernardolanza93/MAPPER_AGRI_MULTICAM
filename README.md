@@ -12,16 +12,16 @@ The main.py file runs a program capable of acquiring and saving images from an I
 The media_mapper_evaluator file and the associated evaluator_utils file (containing the grafted functions) allow the analysis of the media produced by the main, which is carried out on a PC. We are therefore able to produce geometric and volumetric measurements from the acquisitions and estimate the woody biomass within our acquisitions.
 
 ## Executable:
-# before (if not performed) give the writing reading permission to the executable file:
+### before (if not performed) give the writing reading permission to the executable file:
 
 ```
 chmod +x run_test_all_cam.sh
 ```
-# browse directory to execute bash files
+### browse directory to execute bash files
 ```
 cd MAPPER_AGRI_MULTICAM/
 ```
-# Execute files to run specific programs and update software
+### Execute files to run specific programs and update software
 
 ```
 ./run_test_all_cam.sh
