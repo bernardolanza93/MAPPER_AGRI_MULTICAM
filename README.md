@@ -96,6 +96,16 @@ https://github.com/35selim/RealSense-Jetson/tree/main
 ```
 sudo apt-get install python3-opencv
 ```
+### INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
+## ARM 64 linux todo
+```
+pip install open-gopro
+```
+### ToDo: pylon viewewr and pypylon library installation. SDK software to display and python library to acquire. 
+## search for ARM 64 linuz tar.gz pylon software
+```
+https://www2.baslerweb.com/en/downloads/software-downloads/
+```
 
 
 
