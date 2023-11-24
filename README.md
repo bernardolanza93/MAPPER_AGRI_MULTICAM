@@ -11,6 +11,38 @@ This repository contains both acquisition and analysis software for optical meas
 The main.py file runs a program capable of acquiring and saving images from an INTEL Realsense D435 camera, via an NVIDIA Jetson Nano card.
 The media_mapper_evaluator file and the associated evaluator_utils file (containing the grafted functions) allow the analysis of the media produced by the main, which is carried out on a PC. We are therefore able to produce geometric and volumetric measurements from the acquisitions and estimate the woody biomass within our acquisitions.
 
+## Executable:
+### before (if not performed) give the writing reading permission to the executable file:
+
+```
+chmod +x run_test_all_cam.sh
+```
+### browse directory to execute bash files
+```
+cd MAPPER_AGRI_MULTICAM/
+```
+### Execute files to run specific programs and update software
+
+```
+./run_test_all_cam.sh
+./run_calibration_camera.sh
+./run_calibration_no_capture.sh
+./run_odometry.sh
+./run_NO_ARUCO_odometry.sh
+./run_vision.sh
+```
+## Generate requirements.txt:
+```
+cd MAPPER_AGRI_MULTICAM/
+pip freeze > requirements.txt
+```
+
+## Install requirements.txt:
+```
+cd MAPPER_AGRI_MULTICAM/
+pip install -r requirements.txt
+```
+
 ## Configuring sensors in the field  
 
 The camera should be positioned at a fixed distance from the row so that it completely frames the pruning area. It is necessary to estimate:
@@ -95,6 +127,16 @@ https://github.com/35selim/RealSense-Jetson/tree/main
 ### INSTALL OPENCV:
 ```
 sudo apt-get install python3-opencv
+```
+### INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
+## ARM 64 linux todo
+```
+pip install open-gopro
+```
+### ToDo: pylon viewewr and pypylon library installation. SDK software to display and python library to acquire. 
+## search for ARM 64 linuz tar.gz pylon software
+```
+https://www2.baslerweb.com/en/downloads/software-downloads/
 ```
 
 
