@@ -31,6 +31,17 @@ cd MAPPER_AGRI_MULTICAM/
 ./run_NO_ARUCO_odometry.sh
 ./run_vision.sh
 ```
+## Generate requirements.txt:
+```
+cd MAPPER_AGRI_MULTICAM/
+pip freeze > requirements.txt
+```
+
+## Install requirements.txt:
+```
+cd MAPPER_AGRI_MULTICAM/
+pip install -r requirements.txt
+```
 
 ## Configuring sensors in the field  
 
