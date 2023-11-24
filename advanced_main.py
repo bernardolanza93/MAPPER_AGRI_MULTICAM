@@ -12,7 +12,7 @@ def processor():
     try:
 
         # The command you want to run
-        bash_command_off = "sudo init 5"
+        bash_command_off = "sudo init 3"
 
         # Run the command using subprocess
         process = subprocess.Popen(bash_command_off.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
