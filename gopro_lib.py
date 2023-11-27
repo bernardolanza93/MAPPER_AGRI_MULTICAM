@@ -9,15 +9,20 @@ from open_gopro.logger import setup_logging
 from open_gopro.util import add_cli_args_and_parse
 from typing import Final
 
-TIME_ACQUISITION = False
-STREAM_PREVIEW = 0
+TIME_ACQUISITION = 0
+PHOTO_GOPRO = 0
+
 WEBCAM = 1
 now_GP = datetime.now()
 timing_GP = now_GP.strftime("%Y_%m_%d_%H_%M_%S")
-video_string = "acquisition/" +"GP_"+ timing_GP + "_vid.mp4"
+video_string = "aquisition/" +"GP_"+ timing_GP + "_vid.mp4"
+photo_string = "aquisition/" +"GP_"+ timing_GP + "_img.jpg"
+DOWNLOAD_ALL = 0
 
 
 STREAM_URL: Final[str] = r"udp://0.0.0.0:8554"
+
+
 
 
 async def wait_for_webcam_status(gopro: GoProBase, statuses: set[WebcamStatus], timeout: int = 10) -> bool:
@@ -58,17 +63,61 @@ async def main() -> None:
 
 
         info =  gopro.http_command.get_camera_info
-        print(gopro.http_command.get_camera_state)
-        print(gopro.http_command.get_media_list)
+        # print(gopro.http_command.get_camera_state)
+        # print(gopro.http_command.get_media_list)
+
+
+        if DOWNLOAD_ALL:
+            # Download all of the files from the camera
+            media_list = (await gopro.http_command.get_media_list()).data.files
+            for item in media_list:
+                await gopro.http_command.download_file(camera_file=item.filename)
+
+        if PHOTO_GOPRO:
+            assert gopro
+            # Configure settings to prepare for photo
+            await gopro.http_setting.video_performance_mode.set(Params.PerformanceMode.MAX_PERFORMANCE)
+            await gopro.http_setting.max_lens_mode.set(Params.MaxLensMode.DEFAULT)
+            await gopro.http_setting.camera_ux_mode.set(Params.CameraUxMode.PRO)
+            await gopro.http_setting.resolution.set(Params.Resolution.RES_1080)
+            await gopro.http_command.set_turbo_mode(mode=Params.Toggle.DISABLE)
+            assert (await gopro.http_command.load_preset_group(group=proto.EnumPresetGroup.PRESET_GROUP_ID_PHOTO)).ok
+
+            media_set_before = set((await gopro.http_command.get_media_list()).data.files)
+            # Take a photo
+            print("Capturing a photo...")
+            assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.ENABLE)).ok
+
+            time.sleep(5)
+
+            # Get the media list after
+            media_set_after = set((await gopro.http_command.get_media_list()).data.files)
+            # The photo is (most likely) the difference between the two sets
+            photo = media_set_after.difference(media_set_before).pop()
+            # Download the photo
+            print(f"Downloading {photo.filename}...")
+            await gopro.http_command.download_file(camera_file=photo.filename, local_file=photo_string)
+            print(f"Success!! :smiley: File has been downloaded to {photo_string}")
+
+            if gopro:
+                await gopro.close()
+            print("Exiting...")
+
 
         if TIME_ACQUISITION:
 
 
 
+
+
+
+
             assert gopro
             # Configure settings to prepare for video
-            await gopro.http_setting.fps.set(Params.FPS.FPS_30)
-            await gopro.http_setting.resolution.set(Params.Resolution.RES_4K)
+            #REGOLA FPS E RISOLUZIONE
+            await gopro.http_setting.fps.set(Params.FPS.FPS_120)
+            await gopro.http_setting.resolution.set(Params.Resolution.RES_1080)
+
             await gopro.http_setting.video_performance_mode.set(Params.PerformanceMode.MAX_PERFORMANCE)
             await gopro.http_setting.max_lens_mode.set(Params.MaxLensMode.DEFAULT)
             await gopro.http_setting.camera_ux_mode.set(Params.CameraUxMode.PRO)
@@ -78,17 +127,19 @@ async def main() -> None:
 
             # Get the media list before
             media_set_before = set((await gopro.http_command.get_media_list()).data.files)
+            print(media_set_before)
 
             # Take a video
             print("Capturing a video...")
 
-            assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.ENABLE)).ok
-            await asyncio.sleep(2)
-            assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.DISABLE)).ok
 
+            assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.ENABLE)).ok
+            await asyncio.sleep(1)
+            assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.DISABLE)).ok
+            print("video stop")
+            time.sleep(1)
             # Download all of the files from the camera
-            media_list = (await gopro.http_command.get_media_list()).data.files
-            print("media in camera: ",media_list)
+
             # Get the media list after
             media_set_after = set((await gopro.http_command.get_media_list()).data.files)
             # The video (is most likely) the difference between the two sets
@@ -97,6 +148,8 @@ async def main() -> None:
             print("Downloading the video...")
             await gopro.http_command.download_file(camera_file=video.filename, local_file=video_string)
             print(f"Success!! :smiley: File has been downloaded to {video_string}")
+
+
 
             if gopro:
                 await gopro.close()

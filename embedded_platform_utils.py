@@ -31,6 +31,7 @@ FPS_DISPLAY = True
 DISPLAY_RGB = 1
 FRAMES_TO_ACQUIRE = 30
 config_file = "cfg_file.txt"
+PRINT_FPS_D435 = 1
 
 
 #install GPIO library:
@@ -75,10 +76,21 @@ def process_1_GPIO(status):
 
             if status.value == 0:
                 GPIO.output(led_red_pin, GPIO.HIGH)
+                time.sleep(0.2)
+                GPIO.output(led_red_pin, GPIO.LOW)
+
+
+
                 GPIO.output(led_green_pin, GPIO.LOW)
             if status.value == 1:
                 GPIO.output(led_red_pin, GPIO.LOW)
                 GPIO.output(led_green_pin, GPIO.HIGH)
+                time.sleep(0.2)
+                GPIO.output(led_green_pin, GPIO.LOW)
+
+
+
+
             if status.value == 2:
                 for i in range(1, 6):
                     GPIO.output(led_red_pin, GPIO.HIGH)
