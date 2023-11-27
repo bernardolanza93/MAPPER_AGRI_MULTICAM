@@ -217,6 +217,9 @@ def processor():
         print("STATUS PROCESSOR ZERO")
         time.sleep(1)
         global_status.value = 0
+
+
+
         sys.exit()
 
 
