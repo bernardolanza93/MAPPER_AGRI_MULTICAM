@@ -104,7 +104,7 @@ def process_1_GPIO(status):
 
             button_state = GPIO.input(button_pin)
             if button_state == GPIO.LOW:
-                print("|o|____BUTTON_TRIGGER___")
+                print("|o|____BUTTON_PRESSED___")
                 # Toggle the value
                 if status.value == 0:
                     print("TO GREEN-PRESSED PLAY, status:", status.value)
@@ -117,6 +117,7 @@ def process_1_GPIO(status):
                 else:
                     print("ERROR, status:", status.value)
                     sys.exit()
+                    time.sleep(1)
 
 
 
