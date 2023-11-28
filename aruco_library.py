@@ -5,7 +5,7 @@ import cv2.aruco as aruco
 
 # ArUco marker size in meters (if known)
 marker_size = MARKER_SIZE  # Adjust this to the actual marker size
-aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
+aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_1000)
 # Load the camera matrix and distortion coefficients
 # Check if the files exist before loading
 if os.path.exists(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy")) and os.path.exists(
