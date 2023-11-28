@@ -14,9 +14,13 @@ import os.path
 from pypylon import pylon
 import multiprocessing
 import os
-import Jetson.GPIO as GPIO
+try:
+    import Jetson.GPIO as GPIO
+except:
+    print("NO JETSon mode")
 import subprocess
 import time
+import json
 
 
 
@@ -269,3 +273,31 @@ def writeCSVdata(time, data):
     writer = csv.writer(file)
     writer.writerow(data)
     file.close()
+
+def check_config_file():
+    config_file = 'config.json'
+    default_value = 0.067
+    config_data = {}
+
+    if not os.path.exists(config_file):
+        # If the config file doesn't exist, create it with default values
+        print("create DEFAULT CONFIG FILE")
+        config_data['time_sleep_odometry'] = default_value
+        with open(config_file, 'w') as f:
+            json.dump(config_data, f)
+    else:
+        print("CONFIG FILE FOUND!")
+        # If the config file exists, read its contents
+        with open(config_file, 'r') as f:
+            config_data = json.load(f)
+    print("CONFIG:",config_data)
+    return config_data
+
+
+# Example usage:
+config = check_config_file()
+print(config)
+time_sleep_odometry_value = config.get('time_sleep_odometry')
+print(time_sleep_odometry_value)
+
+
