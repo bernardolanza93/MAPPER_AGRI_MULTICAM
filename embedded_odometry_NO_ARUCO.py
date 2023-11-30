@@ -29,8 +29,7 @@ def odometry_capture_no_aruco(global_status):
         print("configured succesfully T265...")
 
     while 1:
-        if PRINT_FPS_ODOMETRY:
-            start_time = time.time()
+
 
         local_status = global_status.value
         print("LOCAL STAT INI = ", local_status)
@@ -72,6 +71,9 @@ def odometry_capture_no_aruco(global_status):
         print("=====================================================")
 
         while local_status == 0:
+            if PRINT_FPS_ODOMETRY:
+                start_time = time.time()
+
             local_status = global_status.value
             time.sleep(0.5)
             print(".", end="")
