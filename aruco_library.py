@@ -123,7 +123,7 @@ def aruco_detection(image1):
         try:
             rvec, _ = cv2.Rodrigues(R)
         except Exception as e:
-            print("rvecs error R", rvec, R, e)
+            print("rvecs error R", rvec, R,ids, e)
 
         # Calculate Euler angles from the rotation vector
         roll, pitch, yaw = rvec.flatten()
