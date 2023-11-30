@@ -71,14 +71,13 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
         rvecs_all, tvecs_all = cv2.aruco.estimatePoseSingleMarkers(corners, marker_size, camera_matrix, dist_coeffs)
         print(len(rvecs_all),len(tvecs_all),len(ids))
         for i in range(len(ids)):
-            if len(ids) > 1:
-                marker_id = ids[i][0]
-                rvecs = rvecs_all[i][0]
-                tvecs = tvecs_all[i][0]
 
-                print(marker_id,tvecs,rvecs)
-            else:
-                print(ids[0],tvecs_all[0],rvecs_all[0])
+            marker_id = ids[i][0]
+            rvecs = rvecs_all[i][0]
+            tvecs = tvecs_all[i][0]
+
+            print(marker_id,tvecs,rvecs)
+
 
             #cv2.aruco.drawAxis(image1, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
             #cv2.aruco.drawDetectedMarkers(image1, corners)
