@@ -75,6 +75,8 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
             rvecs = rvecs_all[i]
             tvecs = tvecs_all[i]
 
+            print(marker_id,tvecs,rvecs)
+
             #cv2.aruco.drawAxis(image1, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
             #cv2.aruco.drawDetectedMarkers(image1, corners)
 
