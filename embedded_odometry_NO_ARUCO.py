@@ -71,8 +71,7 @@ def odometry_capture_no_aruco(global_status):
         print("=====================================================")
 
         while local_status == 0:
-            if PRINT_FPS_ODOMETRY:
-                start_time = time.time()
+
 
             local_status = global_status.value
             time.sleep(0.5)
@@ -80,6 +79,8 @@ def odometry_capture_no_aruco(global_status):
         print(".")
         print("|_> STATUS LOOP EXIT, STARTING!, local_status:", local_status)
         while local_status == 1:
+            if PRINT_FPS_ODOMETRY:
+                start_time = time.time()
 
             if enable_T265 or enable_D435i:
 
