@@ -164,7 +164,7 @@ def odometry_capture(global_status):
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
                         writeCSVdata_odometry(timing_abs_ar, pose_list)
-                        if not enable_D435i:
+                        if not DETECT_MARKER:
                             #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                             time.sleep(DIVIDER_FPS_REDUCTION)
                     local_status = global_status.value

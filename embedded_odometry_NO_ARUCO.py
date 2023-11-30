@@ -127,7 +127,7 @@ def odometry_capture_no_aruco(global_status):
                         writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, pose_list)
                         if not enable_D435i:
                             # converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
-                            time.sleep(time_sleep_odometry_value)
+                            time.sleep(DIVIDER_FPS_REDUCTION)
                     local_status = global_status.value
                     if local_status == 0:
                         print("TERMINATION SIGNAL DETECTED")

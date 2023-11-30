@@ -6,11 +6,11 @@ from matplotlib.patches import Ellipse
 num_steps = 10   # Number of time steps
 true_position = np.array([0, 0, 0])   # True initial position of the robot (x, y, theta)
 velocity = 1   # Constant velocity along the x-axis
-movement_std_dev = 0.01   # Standard deviation of robot movement (motion model)
+movement_std_dev = 0.001   # Standard deviation of robot movement (motion model)
 
 sensor_std_dev_x = 0.01   # Standard deviation of the sensor measurement noise
-sensor_std_dev_y = 0.01   # Standard deviation of the sensor measurement noise
-sensor_std_dev_theta = 1   # Standard deviation of the sensor measurement noise
+sensor_std_dev_y = 0.1 # Standard deviation of the sensor measurement noise
+sensor_std_dev_theta = 0.1   # Standard deviation of the sensor measurement noise
 
 # Function to simulate robot movement with velocity
 def move_robot(position):
