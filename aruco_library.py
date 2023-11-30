@@ -94,7 +94,10 @@ def aruco_detection(image1):
         """
 
         # Convert the rotation vector to a rotation matrix
-        R, _ = cv2.Rodrigues(rvecs)
+        try:
+            R, _ = cv2.Rodrigues(rvecs)
+        except Exception as e:
+            print("rvecs error R", rvecs, R,ids, e)
 
         """
 
@@ -120,10 +123,9 @@ def aruco_detection(image1):
         """
 
         # Convert the rotation matrix to a rotation vector
-        try:
-            rvec, _ = cv2.Rodrigues(R)
-        except Exception as e:
-            print("rvecs error R", rvec, R,ids, e)
+
+        rvec, _ = cv2.Rodrigues(R)
+
 
         # Calculate Euler angles from the rotation vector
         roll, pitch, yaw = rvec.flatten()
