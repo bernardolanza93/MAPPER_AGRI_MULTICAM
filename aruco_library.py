@@ -144,12 +144,9 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
 
             # Extract x, y, and z from tvec
             if tvecs is not None:
-                for i in range(len(tvecs)):
-                    # Ensure the translation vector contains three elements
-                    if len(tvecs[i][0]) == 3:
-                        x, y, z = tvecs[i][0]
-                    else:
-                        print(f"Translation vector for marker {i} does not contain three values.")
+
+                x, y, z = tvecs
+
             else:
                 print("No translation vectors found.")
 
