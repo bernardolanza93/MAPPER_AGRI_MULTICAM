@@ -71,11 +71,12 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
         rvecs_all, tvecs_all = cv2.aruco.estimatePoseSingleMarkers(corners, marker_size, camera_matrix, dist_coeffs)
         print(len(rvecs_all),len(tvecs_all),len(ids))
         for i in range(len(ids)):
-            marker_id = ids[i]
-            rvecs = rvecs_all[i]
-            tvecs = tvecs_all[i]
+            if len(ids) > 1:
+                marker_id = ids[i][0]
+                rvecs = rvecs_all[i][0]
+                tvecs = tvecs_all[i][0]
 
-            print(marker_id,tvecs,rvecs)
+                print(marker_id,tvecs,rvecs)
 
             #cv2.aruco.drawAxis(image1, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
             #cv2.aruco.drawDetectedMarkers(image1, corners)
@@ -152,7 +153,7 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
             else:
                 print("No translation vectors found.")
 
-            pose = [frame_id,marker_id[0], x, y, z, roll, pitch, yaw]
+            pose = [frame_id,marker_id, x, y, z, roll, pitch, yaw]
 
 
             """
