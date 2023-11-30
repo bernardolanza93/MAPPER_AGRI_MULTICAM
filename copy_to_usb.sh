@@ -3,6 +3,32 @@ cd
 export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.6/pyrealsense2
 source ~/.bashrc
 
+
+cd
+
+cd MAPPER_AGRI_MULTICAM/
+
+cd aquisition
+echo ""
+echo -n "MEDIA IN ACQUISITION FOLDER:"
+pwd
+echo ""
+ls
+echo ""
+
+cd ..
+
+cd data/
+
+echo -n "FILE IN DATA FOLDER: "
+pwd
+echo ""
+
+ls
+echo ""
+
+cd
+
 cd
 cd MAPPER_AGRI_MULTICAM/
 git pull

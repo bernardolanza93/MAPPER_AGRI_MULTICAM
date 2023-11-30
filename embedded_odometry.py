@@ -7,12 +7,12 @@ print(" CV2  version: ",cv2.__version__)
 local_status = 0
 
 
-def search_aruco_in_frames(image):
+def search_aruco_in_frames(image,frame_id,timing_abs_ar):
 
 
 
 
-    pose = ARUCO.aruco_detection(image)
+    pose = ARUCO.aruco_detection(image, frame_id,timing_abs_ar)
 
     return pose
 
@@ -131,20 +131,11 @@ def odometry_capture(global_status):
 
                             image1 = np.asanyarray(f1.get_data())
 
-                            pose_aruco = search_aruco_in_frames(image1)
-
-                            if pose_aruco == 0:
-                                pose_aruco = [frame_c,0]
-                            else:
-
-                                pose_aruco.insert(0, frame_c)
+                            pose_aruco = search_aruco_in_frames(image1,frame_c,timing_abs_ar)
 
 
-                            # except Exception as e:
-                            #     print("DETECT ARUCO ERROR",e)
-                            #     pose_aruco = [0]
 
-                            writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose_aruco)
+
 
                         data = pose.get_pose_data()
 
@@ -164,7 +155,7 @@ def odometry_capture(global_status):
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
                         writeCSVdata_odometry(timing_abs_ar, pose_list)
-                        if not DETECT_MARKER:
+                        if not enable_D435i:
                             #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
                             time.sleep(DIVIDER_FPS_REDUCTION)
                     local_status = global_status.value

@@ -29,6 +29,9 @@ def odometry_capture_no_aruco(global_status):
         print("configured succesfully T265...")
 
     while 1:
+        if PRINT_FPS_ODOMETRY:
+            start_time = time.time()
+
         local_status = global_status.value
         print("LOCAL STAT INI = ", local_status)
         time.sleep(1)
@@ -59,7 +62,14 @@ def odometry_capture_no_aruco(global_status):
         frame_c = 0
 
         print("T265 inizialized, DEVICE READY!")
-        print("STATUS LOOP..., checking buttons...status:", local_status)
+        print("STATUS LOOP, checking buttons status:", local_status)
+        print("T265 inizialized, DEVICE READY!")
+        print("STATUS LOOP, checking buttons status:", local_status)
+        print("=====================================================")
+        print("||                                                 ||")
+        print("||                   CLICK PLAY!                   ||")
+        print("||                                                 ||")
+        print("=====================================================")
 
         while local_status == 0:
             local_status = global_status.value
@@ -131,6 +141,16 @@ def odometry_capture_no_aruco(global_status):
                     local_status = global_status.value
                     if local_status == 0:
                         print("TERMINATION SIGNAL DETECTED")
+            if PRINT_FPS_ODOMETRY:
+                # End time
+                end_time = time.time()
+
+                # Calculate time taken
+                time_taken = end_time - start_time
+
+                # Calculate FPS
+                fps = int(1 / time_taken)
+                print("FPS:", fps)
 
         if enable_T265:
             print("PIPELINE STOPPED!")
