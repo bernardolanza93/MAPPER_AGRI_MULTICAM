@@ -97,7 +97,7 @@ def aruco_detection(image1):
         try:
             R, _ = cv2.Rodrigues(rvecs)
         except Exception as e:
-            print("rvecs error R", rvecs, R,ids, e)
+            print("rvecs err or R", rvecs, R,ids, e)
 
         """
 
