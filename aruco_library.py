@@ -69,14 +69,12 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
     if ids is not None:
         # Draw markers and estimate pose
         rvecs_all, tvecs_all = cv2.aruco.estimatePoseSingleMarkers(corners, marker_size, camera_matrix, dist_coeffs)
-        print(len(rvecs_all),len(tvecs_all),len(ids))
         for i in range(len(ids)):
 
             marker_id = ids[i][0]
             rvecs = rvecs_all[i][0]
             tvecs = tvecs_all[i][0]
 
-            print(marker_id,tvecs,rvecs)
 
 
             #cv2.aruco.drawAxis(image1, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
@@ -182,6 +180,7 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
     else:
 
         pose = [frame_id, 0]
+        writeCSVdata_odometry("_ARUCO_" + timing_abs_ar, pose)
 
 
 
