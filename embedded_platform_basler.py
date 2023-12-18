@@ -93,6 +93,8 @@ def BASLER_capture(q,status,global_status):
 
                             except:
                                 print("error save basler")
+
+                        cv2.imshow("D",img_basler)
                         key = cv2.waitKey(1)
                         if key == 27:
                             break
