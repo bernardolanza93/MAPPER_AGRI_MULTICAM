@@ -11,7 +11,7 @@ from datetime import datetime
 from evaluator_utils import *
 import math as m
 import os.path
-from pypylon import pylon
+
 import multiprocessing
 import os
 try:

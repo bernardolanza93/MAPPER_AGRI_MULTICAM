@@ -1,7 +1,7 @@
 import time
 
 from embedded_platform_utils import *
-
+from pypylon import pylon
 
 
 def BASLER_capture(q,status,global_status):
@@ -74,37 +74,36 @@ def BASLER_capture(q,status,global_status):
             internal_global_status = global_status.value
             frame_c += 1
             try:
-                if basler_presence:
-                    if camera.IsGrabbing():
 
-                        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+                if camera.IsGrabbing():
 
-                        if grabResult.GrabSucceeded():
-                            # Access the image data
-                            image = converter.Convert(grabResult)
-                            img_basler = image.GetArray()
-                            print(frame_c)
+                    grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+
+                    if grabResult.GrabSucceeded():
+                        # Access the image data
+                        image = converter.Convert(grabResult)
+                        img_basler = image.GetArray()
+                        print(frame_c)
 
 
 
-                            if SAVE_VIDEO_TIME != 0:
-                                try:
-                                    q.put(img_basler)
+                        if SAVE_VIDEO_TIME != 0:
+                            try:
+                                q.put(img_basler)
 
-                                except:
-                                    print("error save basler")
-                            key = cv2.waitKey(1)
-                            if key == 27:
-                                break
+                            except:
+                                print("error save basler")
+                        key = cv2.waitKey(1)
+                        if key == 27:
+                            break
 
-                        else:
-                            print("ERROR: camera not succeded, no image")
-                            status.value = 0
                     else:
-                        print("ERROR: camera is not grabbing")
+                        print("ERROR: camera not succeded, no image")
                         status.value = 0
                 else:
-                    print("ERROR: BASLER NOT PRESENT ")
+                    print("ERROR: camera is not grabbing")
+                    status.value = 0
+
             except Exception as e:
                 print("ERROR basler in loop wait4fr: %s", e)
                 basler_presence = False
