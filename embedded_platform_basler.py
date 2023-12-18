@@ -96,6 +96,7 @@ def BASLER_capture(q,status,global_status):
                             # Access the image data
                             image = converter.Convert(grabResult)
                             img_basler = image.GetArray()
+                            print(frame_c)
 
 
 
