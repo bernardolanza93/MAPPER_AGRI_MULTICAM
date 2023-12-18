@@ -156,10 +156,12 @@ def basler_saver(q,basler_status,global_status):
             if qsize > 1:
                 print("Q long: ", qsize)
             img_basler = q.get()
+            print("GETTED")
             out_BASLER.write(img_basler)
+            print("SAVED")
 
         print("BASLER SAVER RELEASED")
         out_BASLER.release()
 
-        print("______ENDED RECORDING_____")
+        print("___SAVER___ENDED RECORDING_____")
 
