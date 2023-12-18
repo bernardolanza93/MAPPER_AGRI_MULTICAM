@@ -3,7 +3,7 @@ import time
 from embedded_platform_basler import *
 from embedded_platform_realsese import *
 
-basler = False
+basler = True
 realsense = False
 
 
