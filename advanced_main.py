@@ -65,7 +65,6 @@ def processor():
         time.sleep(0.3)
         # The command you want to run
 
-        time.sleep(1)
         status.value = 0
         sys.exit()
 
