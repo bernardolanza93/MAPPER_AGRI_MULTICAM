@@ -85,15 +85,7 @@ def BASLER_capture(q,status,global_status):
         frame_c = 0
         while internal_global_status == 1:
             internal_global_status = global_status.value
-
-
-            start = time.time()
-
-
             frame_c += 1
-
-            # T265
-
             try:
                 if basler_presence:
                     if camera.IsGrabbing():
@@ -105,13 +97,17 @@ def BASLER_capture(q,status,global_status):
                             image = converter.Convert(grabResult)
                             img_basler = image.GetArray()
 
+
+
                             if SAVE_VIDEO_TIME != 0:
                                 try:
                                     q.put(img_basler)
 
                                 except:
                                     print("error save basler")
-
+                            key = cv2.waitKey(1)
+                            if key == 27:
+                                break
 
                         else:
                             print("camera not succeded, no image")
@@ -119,20 +115,12 @@ def BASLER_capture(q,status,global_status):
                     else:
                         print("camera is not grabbing")
                         status.value = 0
+
             except Exception as e:
                 print("ERROR basler in loop wait4fr: %s", e)
                 basler_presence = False
                 status.value = 0
 
-            key = cv2.waitKey(1)
-            if key == 27:
-                #result.release()
-                #cv2.destroyAllWindows()
-                break
-
-            if basler_presence == False:
-                print("no device, termination...")
-                break
 
         print("CYCLE TERMINATED-READY NEW AQUISITION")
 
