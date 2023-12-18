@@ -79,9 +79,9 @@ def BASLER_capture(q,status,global_status):
         while internal_global_status == 0:
             internal_global_status = global_status.value
             time.sleep(0.5)
-            print(".", end="")
+            print(".")
         print(".<-")
-        print("|_> STARTING!, STATUS LOOP EXIT,  local_status:", internal_global_status)
+        print("|_> STARTING! _PLAY_, STATUS LOOP EXIT,  local_status:", internal_global_status)
         frame_c = 0
         while internal_global_status == 1:
             internal_global_status = global_status.value
