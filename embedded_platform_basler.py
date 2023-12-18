@@ -151,14 +151,11 @@ def basler_saver(q,basler_status,global_status):
         print("|_|_| SAVER READY!,  local_status:", internal_saver_status)
 
 
-        while internal_saver_status == 1 or q.qsize() != 0:
+        while internal_saver_status == 1 or q.qsize() > 0:
             qsize = q.qsize()
-            if qsize > 1:
-                print("Q long: ", qsize)
+            print("Q long: ", qsize)
             img_basler = q.get()
-            print("GETTED")
             out_BASLER.write(img_basler)
-            print("SAVED")
 
         print("BASLER SAVER RELEASED")
         out_BASLER.release()
