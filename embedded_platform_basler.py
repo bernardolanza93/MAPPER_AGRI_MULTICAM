@@ -115,17 +115,12 @@ def BASLER_capture(q,status,global_status):
                     else:
                         print("camera is not grabbing")
                         status.value = 0
-
             except Exception as e:
                 print("ERROR basler in loop wait4fr: %s", e)
                 basler_presence = False
                 status.value = 0
 
-
         print("CYCLE TERMINATED-READY NEW AQUISITION")
-
-
-
 
 def basler_saver(q,basler_status,global_status):
     """
@@ -158,9 +153,9 @@ def basler_saver(q,basler_status,global_status):
             while internal_saver_status == 0:
                 internal_saver_status = global_status.value
                 time.sleep(0.5)
-                print(".", end="")
-            print(".<-")
-            print("|_> STARTING!, STATUS LOOP EXIT,  local_status:", internal_saver_status)
+
+
+            print("|_|_| SAVER READY!,  local_status:", internal_saver_status)
 
 
             while global_status.value == 1 or q.qsize() != 0:
