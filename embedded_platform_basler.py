@@ -15,64 +15,51 @@ def BASLER_capture(q,status,global_status):
     :return: nothing
     """
 
+    # conecting to the first available camera
+    try:
+
+        camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+        # lo usa la cri vediamo a che serve
+        camera.Open()
+
+        print('Using device: ', camera.GetDeviceInfo().GetModelName())
+        try:
+            pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
+            # pylon.FeaturePersistence.Save(config_file, camera.GetNodeMap())
+        except Exception as e:
+
+            print("basler failed load config", e)
+            print("basler failed", config_file)
+            status.value = 0
+
+        #
+
+        # Grabing Continusely (video) with minimal delay
+        camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+
+        converter = pylon.ImageFormatConverter()
+
+        # converting to opencv bgr format
+        converter.OutputPixelFormat = pylon.PixelType_BGR8packed
+        converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+
+        # Set video resolution
+        frame_width = 2592
+        frame_height = 1944
+        size = (frame_width, frame_height)
+
+        # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
+
+        print("BASLER CONFIGURED")
+    except Exception as e:
+        basler_presence = False
+        status.value = 0
+        print("basler configuration failed", e)
+
+
+
     #stato di continuo try di acquisizione
     while 1:
-
-
-        if USE_PYLON_CAMERA:
-            # conecting to the first available camera
-            try:
-
-                camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-                #lo usa la cri vediamo a che serve
-                camera.Open()
-
-                print('Using device: ', camera.GetDeviceInfo().GetModelName())
-                try:
-                    pylon.FeaturePersistence.Load(config_file, camera.GetNodeMap(), True)
-                    #pylon.FeaturePersistence.Save(config_file, camera.GetNodeMap())
-                except Exception as e:
-
-                    print("basler failed load config", e)
-                    print("basler failed", config_file)
-                    status.value = 0
-
-                #
-
-                # Grabing Continusely (video) with minimal delay
-                camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
-
-                converter = pylon.ImageFormatConverter()
-
-
-                # converting to opencv bgr format
-                converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-                converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
-
-                # Set video resolution
-                frame_width = 2592
-                frame_height = 1944
-                size = (frame_width, frame_height)
-
-                # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
-
-
-                print("basler configured")
-            except Exception as e:
-                basler_presence = False
-                status.value = 0
-                print("basler failed", e)
-
-
-
-
-        else:
-            print("NO BASLER MODE")
-
-
-
-
-
 
         print("WAIT LOOP LOOP")
 
@@ -111,11 +98,13 @@ def BASLER_capture(q,status,global_status):
                                 break
 
                         else:
-                            print("camera not succeded, no image")
+                            print("ERROR: camera not succeded, no image")
                             status.value = 0
                     else:
-                        print("camera is not grabbing")
+                        print("ERROR: camera is not grabbing")
                         status.value = 0
+                else:
+                    print("ERROR: BASLER NOT PRESENT ")
             except Exception as e:
                 print("ERROR basler in loop wait4fr: %s", e)
                 basler_presence = False
