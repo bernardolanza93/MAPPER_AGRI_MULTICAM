@@ -160,7 +160,7 @@ def basler_saver(q,basler_status,global_status):
 
             while global_status.value == 1 or q.qsize() != 0:
                 qsize = q.qsize()
-                if qsize > 10:
+                if qsize > 1:
                     print("Q long: ", qsize)
                 img_basler = q.get()
                 out_BASLER.write(img_basler)
