@@ -94,7 +94,6 @@ def BASLER_capture(q,status,global_status):
                             except:
                                 print("error save basler")
 
-                        cv2.imshow("D",img_basler)
                         key = cv2.waitKey(1)
                         if key == 27:
                             break
@@ -123,41 +122,44 @@ def basler_saver(q,basler_status,global_status):
     internal_saver_status = global_status.value
 
     while 1:
-        time.sleep(1)
+        time.sleep(0.5)
+        organize_video_from_last_acquisition()
 
-        if USE_PYLON_CAMERA:
 
+
+        internal_saver_status = global_status.value
+
+
+
+
+
+
+
+        frame_width = 2592
+        frame_height = 1944
+
+        gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
+        out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
+
+        print("WAIT SAVER LOOP ")
+
+        while internal_saver_status == 0:
             internal_saver_status = global_status.value
+            time.sleep(0.5)
 
 
+        print("|_|_| SAVER READY!,  local_status:", internal_saver_status)
 
 
-            print("saving, basler status:", basler_status.value)
-            frame_width = 2592
-            frame_height = 1944
+        while internal_saver_status == 1 or q.qsize() != 0:
+            qsize = q.qsize()
+            if qsize > 1:
+                print("Q long: ", qsize)
+            img_basler = q.get()
+            out_BASLER.write(img_basler)
 
-            gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
-            out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
-
-            print("WAIT LOOP LOOP")
-
-            while internal_saver_status == 0:
-                internal_saver_status = global_status.value
-                time.sleep(0.5)
-
-
-            print("|_|_| SAVER READY!,  local_status:", internal_saver_status)
-
-
-            while global_status.value == 1 or q.qsize() != 0:
-                qsize = q.qsize()
-                if qsize > 1:
-                    print("Q long: ", qsize)
-                img_basler = q.get()
-                out_BASLER.write(img_basler)
-
-            print("BASLER SAVER RELEASED")
-            out_BASLER.release()
+        print("BASLER SAVER RELEASED")
+        out_BASLER.release()
 
         print("______ENDED RECORDING_____")
 

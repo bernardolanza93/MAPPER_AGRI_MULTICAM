@@ -13,7 +13,7 @@ def processor():
 
 
 
-        organize_video_from_last_acquisition()
+
 
         global_status = multiprocessing.Value("i", 0)
 
