@@ -123,7 +123,7 @@ def basler_saver(q,basler_status,global_status):
 
     while 1:
         time.sleep(0.5)
-        organize_video_from_last_acquisition()
+        #organize_video_from_last_acquisition()
 
 
 
@@ -153,8 +153,9 @@ def basler_saver(q,basler_status,global_status):
 
         while internal_saver_status == 1 or q.qsize() > 0:
             qsize = q.qsize()
-            print("Q long: ", qsize)
+            # print("Q long: ", qsize)
             img_basler = q.get()
+            print(img_basler)
             out_BASLER.write(img_basler)
 
         print("BASLER SAVER RELEASED")
