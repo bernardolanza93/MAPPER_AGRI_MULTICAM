@@ -75,6 +75,8 @@ def BASLER_capture(q,status,global_status):
         print("|_> STARTING! _PLAY_, STATUS LOOP EXIT,  local_status:", internal_global_status)
         frame_c = 0
         while internal_global_status == 1:
+
+            start_time = time.time()
             internal_global_status = global_status.value
             frame_c += 1
             try:
@@ -101,6 +103,15 @@ def BASLER_capture(q,status,global_status):
                         key = cv2.waitKey(1)
                         if key == 27:
                             break
+
+                        end_time = time.time()
+
+                        # Calculate the total time taken
+                        total_time = end_time - start_time
+
+                        # Calculate FPS
+                        fps = 1 / total_time
+                        print(f"FPS_IMG: {fps}")
 
                     else:
                         print("ERROR: camera not succeded, no image")
@@ -160,12 +171,21 @@ def basler_saver(q,basler_status,global_status):
 
 
         while internal_saver_status == 1 or q.qsize() > 0:
+            start_time_sa = time.time()
             qsize = q.qsize()
             print("Q long: ", qsize)
             img_basler = q.get()
 
             #out_BASLER.write(img_basler)
             OUT_SIMPLE.write(img_basler)
+            end_time = time.time()
+
+            # Calculate the total time taken
+            total_time = end_time - start_time_sa
+
+            # Calculate FPS
+            fps = 1 / total_time
+            print(f"FPS_SAV: {fps}")
 
         print("BASLER SAVER RELEASED")
         #out_BASLER.release()
