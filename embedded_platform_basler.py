@@ -3,8 +3,12 @@ import time
 from embedded_platform_utils import *
 from pypylon import pylon
 
+print(" CV2  version: ", cv2.__version__)
+print("build info: ",cv2.getBuildInformation())
+
 
 def BASLER_capture(q,status,global_status):
+
     internal_global_status = global_status.value
 
     """
@@ -138,8 +142,12 @@ def basler_saver(q,basler_status,global_status):
         frame_width = 2592
         frame_height = 1944
 
+        OUT_SIMPLE = cv2.VideoWriter('filename.avi',cv2.VideoWriter_fourcc(*'MJPG'),10, (frame_width, frame_height))
+
         gst_out_BASLER = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB_BAS.mkv "
         out_BASLER = cv2.VideoWriter(gst_out_BASLER, cv2.CAP_GSTREAMER, 10, (frame_width, frame_height))
+        # Filename
+
 
         print("WAIT SAVER LOOP ")
 
@@ -155,11 +163,13 @@ def basler_saver(q,basler_status,global_status):
             qsize = q.qsize()
             # print("Q long: ", qsize)
             img_basler = q.get()
-            print(img_basler)
-            out_BASLER.write(img_basler)
+
+            #out_BASLER.write(img_basler)
+            OUT_SIMPLE.write(img_basler)
 
         print("BASLER SAVER RELEASED")
-        out_BASLER.release()
+        #out_BASLER.release()
+        OUT_SIMPLE.release()
 
         print("___SAVER___ENDED RECORDING_____")
 
