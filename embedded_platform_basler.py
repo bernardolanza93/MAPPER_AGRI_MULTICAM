@@ -178,14 +178,14 @@ def basler_saver(q,basler_status,global_status):
 
             #out_BASLER.write(img_basler)
             OUT_SIMPLE.write(img_basler)
-            end_time = time.time()
+            end_time_sa = time.time()
 
             # Calculate the total time taken
-            total_time = end_time - start_time_sa
+            total_time_sa = end_time_sa - start_time_sa
 
             # Calculate FPS
-            fps = 1 / total_time
-            print(f"FPS_SAV: {fps}")
+            fps_sa = 1 / total_time_sa
+            print(f"FPS_SAV: {fps_sa}")
 
         print("BASLER SAVER RELEASED")
         #out_BASLER.release()
