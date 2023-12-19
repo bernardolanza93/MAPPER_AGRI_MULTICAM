@@ -20,7 +20,7 @@ def processor():
 
 
         q_RS = multiprocessing.Queue(maxsize=100)
-        q_BS = multiprocessing.Queue(maxsize=100)
+        q_BS = multiprocessing.Queue(maxsize=1000)
         status_basler = multiprocessing.Value("i", 0)
 
         p0 = multiprocessing.Process(target=process_1_GPIO, args=(global_status,))
