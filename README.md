@@ -11,6 +11,9 @@ This repository contains both acquisition and analysis software for optical meas
 The main.py file runs a program capable of acquiring and saving images from an INTEL Realsense D435 camera, via an NVIDIA Jetson Nano card.
 The media_mapper_evaluator file and the associated evaluator_utils file (containing the grafted functions) allow the analysis of the media produced by the main, which is carried out on a PC. We are therefore able to produce geometric and volumetric measurements from the acquisitions and estimate the woody biomass within our acquisitions.
 
+## TODO COMPLETE SOON : GSTREAMER SUPPORT ON OPENCV INSTALLATION
+### now discovering
+
 ## Executable:
 ### before (if not performed) give the writing reading permission to the executable file:
 
