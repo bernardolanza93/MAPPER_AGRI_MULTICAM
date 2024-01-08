@@ -7,6 +7,11 @@ print(" CV2  version: ", cv2.__version__)
 print("build info: ",cv2.getBuildInformation())
 
 
+#CONFIG
+#VIDEO LOOP
+  #WAIT PLAY LOOP
+  #RECORD LOOP
+
 def BASLER_capture(q,status,global_status):
 
     internal_global_status = global_status.value
@@ -21,6 +26,7 @@ def BASLER_capture(q,status,global_status):
 
     # conecting to the first available camera
     try:
+        print("BASLER CONFIGURATION...")
 
         camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
         # lo usa la cri vediamo a che serve
@@ -65,7 +71,7 @@ def BASLER_capture(q,status,global_status):
     #stato di continuo try di acquisizione
     while 1:
 
-        print("WAIT LOOP LOOP")
+        print("WAIT MAIN LOOP FOR VIDEO FILE")
 
         while internal_global_status == 0:
             internal_global_status = global_status.value

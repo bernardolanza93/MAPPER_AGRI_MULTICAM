@@ -1,24 +1,82 @@
+import time
 
 from embedded_platform_utils import *
 
-def RS_saver(queue,status):
-    print("TODO")
+def RS_saver(queue_RGB,queue_DEPTH,global_status):
+    while 1:
+        time.sleep(0.5)
+
+
+        internal_saver_status = global_status.value
+
+
+        gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
+        out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1900, 1080))
+
+        #gst_out_depth   = "appsrc ! video/x-raw, format=GRAY ! queue ! videoconvert ! video/x-raw,format=GRAY ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
+        gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
+        #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
+        #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '' videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
+        out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), 0)
+
+        print("WAIT RS SAVER LOOP ")
+
+        while internal_saver_status == 0:
+            internal_saver_status = global_status.value
+            time.sleep(0.5)
+
+        print("|_|_| SAVER READY!,  local_status:", internal_saver_status)
+
+        while internal_saver_status == 1 or queue_RGB.qsize() > 0 or queue_DEPTH.qsize() > 0:
+            # start_time_sa = time.time()
+            qsize_RGB = queue_RGB.qsize()
+            print("Q long: ", qsize_RGB)
+            rgb = queue_RGB.get()
+            depth = queue_DEPTH.get()
+            try:
+                out.write(rgb)
+                out_depth.write(depth)
+
+            except Exception as e:
+                print("ERROR SAVE RS %s", str(e))
+
+            #
+            #     # save here depth map
+
+
+            # end_time_sa = time.time()
+            #
+            # # Calculate the total time taken
+            # total_time_sa = end_time_sa - start_time_sa
+            #
+            # # Calculate FPS
+            # fps_sa = 1 / total_time_sa
+            # print(f"FPS_SAV: {fps_sa}")
+
+        print("REALSENSE SAVER RELEASED")
+        # out_BASLER.release()
+        out.release()
+        out_depth.release()
+
+        print("___SAVER_RS___ENDED RECORDING_____")
 
 
 
-def RS_capture(queue,global_status):
+def RS_capture(queue_RGB,queue_DEPTH,global_status):
 
     #configure
     #wait loop
     #acquire D435
 
+    # CONFIG
+    # VIDEO LOOP
+    # WAIT PLAY LOOP
+    # RECORD LOOP
+
     check_folder("/data/")
-
-
-
-
-    print("FOLDER ORGANIZED COMPLETED!")
     ##config.enable_device('947122110515')
+
+    TIME_WAITER_REALSENSE_FREEZER = 0.5
 
     ctx = rs.context()
     enable_D435i, enable_T265, device_aviable = search_device(ctx)
@@ -26,6 +84,7 @@ def RS_capture(queue,global_status):
     print("D435:", enable_D435i, " | T265:", enable_T265)
 
     # D435____________________________________________
+    print("START CONFIG D435")
     if enable_D435i:
         """
         # Declare pointcloud object, for calculating pointclouds and texture mappings
@@ -53,244 +112,237 @@ def RS_capture(queue,global_status):
         saver = rs.save_single_frameset()
         align_to = rs.stream.color
         align = rs.align(align_to)
+    print("START CONFIG T265")
+    if enable_T265:
+        # T265_________________________________________________
+
+        pipelineT265 = rs.pipeline(ctx)
+        configT265 = rs.config()
+        serialt265 = str(device_aviable['T265'][0])
+        print(serialt265)
+        configT265.enable_device(serialt265)
+        configT265.enable_stream(rs.stream.pose)
+        configT265.enable_stream(rs.stream.gyro)
+        print("configured succesfully T265...")
+
+        # saver.set_option()
+
+        try:
+            # Start streaming
+            started = pipelineT265.start(configT265)
+            print("T265 started OK", started)
+        except Exception as e:
+            print("error pipeline T265 starting:||||:: %s", str(e))
+        # _______________________________________________________
+
+    else:
+        print("no T265 MODE")
+
+    while 1:
+
+        now_file_ar = datetime.now()
+        timing_abs_ar = now_file_ar.strftime("%Y_%m_%d_%H_%M_%S")
 
         if enable_T265:
-            # T265_________________________________________________
+            print("INITIALIZED MAPPER LOCALIZER FILE")
+            writeCSVdata_odometry(timing_abs_ar, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
 
-            pipelineT265 = rs.pipeline(ctx)
-            configT265 = rs.config()
-            serialt265 = str(device_aviable['T265'][0])
-            print(serialt265)
-            configT265.enable_device(serialt265)
-            configT265.enable_stream(rs.stream.pose)
-            configT265.enable_stream(rs.stream.gyro)
-            print("configured succesfully T265...")
+        local_status = global_status.value
+        print("LOCAL REALSENSE STATUS INIZIALIZED = ", local_status)
+        time.sleep(0.6)
 
-            # saver.set_option()
-
-            try:
-                # Start streaming
-                started = pipelineT265.start(configT265)
-                print("T265 started OK", started)
-            except Exception as e:
-                print("error pipeline T265 starting:||||:: %s", str(e))
-            # _______________________________________________________
-        else:
-            print("no T265 MODE")
-
-        while 1:
-
-            now_dp = datetime.now()
-            timing_dp = now_dp.strftime("%Y_%m_%d_%H_%M_%S")
-
-            if enable_T265:
-                writeCSVdata_odometry(timing_dp, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
-
-            local_status = global_status.value
-            print("LOCAL STAT INI = ", local_status)
-            time.sleep(0.6)
-
+        if enable_D435i:
             try:
                 # Start streaming
                 pipeline.start(config)
                 # colorizer = rs.colorizer()
-                print("D435I START OK ___________")
+                print("PIPELINE D435 STARTED")
             except Exception as e:
-                print("ERROR ON START D435:||||:: %s", str(e))
-            # _________________________________________________
-            print("T265 inizialized, DEVICE READY!")
-            print("STATUS LOOP, checking buttons status:", local_status)
-            print("=====================================================")
-            print("||                                                 ||")
-            print("||              D436 CLICK PLAY!                   ||")
-            print("||                                                 ||")
-            print("=====================================================")
+                print("ERROR PIPELINE D435 %s", str(e))
 
+        if enable_T265:
+            try:
+                tframes = pipelineT265.wait_for_frames()
+                print("PIPELINE T265 STARTED")
 
-
-
-        # if SAVE_VIDEO_TIME != 0:
-        #     if enable_D435i:
-        #         gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
-        #         out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1900, 1080))
-        #
-        #         #gst_out_depth   = "appsrc ! video/x-raw, format=GRAY ! queue ! videoconvert ! video/x-raw,format=GRAY ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
-        #         gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
-        #         #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
-        #         #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '' videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
-        #         out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), 0)
-        #
-        #
-        #
-        #
-        # else:
-        #     print("NO SAVE VIDEO D435 MODE")
-            while local_status == 0:
-                local_status = global_status.value
-                time.sleep(0.5)
-                print(".", end="")
-            print(".<-")
-            print("|_> STARTING!, STATUS LOOP EXIT,  local_status:", local_status)
-
-            frame_c = 0
-            print("START LOOP")
-
-            while local_status == 1:
-
-                if PRINT_FPS_D435:
-                    start_time = time.time()
+            except Exception as e:
+                print("ERROR PIPELINE T265 %s", e)
+                # started = pipelineT265.start(configT265)
+                # tframes = pipelineT265.wait_for_frames()
+                pose = 0
+        # _________________________________________________
 
 
 
 
 
+    # if SAVE_VIDEO_TIME != 0:
+    #     if enable_D435i:
+    #         gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
+    #         out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1900, 1080))
+    #
+    #         #gst_out_depth   = "appsrc ! video/x-raw, format=GRAY ! queue ! videoconvert ! video/x-raw,format=GRAY ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
+    #         gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
+    #         #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
+    #         #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '' videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
+    #         out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), 0)
+    #
+    #
+    #
+    #
+    # else:
+    #     print("NO SAVE VIDEO D435 MODE")
 
-                if enable_T265 or enable_D435i:
-
-                    frame_c += 1
-
-                    if enable_T265:
-                        try:
-                            tframes = pipelineT265.wait_for_frames()
-                        except Exception as e:
-                            print("ERROR T265 wait4fr: %s", e, "object ideally not present",started)
-                            #started = pipelineT265.start(configT265)
-                            #tframes = pipelineT265.wait_for_frames()
-
-
-
-                            pose = 0
-                        try:
-                            pose = tframes.get_pose_frame()
-
-                        except Exception as e:
-                            print("ERROR T265 getFr: %s", e)
-                            pose = 0
-
-                        if pose:
-                            data = pose.get_pose_data()
-                            w = data.rotation.w
-                            x = -data.rotation.z
-                            y = data.rotation.x
-                            z = -data.rotation.y
-
-                            pitch = -m.asin(2.0 * (x * z - w * y)) * 180.0 / m.pi;
-                            roll = m.atan2(2.0 * (w * x + y * z), w * w - x * x - y * y + z * z) * 180.0 / m.pi;
-                            yaw = m.atan2(2.0 * (w * z + x * y), w * w + x * x - y * y - z * z) * 180.0 / m.pi;
-                            pose_list = [data.translation.x, data.translation.y, data.translation.z, data.velocity.x,
-                                         data.velocity.y, data.velocity.z, roll, pitch, yaw]
-                            pose_list.insert(0, frame_c)
-
-                            # print("Frame #{}".format(pose.frame_number))
-                            # print("Position: {}".format(data.translation))
-                            # print("Velocity: {}".format(data.velocity))
-                            # print("Acceleration: {}\n".format(data.acceleration))
-                            writeCSVdata_odometry(timing_dp, pose_list)
-                            if not enable_D435i:
-                                #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
-                                time.sleep(0.067)
-
-                    if enable_D435i:
-                        # Wait for a coherent pair of frames: depth and color
-                        try:
-                            frames = pipeline.wait_for_frames()
-                        except Exception as e:
-                            print("PIPELINE error:||||:: %s", str(e))
-                            sys.exit()
-
-                        aligned_frames = align.process(frames)
-                        depth_frame = aligned_frames.get_depth_frame()
-                        color_frame = aligned_frames.get_color_frame()
-                        if frame_c < 3:
-                            depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
-                            color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
-                            calculate_and_save_intrinsics(depth_intrin)
-                        color_image = np.asanyarray(color_frame.get_data())
-                        depth_image = np.asanyarray(depth_frame.get_data())
-                        print("DEPTH before", depth_image.shape)
+        print("T265/D435 inizialized, DEVICE READY!")
+        print("STATUS RS LOOP, checking buttons status:", local_status)
+        print("=====================================================")
+        print("||                                                 ||")
+        print("||            D435/T265 CLICK PLAY!                ||")
+        print("||                                                 ||")
+        print("=====================================================")
 
 
 
-                        # width = int(1920)
-                        # height = int(1080)
-                        # dim = (width, height)
+        while local_status == 0:
+            local_status = global_status.value
+            time.sleep(0.5)
+            print(".", end="")
+        print(".<-")
+        print("|_> STARTING!, STATUS LOOP EXIT,  local_status:", local_status)
+
+        frame_c = 0
+
+
+        while local_status == 1:
+
+            local_status = global_status.value
+
+            if PRINT_FPS_D435:
+                start_time = time.time()
+            if enable_T265 or enable_D435i:
+
+                frame_c += 1
+
+                try:
+                    pose = tframes.get_pose_frame()
+
+                except Exception as e:
+                    print("ERROR T265 FRAME: %s", e)
+                    pose = 0
+
+                if pose:
+                    data = pose.get_pose_data()
+                    w = data.rotation.w
+                    x = -data.rotation.z
+                    y = data.rotation.x
+                    z = -data.rotation.y
+
+                    roll = m.atan2(2.0 * (w * x + y * z), w * w - x * x - y * y + z * z) * 180.0 / m.pi;
+                    pitch = -m.asin(2.0 * (x * z - w * y)) * 180.0 / m.pi;
+                    yaw = m.atan2(2.0 * (w * z + x * y), w * w + x * x - y * y - z * z) * 180.0 / m.pi;
+                    pose_list = [data.translation.x, data.translation.y, data.translation.z, data.velocity.x,
+                                 data.velocity.y, data.velocity.z, roll, pitch, yaw]
+                    pose_list.insert(0, frame_c)
+
+                    # print("Frame #{}".format(pose.frame_number))
+                    # print("Position: {}".format(data.translation))
+                    # print("Velocity: {}".format(data.velocity))
+                    # print("Acceleration: {}\n".format(data.acceleration))
+                    writeCSVdata_odometry(timing_abs_ar, pose_list)
+                    if not enable_D435i:
+                        #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
+                        time.sleep(0.067)
+
+                if enable_D435i:
+                    # Wait for a coherent pair of frames: depth and color
+                    try:
+                        frames = pipeline.wait_for_frames()
+                    except Exception as e:
+                        print("PIPELINE error:||||:: %s", str(e))
+                        sys.exit()
+
+                    aligned_frames = align.process(frames)
+                    depth_frame = aligned_frames.get_depth_frame()
+                    color_frame = aligned_frames.get_color_frame()
+                    if frame_c < 3:
+                        depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+                        color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
+                        calculate_and_save_intrinsics(depth_intrin)
+                    color_image = np.asanyarray(color_frame.get_data())
+                    depth_image = np.asanyarray(depth_frame.get_data())
+                    print("DEPTH before", depth_image.shape)
+
+
+
+
+                    # convert u16 mm bw image to u16 cm bw
+                    resized = depth_image / 10
+                    # rescale without first 50 cm of offset unwanted
+                    resized = resized - offset
+                    # stretchin all in the 0-255 cm interval
+                    maxi = np.clip(resized, 0, 255)
+                    # convert to 8 bit
+                    intcm = maxi.astype('uint8')
+
+                    try:
+                        queue_RGB.put(color_image)
+                        queue_DEPTH.put(intcm)
+
+                    except:
+                        print("QUEUE ERROR REALSENSE")
+
+
+                    # if SAVE_VIDEO_TIME != 0:
+                    #     try:
+                    #         out.write(color_image)
+
+
+                        # except Exception as e:
+                        #     print("error save video:||||:: %s", str(e))
+
+                        # try:
+                        #     # save here depth map
+                        #     out_depth.write(intcm)
+
+                        # except Exception as e:
+                        #     print("error saving depth 1 ch:||||:: %s", str(e))
                         #
-                        # # resize image depth to fit rgb
-                        # print("DEPTH before", depth_image.shape)
-                        # resized = cv2.resize(depth_image, dim, interpolation=cv2.INTER_AREA)
-                        # print("DEPTH after", resized.shape)
-                        # convert u16 mm bw image to u16 cm bw
-                        resized = depth_image / 10
-                        # rescale without first 50 cm of offset unwanted
-                        resized = resized - offset
+                if PRINT_FPS_D435:
+                    end = time.time()
+                    seconds = end - start_time
+                    fps = round(1 / seconds, 3)
+                    print(fps)
 
-                        # stretchin all in the 0-255 cm interval
-                        maxi = np.clip(resized, 0, 255)
-                        # convert to 8 bit
-                        intcm = maxi.astype('uint8')
+                if DISPLAY_RGB:
+                    # cv2.imshow('depth Stream', color_image)
+                    cv2.imshow('dept!!!h Stream', intcm)
 
-                        # print("RGB", color_image.shape)
-                        print("DEPTH", intcm.shape)
+                    key = cv2.waitKey(1)
+                    if key == 27:
+                        # result.release()
+                        # cv2.destroyAllWindows()
+                        break
 
-                        # if SAVE_VIDEO_TIME != 0:
-                        #     try:
-                        #         out.write(color_image)
+                time.sleep(TIME_WAITER_REALSENSE_FREEZER)
+            else:
+                print("no realsense error!!!!")
+                time.sleep(5)
+            #END CYCLE
 
+            if enable_T265 == False and enable_D435i == False :
+                print("no device, termination...")
+                break
 
-                            # except Exception as e:
-                            #     print("error save video:||||:: %s", str(e))
-
-                            # try:
-                            #     # save here depth map
-                            #     out_depth.write(intcm)
-
-                            # except Exception as e:
-                            #     print("error saving depth 1 ch:||||:: %s", str(e))
-                            #
-                    if PRINT_FPS_D435:
-                        end = time.time()
-                        seconds = end - start_time
-                        fps = round(1 / seconds, 3)
-                        print(fps)
-
-                    if DISPLAY_RGB:
-                        # cv2.imshow('depth Stream', color_image)
-                        cv2.imshow('dept!!!h Stream', intcm)
-
-                        key = cv2.waitKey(1)
-                        if key == 27:
-                            # result.release()
-                            # cv2.destroyAllWindows()
-                            break
-                else:
-                    print("no realsense error!!!!")
-                    time.sleep(5)
-
-                if enable_T265 == False and enable_D435i == False :
-                    print("no device, termination...")
-                    break
-
-            if enable_D435i:
-                pipeline.stop()
-                # try:
-                #     out.release()
-                # except Exception as e:
-                #     print("ERROR RELEASE RGB: %s", str(e))
-                # try:
-                #     out_depth.release()
-                # except Exception as e:
-                #     print(out_depth)
-                #     print(intcm.shape)
-                #     print("ERROR RELEASE DEPTH: %s", str(e))
-
-                cv2.destroyAllWindows()
-                print("closing object...")
-                time.sleep(1)
-            if enable_T265:
-                pipelineT265.stop()
-            print("TERMINATING RS CAPTURE")
-            status.value = 0
+        if enable_D435i:
+            pipeline.stop()
+            cv2.destroyAllWindows()
+            print("closing object...")
             time.sleep(1)
+        if enable_T265:
+            pipelineT265.stop()
+
+        print("TERMINATING RS CAPTURE")
+        time.sleep(1)
 
 
 
