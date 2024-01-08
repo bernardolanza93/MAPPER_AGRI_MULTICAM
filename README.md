@@ -127,10 +127,20 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 https://github.com/35selim/RealSense-Jetson/tree/main
 ```
 
-### INSTALL OPENCV:
+### INSTALL OPENCV NOT OPTIMIZED (NO CUDA NO GSTREAM):
 ```
 sudo apt-get install python3-opencv
 ```
+### INSTALL OPENCV FROM SOURCE:
+## GUIDE:
+```
+https://qengineering.eu/install-opencv-on-jetson-nano.html
+```
+### REPO FOR AUTOMATED SOURCE INSTALLATION:
+```
+https://github.com/Qengineering/Install-OpenCV-Jetson-Nano
+```
+https://qengineering.eu/install-opencv-on-jetson-nano.html
 ### INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
 ## ARM 64 linux todo
 ```
