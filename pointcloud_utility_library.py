@@ -13,7 +13,7 @@ import sys
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import time
-from configuration_path import *
+from CONFIGURATION_VISION import *
 import open3d as o3d
 from sklearn.preprocessing import RobustScaler
 

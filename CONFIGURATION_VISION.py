@@ -3,6 +3,10 @@ import  os
 
 PATH_EXAMPLE = "/home/mmt-ben/Desktop"
 
+#ACQUISITION CONFFIGURATION
+TIME_WAITER_REALSENSE_FREEZER = 0.5
+
+
 
 ZOOM = 100
 iteration = 5

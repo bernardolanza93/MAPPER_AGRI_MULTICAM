@@ -1,8 +1,11 @@
 import time
 
 from embedded_platform_utils import *
+from CONFIGURATION_VISION import *
 
-def RS_saver(queue_RGB,queue_DEPTH,global_status):
+
+def RS_saver(queue_RGB, queue_DEPTH, global_status):
+
     while 1:
         time.sleep(0.5)
 
@@ -76,7 +79,6 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
     check_folder("/data/")
     ##config.enable_device('947122110515')
 
-    TIME_WAITER_REALSENSE_FREEZER = 0.5
 
     ctx = rs.context()
     enable_D435i, enable_T265, device_aviable = search_device(ctx)
@@ -125,73 +127,13 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
         configT265.enable_stream(rs.stream.gyro)
         print("configured succesfully T265...")
 
-        # saver.set_option()
-
-        try:
-            # Start streaming
-            started = pipelineT265.start(configT265)
-            print("T265 started OK", started)
-        except Exception as e:
-            print("error pipeline T265 starting:||||:: %s", str(e))
-        # _______________________________________________________
-
     else:
         print("no T265 MODE")
 
     while 1:
 
-        now_file_ar = datetime.now()
-        timing_abs_ar = now_file_ar.strftime("%Y_%m_%d_%H_%M_%S")
-
-        if enable_T265:
-            print("INITIALIZED MAPPER LOCALIZER FILE")
-            writeCSVdata_odometry(timing_abs_ar, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
-
-        local_status = global_status.value
-        print("LOCAL REALSENSE STATUS INIZIALIZED = ", local_status)
-        time.sleep(0.6)
-
-        if enable_D435i:
-            try:
-                # Start streaming
-                pipeline.start(config)
-                # colorizer = rs.colorizer()
-                print("PIPELINE D435 STARTED")
-            except Exception as e:
-                print("ERROR PIPELINE D435 %s", str(e))
-
-        if enable_T265:
-            try:
-                tframes = pipelineT265.wait_for_frames()
-                print("PIPELINE T265 STARTED")
-
-            except Exception as e:
-                print("ERROR PIPELINE T265 %s", e)
-                # started = pipelineT265.start(configT265)
-                # tframes = pipelineT265.wait_for_frames()
-                pose = 0
-        # _________________________________________________
 
 
-
-
-
-    # if SAVE_VIDEO_TIME != 0:
-    #     if enable_D435i:
-    #         gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
-    #         out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1900, 1080))
-    #
-    #         #gst_out_depth   = "appsrc ! video/x-raw, format=GRAY ! queue ! videoconvert ! video/x-raw,format=GRAY ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
-    #         gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
-    #         #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
-    #         #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '' videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
-    #         out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), 0)
-    #
-    #
-    #
-    #
-    # else:
-    #     print("NO SAVE VIDEO D435 MODE")
 
         print("T265/D435 inizialized, DEVICE READY!")
         print("STATUS RS LOOP, checking buttons status:", local_status)
@@ -200,6 +142,8 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
         print("||            D435/T265 CLICK PLAY!                ||")
         print("||                                                 ||")
         print("=====================================================")
+
+        time.sleep(0.3)
 
 
 
@@ -210,27 +154,62 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
         print(".<-")
         print("|_> STARTING!, STATUS LOOP EXIT,  local_status:", local_status)
 
+
+        now_file_ar = datetime.now()
+        timing_abs_ar = now_file_ar.strftime("%Y_%m_%d_%H_%M_%S")
         frame_c = 0
+        local_status = global_status.value
+
+        writeCSVdata_odometry(timing_abs_ar, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
+
+        print("LOCAL REALSENSE STATUS INIZIALIZED = ", local_status)
+        time.sleep(0.1)
+
+        if enable_T265:
+            print("INITIALIZED MAPPER LOCALIZER FILE")
+
+            try:
+                # Start streaming
+                started = pipelineT265.start(configT265)
+                print("T265 started OK", started)
+            except Exception as e:
+                print("ERROR PIPELINE T265: %s", str(e))
+
+        if enable_D435i:
+            try:
+                # Start streaming
+                pipeline.start(config)
+                # colorizer = rs.colorizer()
+                print("PIPELINE D435 STARTED")
+            except Exception as e:
+                print("ERROR PIPELINE D435 %s", str(e))
 
 
+
+        #____________MAIN IMAGE LOOP"_____________
         while local_status == 1:
 
             local_status = global_status.value
 
-            if PRINT_FPS_D435:
-                start_time = time.time()
             if enable_T265 or enable_D435i:
 
                 frame_c += 1
 
-                try:
-                    pose = tframes.get_pose_frame()
 
-                except Exception as e:
-                    print("ERROR T265 FRAME: %s", e)
-                    pose = 0
+                if enable_T265:
+                    try:
+                        tframes = pipelineT265.wait_for_frames()
+                        print("PIPELINE T265 STARTED")
+
+                    except Exception as e:
+                        print("ERROR PIPELINE T265 %s", e)
+                        pose = 0
+
+
+
 
                 if pose:
+                    pose = tframes.get_pose_frame()
                     data = pose.get_pose_data()
                     w = data.rotation.w
                     x = -data.rotation.z
@@ -259,7 +238,7 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
                         frames = pipeline.wait_for_frames()
                     except Exception as e:
                         print("PIPELINE error:||||:: %s", str(e))
-                        sys.exit()
+
 
                     aligned_frames = align.process(frames)
                     depth_frame = aligned_frames.get_depth_frame()
@@ -290,40 +269,20 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
 
                     except:
                         print("QUEUE ERROR REALSENSE")
+                    time.sleep(TIME_WAITER_REALSENSE_FREEZER)
 
 
-                    # if SAVE_VIDEO_TIME != 0:
-                    #     try:
-                    #         out.write(color_image)
+                    if DISPLAY_RGB:
+                        # cv2.imshow('depth Stream', color_image)
+                        cv2.imshow('dept!!!h Stream', intcm)
+
+                        key = cv2.waitKey(1)
+                        if key == 27:
+                            # result.release()
+                            # cv2.destroyAllWindows()
+                            break
 
 
-                        # except Exception as e:
-                        #     print("error save video:||||:: %s", str(e))
-
-                        # try:
-                        #     # save here depth map
-                        #     out_depth.write(intcm)
-
-                        # except Exception as e:
-                        #     print("error saving depth 1 ch:||||:: %s", str(e))
-                        #
-                if PRINT_FPS_D435:
-                    end = time.time()
-                    seconds = end - start_time
-                    fps = round(1 / seconds, 3)
-                    print(fps)
-
-                if DISPLAY_RGB:
-                    # cv2.imshow('depth Stream', color_image)
-                    cv2.imshow('dept!!!h Stream', intcm)
-
-                    key = cv2.waitKey(1)
-                    if key == 27:
-                        # result.release()
-                        # cv2.destroyAllWindows()
-                        break
-
-                time.sleep(TIME_WAITER_REALSENSE_FREEZER)
             else:
                 print("no realsense error!!!!")
                 time.sleep(5)

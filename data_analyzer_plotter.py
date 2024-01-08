@@ -3,7 +3,7 @@ import sys
 import matplotlib.pyplot as plt
 import csv
 import numpy as np
-from configuration_path import *
+from CONFIGURATION_VISION import *
 import math
 import seaborn as sns
 from scipy.stats import linregress

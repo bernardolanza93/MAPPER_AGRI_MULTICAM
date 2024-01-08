@@ -3,6 +3,7 @@ import time
 from embedded_platform_basler import *
 from embedded_platform_realsese import *
 
+
 basler = True
 realsense = False
 
@@ -10,10 +11,6 @@ realsense = False
 
 def processor():
     try:
-
-
-
-
 
         global_status = multiprocessing.Value("i", 0)
 
