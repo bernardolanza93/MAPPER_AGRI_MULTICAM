@@ -14,6 +14,10 @@ The media_mapper_evaluator file and the associated evaluator_utils file (contain
 ## TODO COMPLETE SOON : GSTREAMER SUPPORT ON OPENCV INSTALLATION
 ### now discovering
 
+##To close all process in backgroud digit:
+```
+pkill python
+```
 ## Executable:
 ### before (if not performed) give the writing reading permission to the executable file:
 
