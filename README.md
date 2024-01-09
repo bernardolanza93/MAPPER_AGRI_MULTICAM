@@ -51,6 +51,10 @@ pip freeze > requirements.txt
 cd MAPPER_AGRI_MULTICAM/
 pip install -r requirements.txt
 ```
+## Firstly, review what packages are installed on your Jetson Nano.
+```
+pip3 list
+```
 
 ## Configuring sensors in the field  
 
@@ -162,6 +166,10 @@ sudo apt-get install python3-opencv
 ```
 sudo apt-get remove -y
 ```
+### Or for specific:
+```
+pip uninstall opencv-python==4.5.1
+```
 ### to uninstall and 
 ```
 sudo apt list --installed
@@ -172,7 +180,17 @@ sudo apt list --installed
 ```
 sudo sudo apt-get purge *libopencv*
 ```
+### To uninstall manually (not suggested)
+```
+sudo find / -name " *opencv* " -exec rm -i {} \;
+```
+### with above command, I find the opencv related folders and files, and remove them.
 
+
+### After removing process, I checked the version using following command if opencv still exist.
+```
+pkg-config --modversion opencv
+```
 
 ## INSTALL OPENCV FROM SOURCE:
 ### GUIDE:
