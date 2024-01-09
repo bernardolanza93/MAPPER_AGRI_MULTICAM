@@ -133,6 +133,27 @@ sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 https://github.com/35selim/RealSense-Jetson/tree/main
 ```
 
+### On python to see the opencv version installed:
+```
+print (cv2.__version__)
+```
+
+### Before installing opencv you need some requirements and purge old version:
+```
+echo "** Remove other OpenCV first"
+sudo sudo apt-get purge *libopencv*
+
+
+echo "** Install requirement"
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+sudo apt-get install -y python2.7-dev python3.6-dev python-dev python-numpy python3-numpy
+sudo apt-get install -y libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev
+sudo apt-get install -y libv4l-dev v4l-utils qv4l2 v4l2ucp
+sudo apt-get install -y curl
+```
+
 ### INSTALL OPENCV NOT OPTIMIZED (NO CUDA NO GSTREAM):
 ```
 sudo apt-get install python3-opencv
@@ -147,6 +168,12 @@ sudo apt list --installed
 ```
 ### to list installed packages.
 
+### Other way to uninstall:
+```
+sudo sudo apt-get purge *libopencv*
+```
+
+
 ## INSTALL OPENCV FROM SOURCE:
 ### GUIDE:
 
@@ -156,7 +183,10 @@ https://qengineering.eu/install-opencv-on-jetson-nano.html
 
 https://github.com/Qengineering/Install-OpenCV-Jetson-Nano
 
-https://qengineering.eu/install-opencv-on-jetson-nano.html
+### Here you can see another guide to install opencv on jetson by source (backup guide jut for help)
+
+https://github.com/AastaNV/JEP/tree/master/script
+
 ### INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
 ## ARM 64 linux todo
 ```
