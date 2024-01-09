@@ -127,8 +127,8 @@ sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 ```
 
-### INSTALL PYREALSENSE FOLLOWING THIS REPO
-## install SDK to utilize T265, and instal pyrealsense2 to import RS libraries
+## INSTALL PYREALSENSE FOLLOWING THIS REPO
+### install SDK to utilize T265, and instal pyrealsense2 to import RS libraries
 ```
 https://github.com/35selim/RealSense-Jetson/tree/main
 ```
@@ -187,20 +187,20 @@ https://github.com/Qengineering/Install-OpenCV-Jetson-Nano
 
 https://github.com/AastaNV/JEP/tree/master/script
 
-### INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
-## ARM 64 linux todo
+## INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
+### ARM 64 linux todo
 ```
 pip install open-gopro
 ```
 ### ToDo: pylon viewewr and pypylon library installation. SDK software to display and python library to acquire. 
-## search for ARM 64 linuz tar.gz pylon software
+### search for ARM 64 linuz tar.gz pylon software
 ```
 https://www2.baslerweb.com/en/downloads/software-downloads/
 ```
 
 
 
-### Executing program
+## Executing program
 
 * How to run the program
 * Step-by-step bullets
@@ -261,7 +261,6 @@ command to run if program contains helper info
 
 Contributors names and contact info
 
-ex. Dominique Pizzie  
 ex. [@BernardoLanza]([https://www.linkedin.com/in/bernardo-lanza-554064163/])
 
 ## Version History
@@ -272,15 +271,5 @@ ex. [@BernardoLanza]([https://www.linkedin.com/in/bernardo-lanza-554064163/])
 * 0.1
     * Initial Release
 
-## License
 
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
 
-## Acknowledgments
-
-Inspiration, code snippets, etc.
-* [awesome-readme](https://github.com/matiassingers/awesome-readme)
-* [PurpleBooth](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2)
-* [dbader](https://github.com/dbader/readme-template)
-* [zenorocha](https://gist.github.com/zenorocha/4526327)
-* [fvcproductions](https://gist.github.com/fvcproductions/1bfc2d4aecb01a834b46)
