@@ -140,6 +140,7 @@ https://github.com/35selim/RealSense-Jetson/tree/main
 ### On python to see the opencv version installed:
 ```
 print (cv2.__version__)
+print cv2.getBuildInformation()
 ```
 
 ### Before installing opencv you need some requirements and purge old version:
