@@ -131,6 +131,16 @@ https://github.com/35selim/RealSense-Jetson/tree/main
 ```
 sudo apt-get install python3-opencv
 ```
+### Use 
+```
+sudo apt-get remove -y
+```
+### to uninstall and 
+```
+sudo apt list --installed
+```
+### to list installed packages.
+
 ## INSTALL OPENCV FROM SOURCE:
 ### GUIDE:
 
