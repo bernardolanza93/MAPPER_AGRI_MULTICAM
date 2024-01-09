@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-import  os
+import os
 
 PATH_EXAMPLE = "/home/mmt-ben/Desktop"
 
 #ACQUISITION CONFFIGURATION
-TIME_WAITER_REALSENSE_FREEZER = 0.5
+TIME_WAITER_REALSENSE_FREEZER = 0.8
+basler = True
+realsense = False
 
 
 

@@ -4,8 +4,7 @@ from embedded_platform_basler import *
 from embedded_platform_realsese import *
 
 
-basler = True
-realsense = False
+
 
 
 
