@@ -51,6 +51,10 @@ pip freeze > requirements.txt
 cd MAPPER_AGRI_MULTICAM/
 pip install -r requirements.txt
 ```
+## Firstly, review what packages are installed on your Jetson Nano.
+```
+pip3 list
+```
 
 ## Configuring sensors in the field  
 
@@ -127,10 +131,32 @@ sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 sudo apt-get install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev
 ```
 
-### INSTALL PYREALSENSE FOLLOWING THIS REPO
-## install SDK to utilize T265, and instal pyrealsense2 to import RS libraries
+## INSTALL PYREALSENSE FOLLOWING THIS REPO
+### install SDK to utilize T265, and instal pyrealsense2 to import RS libraries
 ```
 https://github.com/35selim/RealSense-Jetson/tree/main
+```
+
+### On python to see the opencv version installed:
+```
+print (cv2.__version__)
+print cv2.getBuildInformation()
+```
+
+### Before installing opencv you need some requirements and purge old version:
+```
+echo "** Remove other OpenCV first"
+sudo sudo apt-get purge *libopencv*
+
+
+echo "** Install requirement"
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+sudo apt-get install -y python2.7-dev python3.6-dev python-dev python-numpy python3-numpy
+sudo apt-get install -y libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev
+sudo apt-get install -y libv4l-dev v4l-utils qv4l2 v4l2ucp
+sudo apt-get install -y curl
 ```
 
 ### INSTALL OPENCV NOT OPTIMIZED (NO CUDA NO GSTREAM):
@@ -141,11 +167,31 @@ sudo apt-get install python3-opencv
 ```
 sudo apt-get remove -y
 ```
+### Or for specific:
+```
+pip uninstall opencv-python==4.5.1
+```
 ### to uninstall and 
 ```
 sudo apt list --installed
 ```
 ### to list installed packages.
+
+### Other way to uninstall:
+```
+sudo sudo apt-get purge *libopencv*
+```
+### To uninstall manually (not suggested)
+```
+sudo find / -name " *opencv* " -exec rm -i {} \;
+```
+### with above command, I find the opencv related folders and files, and remove them.
+
+
+### After removing process, I checked the version using following command if opencv still exist.
+```
+pkg-config --modversion opencv
+```
 
 ## INSTALL OPENCV FROM SOURCE:
 ### GUIDE:
@@ -156,21 +202,24 @@ https://qengineering.eu/install-opencv-on-jetson-nano.html
 
 https://github.com/Qengineering/Install-OpenCV-Jetson-Nano
 
-https://qengineering.eu/install-opencv-on-jetson-nano.html
-### INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
-## ARM 64 linux todo
+### Here you can see another guide to install opencv on jetson by source (backup guide jut for help)
+
+https://github.com/AastaNV/JEP/tree/master/script
+
+## INSTALL OPEN GOPRO (Ubuntu 64bit pc X86):
+### ARM 64 linux todo
 ```
 pip install open-gopro
 ```
 ### ToDo: pylon viewewr and pypylon library installation. SDK software to display and python library to acquire. 
-## search for ARM 64 linuz tar.gz pylon software
+### search for ARM 64 linuz tar.gz pylon software
 ```
 https://www2.baslerweb.com/en/downloads/software-downloads/
 ```
 
 
 
-### Executing program
+## Executing program
 
 * How to run the program
 * Step-by-step bullets
@@ -231,7 +280,6 @@ command to run if program contains helper info
 
 Contributors names and contact info
 
-ex. Dominique Pizzie  
 ex. [@BernardoLanza]([https://www.linkedin.com/in/bernardo-lanza-554064163/])
 
 ## Version History
@@ -242,15 +290,5 @@ ex. [@BernardoLanza]([https://www.linkedin.com/in/bernardo-lanza-554064163/])
 * 0.1
     * Initial Release
 
-## License
 
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
 
-## Acknowledgments
-
-Inspiration, code snippets, etc.
-* [awesome-readme](https://github.com/matiassingers/awesome-readme)
-* [PurpleBooth](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2)
-* [dbader](https://github.com/dbader/readme-template)
-* [zenorocha](https://gist.github.com/zenorocha/4526327)
-* [fvcproductions](https://gist.github.com/fvcproductions/1bfc2d4aecb01a834b46)
