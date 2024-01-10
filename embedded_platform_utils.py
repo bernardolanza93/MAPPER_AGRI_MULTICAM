@@ -32,7 +32,7 @@ USE_PYLON_CAMERA = True
 
 SAVE_VIDEO_TIME = 1  # 0 per non salvareTrue
 FPS_DISPLAY = True
-DISPLAY_RGB = 1
+DISPLAY_RGB = 0
 FRAMES_TO_ACQUIRE = 30
 config_file = "cfg_file.txt"
 PRINT_FPS_D435 = 1
@@ -132,7 +132,7 @@ def process_1_GPIO(status):
 
     GPIO.cleanup()
 
-def organize_video_from_last_acquisition():
+def organize_video_from_last_acquisition(timing):
     try:
         path_dir = "aquisition_raw/"
         if not os.path.exists(path_dir):
@@ -145,10 +145,10 @@ def organize_video_from_last_acquisition():
         name1 = "aquisition_"
 
 
-        # convert to string
-        now = datetime.now()
-        date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
-        folder_name = path_dir  + name1 + date_time
+        # # convert to string
+        # now = datetime.now()
+        # date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
+        folder_name = path_dir + name1 + timing
 
         print("folder dest:", folder_name)
 

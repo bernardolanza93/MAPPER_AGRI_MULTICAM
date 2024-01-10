@@ -19,7 +19,6 @@ def processor():
         q_RS_DEPTH = multiprocessing.Queue(maxsize=300)
         q_BS = multiprocessing.Queue(maxsize=300)
         status_basler = multiprocessing.Value("i", 0)
-        organize_video_from_last_acquisition()
 
         p0 = multiprocessing.Process(target=process_1_GPIO, args=(global_status,))
         p1 = multiprocessing.Process(target=BASLER_capture, args=(q_BS,status_basler,global_status))

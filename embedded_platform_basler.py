@@ -44,8 +44,7 @@ def BASLER_capture(q,status,global_status):
 
         #
 
-        # Grabing Continusely (video) with minimal delay
-        camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+
 
         converter = pylon.ImageFormatConverter()
 
@@ -58,12 +57,9 @@ def BASLER_capture(q,status,global_status):
         frame_height = 1944
         size = (frame_width, frame_height)
 
-        # result = cv2.VideoWriter('filename.avi', cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), 10, size)
 
         print("BASLER CONFIGURED")
     except Exception as e:
-        basler_presence = False
-        status.value = 0
         print("basler configuration failed", e)
 
 
@@ -78,8 +74,13 @@ def BASLER_capture(q,status,global_status):
             time.sleep(0.5)
             print(".")
         print(".<-")
-        print("|_> STARTING! _PLAY_, STATUS LOOP EXIT,  local_status:", internal_global_status)
+        print("|_> STARTING! _PLAY_, STATUS BASLER LOOP EXIT,  local_status:", internal_global_status)
         frame_c = 0
+
+        # Grabing Continusely (video) with minimal delay
+        camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+        #spostato qui momentaneamente perche sotto voglio introdure lo stop grabbing quindi anche ogni volta che lancio play devo lanciare lo start grabbing
+
         while internal_global_status == 1:
 
             # start_time = time.time()
@@ -95,9 +96,6 @@ def BASLER_capture(q,status,global_status):
                         # Access the image data
                         image = converter.Convert(grabResult)
                         img_basler = image.GetArray()
-                        #print(frame_c)
-
-
 
                         if SAVE_VIDEO_TIME != 0:
                             try:
@@ -132,6 +130,8 @@ def BASLER_capture(q,status,global_status):
                 status.value = 0
 
         print("CYCLE TERMINATED-READY NEW AQUISITION")
+        #non vedo lo start grabbing quindi da testare. potrebbe non riuscire piu a startare nuovi frames...
+        camera.StopGrabbing()
 
 def basler_saver(q,basler_status,global_status):
     """
@@ -179,7 +179,7 @@ def basler_saver(q,basler_status,global_status):
         while internal_saver_status == 1 or q.qsize() > 0:
             # start_time_sa = time.time()
             qsize = q.qsize()
-            print("Q long: ", qsize)
+            print("Q_BAS: ", qsize)
             img_basler = q.get()
 
             #out_BASLER.write(img_basler)
@@ -197,5 +197,5 @@ def basler_saver(q,basler_status,global_status):
         #out_BASLER.release()
         OUT_SIMPLE.release()
 
-        print("___SAVER___ENDED RECORDING_____")
+        print("_SAVER_BASLER_ENDED RECORDING_")
 

@@ -36,9 +36,6 @@ def display_t265():
 
 
 
-
-
-
     finally:
         pipeline.stop()
 

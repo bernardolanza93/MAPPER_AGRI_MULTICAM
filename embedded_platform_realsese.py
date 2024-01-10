@@ -12,17 +12,25 @@ def RS_saver(queue_RGB, queue_DEPTH, global_status):
 
         internal_saver_status = global_status.value
 
+        size = (1920, 1080)
+        fps = 20.0
+
 
         gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=RGB.mkv "
-        out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  20.0, (1900, 1080))
+        out = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER,  fps, size)
 
         #gst_out_depth   = "appsrc ! video/x-raw, format=GRAY ! queue ! videoconvert ! video/x-raw,format=GRAY ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location=DEPTH.mkv "
         gst_out_depth = "appsrc caps=video/x-raw,format=GRAY8 ! videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! h265parse ! filesink location=DEPTH.mkv "
         #gst_out_depth = ("appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv" )
         #gst_out_depth = ('appsrc caps=video/x-raw,format=GRAY8,width=1920,height=1080,framerate=30/1 ! '' videoconvert ! omxh265enc ! video/x-h265, stream-format=byte-stream ! ''h265parse ! filesink location=test.h265 ')
-        out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  20.0, (1920, 1080), 0)
+        out_depth = cv2.VideoWriter(gst_out_depth, cv2.CAP_GSTREAMER,  fps, size, 0)
+
+
+
+
 
         print("WAIT RS SAVER LOOP ")
+
 
         while internal_saver_status == 0:
             internal_saver_status = global_status.value
@@ -33,7 +41,7 @@ def RS_saver(queue_RGB, queue_DEPTH, global_status):
         while internal_saver_status == 1 or queue_RGB.qsize() > 0 or queue_DEPTH.qsize() > 0:
             # start_time_sa = time.time()
             qsize_RGB = queue_RGB.qsize()
-            print("Q long: ", qsize_RGB)
+            #print("Q long: ", qsize_RGB)
             rgb = queue_RGB.get()
             depth = queue_DEPTH.get()
             try:
@@ -83,17 +91,12 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
     ctx = rs.context()
     enable_D435i, enable_T265, device_aviable = search_device(ctx)
 
-    print("D435:", enable_D435i, " | T265:", enable_T265)
+    print("DEVICE: | D435:", enable_D435i, " | T265:", enable_T265, " |")
 
     # D435____________________________________________
     print("START CONFIG D435")
     if enable_D435i:
-        """
-        # Declare pointcloud object, for calculating pointclouds and texture mappings
-        pc = rs.pointcloud()
-        # We want the points object to be persistent so we can display the last cloud when a frame drops
-        points = rs.points()
-        """
+
         pipeline = rs.pipeline(ctx)
         config = rs.config()
         try:
@@ -106,18 +109,16 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
         config.enable_device(seriald435)
         config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
         config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
-
-        # We'll use the colorizer to generate texture for our PLY
-
-        # config.enable_stream(rs.stream.accel,rs.format.motion_xyz32f,200)
-        # config.enable_stream(rs.stream.gyro,rs.format.motion_xyz32f,200)
-        saver = rs.save_single_frameset()
         align_to = rs.stream.color
         align = rs.align(align_to)
+    else:
+        if enable_T265:
+            print("______|_|_|______ONLY ODOMETRY SYSTEM_______|_|_|______")
+
+
     print("START CONFIG T265")
     if enable_T265:
         # T265_________________________________________________
-
         pipelineT265 = rs.pipeline(ctx)
         configT265 = rs.config()
         serialt265 = str(device_aviable['T265'][0])
@@ -125,7 +126,7 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
         configT265.enable_device(serialt265)
         configT265.enable_stream(rs.stream.pose)
         configT265.enable_stream(rs.stream.gyro)
-        print("configured succesfully T265...")
+        print("T265 CONFIGURED!")
 
     else:
         print("no T265 MODE")
@@ -157,13 +158,17 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
 
         now_file_ar = datetime.now()
         timing_abs_ar = now_file_ar.strftime("%Y_%m_%d_%H_%M_%S")
+
+        print("REORGANIZE LAST VIDEO ACQUISITION IN FOLDER")
+        organize_video_from_last_acquisition(timing_abs_ar)
+
         frame_c = 0
         local_status = global_status.value
 
         writeCSVdata_odometry(timing_abs_ar, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
 
         print("LOCAL REALSENSE STATUS INIZIALIZED = ", local_status)
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         if enable_T265:
             print("INITIALIZED MAPPER LOCALIZER FILE")
@@ -205,10 +210,6 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
                         print("ERROR PIPELINE T265 %s", e)
                         pose = 0
 
-
-
-
-                if pose:
                     pose = tframes.get_pose_frame()
                     data = pose.get_pose_data()
                     w = data.rotation.w
@@ -228,9 +229,7 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
                     # print("Velocity: {}".format(data.velocity))
                     # print("Acceleration: {}\n".format(data.acceleration))
                     writeCSVdata_odometry(timing_abs_ar, pose_list)
-                    if not enable_D435i:
-                        #converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
-                        time.sleep(0.067)
+
 
                 if enable_D435i:
                     # Wait for a coherent pair of frames: depth and color
@@ -249,11 +248,7 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
                         calculate_and_save_intrinsics(depth_intrin)
                     color_image = np.asanyarray(color_frame.get_data())
                     depth_image = np.asanyarray(depth_frame.get_data())
-                    print("DEPTH before", depth_image.shape)
-
-
-
-
+                    #print("DEPTH before", depth_image.shape)
                     # convert u16 mm bw image to u16 cm bw
                     resized = depth_image / 10
                     # rescale without first 50 cm of offset unwanted
@@ -269,6 +264,7 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
 
                     except:
                         print("QUEUE ERROR REALSENSE")
+                    #Dormiamo ora per non pesare sull acquisizione basler
                     time.sleep(TIME_WAITER_REALSENSE_FREEZER)
 
 
@@ -281,27 +277,28 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
                             # result.release()
                             # cv2.destroyAllWindows()
                             break
+                else:
+                    # converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
+                    time.sleep(0.067)
 
 
             else:
-                print("no realsense error!!!!")
+                print("REALSENSE NONE !!!")
                 time.sleep(5)
             #END CYCLE
 
-            if enable_T265 == False and enable_D435i == False :
-                print("no device, termination...")
-                break
+
 
         if enable_D435i:
             pipeline.stop()
             cv2.destroyAllWindows()
             print("closing object...")
-            time.sleep(1)
+            time.sleep(0.3)
         if enable_T265:
             pipelineT265.stop()
 
         print("TERMINATING RS CAPTURE")
-        time.sleep(1)
+        time.sleep(0.5)
 
 
 
