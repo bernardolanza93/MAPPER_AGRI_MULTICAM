@@ -203,7 +203,7 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
                 if enable_T265:
                     try:
                         tframes = pipelineT265.wait_for_frames()
-                        print("PIPELINE T265 STARTED")
+
 
                     except Exception as e:
                         print("ERROR PIPELINE T265 %s", e)
