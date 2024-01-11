@@ -159,8 +159,6 @@ def RS_capture(queue_RGB,queue_DEPTH,global_status):
         now_file_ar = datetime.now()
         timing_abs_ar = now_file_ar.strftime("%Y_%m_%d_%H_%M_%S")
 
-        print("REORGANIZE LAST VIDEO ACQUISITION IN FOLDER")
-        organize_video_from_last_acquisition(timing_abs_ar)
 
         frame_c = 0
         local_status = global_status.value
