@@ -74,7 +74,6 @@ def RS_saver(queue_RGB, queue_DEPTH, global_status):
 
 
 def RS_capture(queue_RGB,queue_DEPTH,global_status):
-    local_status = global_status.value
 
     #configure
     #wait loop
