@@ -43,6 +43,7 @@ def copy_to_usb(source_folder, destination_folder):
             # Copy the entire directory tree (files and folders) to the USB drive
             shutil.copytree(source_path, destination_path)
             print("Files and folders copied successfully to USB drive.")
+            print(source_path)
         except Exception as e:
             print(f"Error: {e}")
     else:
@@ -50,4 +51,4 @@ def copy_to_usb(source_folder, destination_folder):
 
 
 # Replace 'source_folder' and 'destination_folder' with your actual source and destination paths
-copy_to_usb('data', 'data_from_jetson')
+copy_to_usb('aquisition_raw', 'data_from_jetson')
