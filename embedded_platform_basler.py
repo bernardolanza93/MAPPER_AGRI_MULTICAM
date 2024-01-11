@@ -77,11 +77,11 @@ def BASLER_capture(q,status,global_status):
         print("|_> STARTING! _PLAY_, STATUS BASLER LOOP EXIT,  local_status:", internal_global_status)
         frame_c = 0
 
-        now_file_ar = datetime.now()
-        timing_abs_ar = now_file_ar.strftime("%Y_%m_%d_%H_%M_%S")
+        now_file_ = datetime.now()
+        timing_abs = now_file_.strftime("%Y_%m_%d_%H_%M_%S")
 
         print("REORGANIZE LAST VIDEO ACQUISITION IN FOLDER")
-        organize_video_from_last_acquisition(timing_abs_ar)
+        organize_video_from_last_acquisition(timing_abs)
 
         # Grabing Continusely (video) with minimal delay
         camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
