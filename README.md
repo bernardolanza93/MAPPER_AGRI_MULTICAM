@@ -15,14 +15,16 @@ The media_mapper_evaluator file and the associated evaluator_utils file (contain
 ### now discovering
 
 ## Executable:
+
+### browse directory to execute bash files
+```
+cd MAPPER_AGRI_MULTICAM/
+```
+
 ### before (if not performed) give the writing reading permission to the executable file:
 
 ```
 chmod +x run_test_all_cam.sh
-```
-### browse directory to execute bash files
-```
-cd MAPPER_AGRI_MULTICAM/
 ```
 ### Execute files to run specific programs and update software
 
