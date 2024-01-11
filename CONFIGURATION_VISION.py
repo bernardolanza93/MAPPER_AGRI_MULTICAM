@@ -6,7 +6,7 @@ PATH_EXAMPLE = "/home/mmt-ben/Desktop"
 #ACQUISITION CONFFIGURATION
 TIME_WAITER_REALSENSE_FREEZER = 0.8
 basler = True
-realsense = False
+realsense = True
 
 
 
