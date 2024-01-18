@@ -1,6 +1,5 @@
 from embedded_platform_utils import *
-import cv2.aruco as aruco
-
+from cv2 import aruco
 
 
 # ArUco marker size in meters (if known)
