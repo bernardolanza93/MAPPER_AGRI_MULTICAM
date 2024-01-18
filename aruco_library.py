@@ -4,7 +4,7 @@ from cv2 import aruco
 
 # ArUco marker size in meters (if known)
 marker_size = MARKER_SIZE  # Adjust this to the actual marker size
-aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_1000)
+aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_1000)
 # Load the camera matrix and distortion coefficients
 # Check if the files exist before loading
 if os.path.exists(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy")) and os.path.exists(
@@ -22,7 +22,7 @@ if os.path.exists(os.path.join(FOLDER_CALIBRATION_CAMERA, "camera_matrix.npy")) 
 
        """
 
-    parameters = aruco.DetectorParameters_create()
+    parameters = aruco.DetectorParameters()
     print("ARUCO DETECTOR OBJECT CREATED! ")
 else:
     print("ARUCO MODULE FAIL // NO CALIBRATION")
@@ -55,8 +55,9 @@ def aruco_detection(image1,frame_id,timing_abs_ar):
     and for ‘refind’ strategies (see refineDetectedMarkers() ).
     """
 
-    corners, ids, rejectedImgPoints = aruco.detectMarkers(image1, aruco_dict, parameters=parameters)
-
+    #corners, ids, rejectedImgPoints = aruco.detectMarkers(image1, aruco_dict, parameters=parameters)
+    detector = aruco.ArucoDetector(aruco_dict, parameters)
+    corners, ids, rejectedImgPoints = detector.detectMarkers(image1)
 
 
 
