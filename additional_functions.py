@@ -39,8 +39,6 @@ def brightness(img):
     else:
         # Grayscale
         return np.average(img)
-
-
 def mask_generation(frame, bottom_color, top_color):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -53,8 +51,6 @@ def mask_generation(frame, bottom_color, top_color):
     green[imask] = frame[imask]  # dentro i mask metto frame
 
     return green, imagem
-
-
 def undesired_objects(image):
     image = image.astype('uint8')
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=4)
@@ -70,8 +66,24 @@ def undesired_objects(image):
     img2 = np.zeros(output.shape)
     img2[output == max_label] = 255
     return img2
+def count_files_in_folder(folder_path):
+    try:
+        # Get the list of files in the folder
+        files = os.listdir(folder_path)
 
+        # Filter out directories, leaving only files
+        files = [file for file in files if os.path.isfile(os.path.join(folder_path, file))]
 
+        # Count the number of files
+        file_count = len(files)
+        print("n files:",file_count)
+
+        return file_count
+
+    except FileNotFoundError:
+        print(f"The specified folder '{folder_path}' does not exist.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 def resize_image(img, percentage):
     # Display the frame
     # saved in the file
@@ -83,9 +95,6 @@ def resize_image(img, percentage):
     # resize image
     resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
     return resized
-
-
-
 def crop_with_box_one_shoot(box, mask_bu, frame, depth):
     P1 = box[0]
     P2 = box[1]
@@ -110,9 +119,6 @@ def crop_with_box_one_shoot(box, mask_bu, frame, depth):
 
     print("impossible crop entire image, width:", w, "x min e max:", xmin, xmax, "height: ", h, ymin, ymax)
     return mask_bu, frame, depth
-
-
-
 def write_pointcloud(filename, xyz_points, rgb_points=None):
     '''
     Function that writes a .ply file of the point cloud according to the camera points
@@ -153,9 +159,6 @@ def write_pointcloud(filename, xyz_points, rgb_points=None):
                                         rgb_points[i, 2].tobytes(), rgb_points[i, 1].tobytes(),
                                         rgb_points[i, 0].tobytes())))
     fid.close()
-
-
-
 def draw_and_identify_current_cnt(frame, i, box):
     font = cv2.FONT_HERSHEY_SIMPLEX
     fontScale = 1
@@ -163,31 +166,23 @@ def draw_and_identify_current_cnt(frame, i, box):
     thickness = 2
     frame = cv2.putText(frame, str(i), (box[0][0], box[0][1] - 100), font,
                         fontScale, color, thickness, cv2.LINE_AA)
-
-
 def draw_and_calculate_poligonal_max_diameter(cnt, frame):
     epsilon = 0.003 * cv2.arcLength(cnt, True)
     approx = cv2.approxPolyDP(cnt, epsilon, True)
 
     #cv2.drawContours(frame, [approx], -1, (255, 255, 0), 1)
-
-
 def draw_and_calculate_rotated_box(cnt, frame):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
     #cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
     return box
-
-
 def fit_and_draw_line_cnt(cnt, frame):
     rows, cols = frame.shape[:2]
     [vx, vy, x, y] = cv2.fitLine(cnt, cv2.DIST_L2, 0, 0.01, 0.01)
     lef = int((-x * vy / vx) + y)
     ri = int(((cols - x) * vy / vx) + y)
     cv2.line(frame, (cols - 1, ri), (0, lef), (0, 255, 0), 1)
-
-
 def first_layer_detect_raw_shoots(im, frame):
     im = (255 - im)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (12, 12))
@@ -237,8 +232,6 @@ def first_layer_detect_raw_shoots(im, frame):
                         return i
     print("no one aviable")
     return 0
-
-
 def count_and_display_pixel(green, mask):
     height = green.shape[0]
     width = green.shape[1]
@@ -252,8 +245,6 @@ def count_and_display_pixel(green, mask):
     green = cv2.putText(green, 'pix : ' + str(number_of_black_pix), org, font,
                         fontScale, color, thickness, cv2.LINE_AA)
     return number_of_black_pix
-
-
 def writeCSVdata(time, data):
     """
     write data 2 CSV
@@ -267,12 +258,8 @@ def writeCSVdata(time, data):
     writer = csv.writer(file)
     writer.writerow(data)
     file.close()
-
-
 def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
-
-
 def two_points_euc_distance(P1, P2):
     #3d
     x1 = P1[0]
@@ -288,9 +275,6 @@ def two_points_euc_distance(P1, P2):
     squared_dist = np.sum((p1 - p2) ** 2, axis=0)
     dist = np.sqrt(squared_dist)
     return dist
-
-
-
 def create_flatten_array_for_ply_save(pointcloud):
     X, Y, Z = cv2.split(pointcloud)  # For BGR image
     X = X.flatten()
@@ -302,8 +286,6 @@ def create_flatten_array_for_ply_save(pointcloud):
     array = array.T
     print(array.shape)
     return array
-
-
 def convert_u8_img_to_u16_d435_depth_image(u8_image):
     # print(u8_image)
     u16_image = u8_image.astype('uint16')
@@ -313,8 +295,6 @@ def convert_u8_img_to_u16_d435_depth_image(u8_image):
     # print(u16_image_off_mm.shape, type(u16_image_off_mm),u16_image_off_mm.dtype)
 
     return u16_image_off_mm
-
-
 def obtain_intrinsics():
     intrinsics = rs.intrinsics()
     with open("intrinsics.csv", "r") as f:
@@ -348,16 +328,10 @@ def obtain_intrinsics():
                 intrinsics.coeffs = new_list
 
     return intrinsics
-
-
 def distanceCalculate(p1, p2):
     """p1 and p2 in format (x1,y1) and (x2,y2) tuples"""
     dis = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2) ** 0.5
     return dis
-
-
-
-
 def volume_from_lenght_and_diam_med(box, frame, mask_bu):
     # lenght of the box, aka minimum rectangular distance
     # |__->   L2

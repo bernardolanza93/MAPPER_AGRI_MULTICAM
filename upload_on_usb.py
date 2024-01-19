@@ -52,3 +52,4 @@ def copy_to_usb(source_folder, destination_folder):
 
 # Replace 'source_folder' and 'destination_folder' with your actual source and destination paths
 copy_to_usb('aquisition_raw', 'data_from_jetson')
+copy_to_usb('data', 'data_from_jetson')

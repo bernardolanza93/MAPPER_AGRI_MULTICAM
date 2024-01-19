@@ -1,103 +1,56 @@
+import fitz
 import numpy as np
-import matplotlib.pyplot as plt
+import cv2
 
-# Define the state variables (x, y, theta) and their uncertainties
-state = np.array([0.0, 0.0, 0.0])  # Initial state: (x, y, theta)
-true_state = np.array([0.0, 0.0, 0.0])  # Initial state: (x, y, theta)
-state_covariance = np.diag([0.0, 0.0, 0.0])  # Initial uncertainty: (x, y, theta)
-
-# Define the motion model (how the state evolves over time)
-def predict_state(state, delta_t, velocity, angular_velocity):
-    x, y, theta = state
-    x += delta_t * velocity * np.cos(theta)
-    y += delta_t * velocity * np.sin(theta)
-    theta += delta_t * angular_velocity
-    return np.array([x, y, theta])
-
-# Define the measurement model (how sensor measurements relate to the state)
-def measurement_model(state):
-    return state
+# file path you want to extract images from
+file = "/home/mmt-ben/MAPPER_AGRI_MULTICAM/MMI_mix_v3.pdf"
+#piu aumenta piu mantiene solo le cose chiare dell immagine
+delighting_coeff= 0.4
 
 
-# Create lists to store the data for plotting
-true_trajectory = []
-measured_positions = []
-estimated_positions = []
-uncertainty_x = []
-uncertainty_y = []
-uncertainty_theta = []
+def opencv_image_to_pdf(opencv_image, output_pdf):
+    doc = fitz.open()
+    img = fitz.open(opencv_image)  # open pic as document
+    rect = img[0].rect  # pic dimension
+    pdfbytes = img.convert_to_pdf()  # make a PDF stream
+    img.close()  # no longer needed
+    imgPDF = fitz.open("pdf", pdfbytes)  # open stream as PDF
+    page = doc.new_page(width=rect.width,  # new page with ...
+                        height=rect.height)  # pic dimension
+    page.show_pdf_page(rect, imgPDF, 0)  # image fills the page
+
+    doc.save(output_pdf)
 
 
-# Define the measurement uncertainty (sensor noise)
-measurement_covariance = np.diag([0.46, 0.35, 0.03])
+with fitz.Document(file) as doc:
+    for xref in {xref[0] for page in doc for xref in page.get_images(False) if xref[1] == 0}:
+        # dictionary with image
+        image_dict = doc.extract_image(xref)
+        # image as OpenCV's Mat
+        i = cv2.imdecode(np.frombuffer(image_dict["image"],
+                                       np.dtype(f'u{image_dict["bpc"] // 8}')
+                                       ),
+                         cv2.IMREAD_GRAYSCALE)
 
-true_covariance =  np.diag([0.01, 0.01, 0.001])
+        # Calculate the mean intensity of the grayscale image
+        mean_intensity = np.mean(i)
+        res = 255 - mean_intensity
+        mean_intensity =delighting_coeff * res + mean_intensity
+        print("mean:",mean_intensity)
 
-# Simulate the noisy circular path motion
-num_steps = 200
 
-# Simulate the noisy circular path motion and Kalman Filter updates
-for i in range(num_steps):
-    # Simulate motion
-    delta_t = 0.2  # Time step
-    if i < int(num_steps/2):
-        angular_velocity = 0.05  # Angular velocity
-        velocity = 1.0  # Linear velocity
 
-    else:
-        angular_velocity = -0.1  # Angular velocity
-        velocity = 3.0  # Linear velocity
+        # Apply thresholding
+        _, thresholded_image = cv2.threshold(i, mean_intensity, 255, cv2.THRESH_BINARY)
 
-    true_state = predict_state(true_state, delta_t, velocity, angular_velocity) #+ np.random.multivariate_normal([0, 0, 0], true_covariance)
-    true_trajectory.append(true_state[0:2])
+        cv2.imshow("OpenCV", thresholded_image)
+        cv2.imshow("OpenChhV", i)
+        cv2.waitKey(0)
 
-    # Simulate noisy measurements
-    noisy_measurement = true_state + np.random.multivariate_normal([0, 0, 0], measurement_covariance)
+        write_image = "thr.png"
 
-    # Kalman Filter Prediction Step
-    state = predict_state(state, delta_t, velocity, angular_velocity)
-    state_covariance = state_covariance  # Update based on the motion model (skip for simplicity)
+        cv2.imwrite(write_image, thresholded_image)
 
-    # Kalman Filter Update Step
-    kalman_gain = state_covariance @ np.linalg.inv(state_covariance + measurement_covariance)
-    state = state + kalman_gain @ (noisy_measurement - measurement_model(state))
-    state_covariance = (np.eye(3) - kalman_gain) @ state_covariance
 
-    # Store the data for plotting
-
-    measured_positions.append(noisy_measurement[0:2])
-    estimated_positions.append(state[0:2])
-    uncertainty_x.append(np.sqrt(state_covariance[0, 0]))
-    uncertainty_y.append(np.sqrt(state_covariance[1, 1]))
-    uncertainty_theta.append(np.sqrt(state_covariance[2, 2]))
-
-# Extract x and y coordinates for plotting
-true_x, true_y = zip(*true_trajectory)
-measured_x, measured_y = zip(*measured_positions)
-estimated_x, estimated_y = zip(*estimated_positions)
-
-# Plot the true trajectory, measured positions, and estimated positions
-plt.figure(figsize=(10, 6))
-plt.plot(true_x, true_y, label="True Trajectory", color='blue')
-plt.scatter(measured_x, measured_y, label="Measured Positions", color='red', marker='x')
-plt.scatter(estimated_x, estimated_y, label="Estimated Positions", color='orange', marker='o')
-
-# Plot uncertainty evolution for x, y, and theta
-plt.figure(figsize=(10, 4))
-plt.plot(uncertainty_x, label="Uncertainty X", color='blue')
-plt.plot(uncertainty_y, label="Uncertainty Y", color='red')
-plt.plot(uncertainty_theta, label="Uncertainty Theta", color='green')
-plt.xlabel("Time Step")
-plt.ylabel("Uncertainty")
-plt.legend()
-
-# Set axis labels and legend
-plt.figure(1)
-plt.xlabel("X Position")
-plt.ylabel("Y Position")
-plt.legend()
-plt.title("Robot Trajectory with Measured Positions")
-plt.grid()
-
-# Display the plots
-plt.show()
+output_pdf = "/home/mmt-ben/MAPPER_AGRI_MULTICAM/out.pdf"
+opencv_image_to_pdf(write_image, output_pdf)
