@@ -144,16 +144,16 @@ def odometry_capture_no_aruco(global_status):
 
                         writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, pose_list)
 
-                        if PRINT_FPS_ODOMETRY:
-                            # End time
-                            end_time = time.time()
+                    if PRINT_FPS_ODOMETRY:
+                        # End time
+                        end_time = time.time()
 
-                            # Calculate time taken
-                            time_taken = end_time - start_time
+                        # Calculate time taken
+                        time_taken = end_time - start_time
 
-                            # Calculate FPS
-                            fps = int(1 / time_taken)
-                            print("FPS:", fps)
+                        # Calculate FPS
+                        fps = int(1 / time_taken)
+                        print("FPS:", fps)
 
 
                     local_status = global_status.value
