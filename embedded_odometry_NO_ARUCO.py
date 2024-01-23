@@ -81,8 +81,7 @@ def odometry_capture_no_aruco(global_status):
         print("|_> STATUS LOOP EXIT, STARTING!, local_status:", local_status)
 
         while local_status == 1:
-            if PRINT_FPS_ODOMETRY:
-                start_time = time.time()
+
 
             if enable_T265 or enable_D435i:
 
@@ -90,6 +89,8 @@ def odometry_capture_no_aruco(global_status):
                 frame_c += 1
 
                 if enable_T265:
+                    if PRINT_FPS_ODOMETRY:
+                        start_time = time.time()
                     try:
                         tframes = pipelineT265.wait_for_frames()
                     except Exception as e:
