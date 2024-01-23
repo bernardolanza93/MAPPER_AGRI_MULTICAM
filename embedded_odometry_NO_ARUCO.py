@@ -40,6 +40,7 @@ def odometry_capture_no_aruco(global_status):
         timing_abs = now_file.strftime("%Y_%m_%d_%H_%M_%S")
         #writeCSVdata_odometry("_ARUCO_" + timing_abs, ["frame", "id_marker", "x", "y", "z", "roll", "pitch", "yaw"])
         writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
+        print("FPS CONTROL:",DIVIDER_FPS_REDUCTION)
 
         ##config.enable_device('947122110515')
         print("PIPELINE CONFIG T265...")
@@ -78,6 +79,7 @@ def odometry_capture_no_aruco(global_status):
             print(".", end="")
         print(".")
         print("|_> STATUS LOOP EXIT, STARTING!, local_status:", local_status)
+
         while local_status == 1:
             if PRINT_FPS_ODOMETRY:
                 start_time = time.time()
