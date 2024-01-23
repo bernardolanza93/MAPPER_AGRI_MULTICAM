@@ -40,7 +40,6 @@ def odometry_capture_no_aruco(global_status):
         timing_abs = now_file.strftime("%Y_%m_%d_%H_%M_%S")
         #writeCSVdata_odometry("_ARUCO_" + timing_abs, ["frame", "id_marker", "x", "y", "z", "roll", "pitch", "yaw"])
         writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, ["frame", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"])
-        print("FPS CONTROL:",DIVIDER_FPS_REDUCTION)
 
         ##config.enable_device('947122110515')
         print("PIPELINE CONFIG T265...")
@@ -79,9 +78,9 @@ def odometry_capture_no_aruco(global_status):
             print(".", end="")
         print(".")
         print("|_> STATUS LOOP EXIT, STARTING!, local_status:", local_status)
-
         while local_status == 1:
-
+            if PRINT_FPS_ODOMETRY:
+                start_time = time.time()
 
             if enable_T265 or enable_D435i:
 
@@ -89,8 +88,6 @@ def odometry_capture_no_aruco(global_status):
                 frame_c += 1
 
                 if enable_T265:
-                    if PRINT_FPS_ODOMETRY:
-                        start_time = time.time()
                     try:
                         tframes = pipelineT265.wait_for_frames()
                     except Exception as e:
@@ -140,26 +137,23 @@ def odometry_capture_no_aruco(global_status):
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
 
-                        time.sleep(DIVIDER_FPS_REDUCTION)
-
                         writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, pose_list)
-
-                    if PRINT_FPS_ODOMETRY:
-                        # End time
-                        end_time = time.time()
-
-                        # Calculate time taken
-                        time_taken = end_time - start_time
-
-                        # Calculate FPS
-                        fps = int(1 / time_taken)
-                        print("FPS:", fps)
-
-
+                        if not enable_D435i:
+                            # converte la velocita di salvataggio dai 1500 FPS (T265 standalone)  ad un acquisizione piu realistica (15 FPS della D435)
+                            time.sleep(DIVIDER_FPS_REDUCTION)
                     local_status = global_status.value
                     if local_status == 0:
                         print("TERMINATION SIGNAL DETECTED")
+            if PRINT_FPS_ODOMETRY:
+                # End time
+                end_time = time.time()
 
+                # Calculate time taken
+                time_taken = end_time - start_time
+
+                # Calculate FPS
+                fps = int(1 / time_taken)
+                print("FPS:", fps)
 
         if enable_T265:
             print("PIPELINE STOPPED!")
