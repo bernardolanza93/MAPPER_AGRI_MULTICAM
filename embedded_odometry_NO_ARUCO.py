@@ -137,9 +137,11 @@ def odometry_capture_no_aruco(global_status):
                         # print("Velocity: {}".format(data.velocity))
                         # print("Acceleration: {}\n".format(data.acceleration))
 
+                        time.sleep(DIVIDER_FPS_REDUCTION)
+
                         writeCSVdata_odometry("_NO_ARUCO_" +timing_abs, pose_list)
 
-                        time.sleep(DIVIDER_FPS_REDUCTION)
+
                     local_status = global_status.value
                     if local_status == 0:
                         print("TERMINATION SIGNAL DETECTED")
