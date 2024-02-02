@@ -5,10 +5,9 @@ import sys
 
 
 
-filename = "/home/mmt-ben/MAPPER_AGRI_MULTICAM/aquisition/GX010058.MP4"
+filename = "/home/mmt-ben/MAPPER_AGRI_MULTICAM/aquisition_raw/GX010054.MP4"
 
-
-save_folder = '/home/mmt-ben/MAPPER_AGRI_MULTICAM/training_image_extracted'
+save_folder = '/home/mmt-ben/MAPPER_AGRI_MULTICAM/example_photogrammetry'
 cap = cv.VideoCapture(filename)
 if not cap.isOpened():
     print("Cannot open camera")
