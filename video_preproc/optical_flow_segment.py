@@ -163,7 +163,7 @@ def calculate_mean_optical_flow_x(image, previous_frame,speed_mem):
 
 
 # Leggi il video
-cap = cv2.VideoCapture('/home/mmt-ben/MAPPER_AGRI_MULTICAM/aquisition_raw/GX010050.MP4')
+cap = cv2.VideoCapture('/home/mmt-ben/MAPPER_AGRI_MULTICAM/aquisition_raw/GX010048.MP4')
 
 # Inizializza il calcolatore di optical flow
 previous_frame = None
@@ -179,7 +179,7 @@ while True:
     if not ret:
         break
     print(i)
-    if i > 600:
+    if i > 1000:
         frame = cv2.rotate(frame, cv2.ROTATE_180)
 
         # Converti l'immagine in scala di grigi
@@ -203,7 +203,13 @@ while True:
 
             # Soglia per discriminare tra foreground e background
 
-            mask = (np.abs(flow_x) > speed_mem-1).astype(np.uint8) * 255
+            mask = (np.logical_and(np.abs(flow_x) > speed_mem - 1, np.abs(flow_x) < speed_mem + 10)).astype(np.uint8) * 255
+            # Define the kernel for the erosion operation
+            kernel = np.ones((5, 5), np.uint8)
+
+            # Perform erosion operation
+            mask = cv2.dilate(mask, kernel, iterations=2)
+
 
             # Crea una maschera 3 canali per il frame RGB
             mask_rgb = cv2.cvtColor(mask.astype(np.uint8), cv2.COLOR_GRAY2RGB)

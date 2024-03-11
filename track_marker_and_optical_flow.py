@@ -72,7 +72,7 @@ def visualizza_dati(csv_path):
 
     # Grafico della velocità del marker
     plt.subplot(3, 1, 2)
-    plt.plot(velocita_marker_x, label='Velocità Marker X')
+    plt.plot(velocita_marker_x_or, label='Velocità Marker X')
     #plt.plot(velocita_marker_x_or, label='Velocità Marker X ORIGINALE')
     #plt.plot(velocita_marker_y, label='Velocità Marker Y')
     #plt.plot(velocita_marker_z, label='Velocità Marker Z')
