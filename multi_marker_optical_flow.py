@@ -16,12 +16,12 @@ output_excel = 'marker_data.xlsx'
 
 # Definisci il percorso della cartella di calibrazione
 folder_calibration = "/home/mmt-ben/MAPPER_AGRI_MULTICAM/CALIBRATION_CAMERA_FILE"
-
+PLOT_SINGLE_PATH = 0
 # Carica i parametri di calibrazione della camera
 mtx = np.load(os.path.join(folder_calibration, "camera_matrix.npy"))
 dist = np.load(os.path.join(folder_calibration, "dist_coeffs.npy"))
 
-video_name = 'GX010113.MP4'
+video_name = 'GX010114.MP4'
 # Definisci il percorso del video
 video_path = '/home/mmt-ben/MAPPER_AGRI_MULTICAM/aquisition_raw/'+video_name
 
@@ -69,6 +69,17 @@ df_res.to_excel(output_excel_res, index=False)
 
 print(f"Creato il file '{output_excel}' con gli header vuoti.")
 
+
+def smart_cutter_df(df, threshold):
+    start_idx = 0
+    sub_dataframes = []
+    for i in range(1, len(df)):
+        if df['n_frame'].iloc[i] - df['n_frame'].iloc[i - 1] > threshold:
+            # Se c'è una discontinuità
+            sub_dataframes.append(df.iloc[start_idx:i])
+            start_idx = i
+    sub_dataframes.append(df.iloc[start_idx:])
+    return sub_dataframes
 
 def divide_dataframe(df, start_points, end_points):
     """
@@ -141,7 +152,7 @@ def imaga_analizer_raw():
         n_frames = n_frames+1
         row_data = {'n_frame': n_frames}
 
-        print("_")
+        #print("_")
         ret, frame = cap.read()
         if not ret:
             break
@@ -180,7 +191,7 @@ def imaga_analizer_raw():
 
             # Loop attraverso i marker trovati
             # Loop attraverso i marker trovati
-            print(len(ids))
+            #print(len(ids))
             for i in range(len(ids)):
                 # Calcola la posizione 3D del marker rispetto alla telecamera
                 rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners[i], MARKER_SIZE, mtx, dist)
@@ -190,7 +201,7 @@ def imaga_analizer_raw():
 
                 # Estrai l'ID de10l marker
                 marker_id = ids[i][0]
-                print("mkr:ID", marker_id)
+                #print("mkr:ID", marker_id)
 
                 # if marker_id == 1:
                 #     print("x,y: ",x,y)
@@ -272,14 +283,10 @@ def plotter_raw_analys(df):
 
     # Ciclo attraverso i marker da 1 a 5
     for marker_inr in marker_ids:
-        print("marker:", marker_inr)
+        #print("marker:", marker_inr)
         # Seleziona solo le righe con valori non nulli per il marker corrente
         marker_data = df[df[f'x_ip_{marker_inr}'].notnull() & df[f'z_3D_{marker_inr}'].notnull()]
 
-        # Plot delle coordinate x e z del marker corrente come scatter plot
-        plt.scatter(marker_data['n_frame'], marker_data[f'x_ip_{marker_inr}']/2000, label=f'X Coordinate Marker {marker_inr}', color='blue')
-        plt.scatter(marker_data['n_frame'], marker_data[f'z_3D_{marker_inr}'], label=f'Z Coordinate Marker {marker_inr}', color='red')
-        plt.scatter(marker_data['n_frame'], marker_data[f'x_3D_{marker_inr}'], label=f'X_3D Coordinate Marker {marker_inr}', color='green')
 
         # Calcola il valore medio di z e l'incertezza
         z_mean = np.mean(marker_data[f'z_3D_{marker_inr}'])
@@ -287,9 +294,25 @@ def plotter_raw_analys(df):
         try:
             if len(marker_data[f'z_3D_{marker_inr}']) > 5:
                 # Calcola la velocità di x e l'incertezza utilizzando la regressioane lineare
+
                 slope_x_ip, intercept_x_ip, _, _, std_err_x_ip = linregress(marker_data['n_frame'], marker_data[f'x_ip_{marker_inr}'])
                 vx = slope_x_ip
                 vx_std = std_err_x_ip
+
+                # Calcola i valori predetti dalla regressione per x_ip
+                predicted_x_ip = slope_x_ip * marker_data['n_frame'] + intercept_x_ip
+
+                # Calcola SSE per x_ip
+                SSE_x_ip = np.sum((marker_data[f'x_ip_{marker_inr}'] - predicted_x_ip) ** 2)
+
+                # Calcola SST per x_ip
+                y_mean_x_ip = np.mean(marker_data[f'x_ip_{marker_inr}'])
+                SST_x_ip = np.sum((marker_data[f'x_ip_{marker_inr}'] - y_mean_x_ip) ** 2)
+
+                # Calcola R^2 per x_ip
+                R_squared_x_ip = 1 - (SSE_x_ip / SST_x_ip)
+                ALL_R_2.append(R_squared_x_ip)
+
 
                 # Calcola la velocità di x_3D e l'incertezza utilizzando la regressione lineare
                 slope_x_3D, intercept_x_3D, _, _, std_err_x_3D = linregress(marker_data['n_frame'], marker_data[f'x_3D_{marker_inr}'])
@@ -301,8 +324,7 @@ def plotter_raw_analys(df):
                 y_fit_x_ip = slope_x_ip * x_fit + intercept_x_ip
                 y_fit_x_3D = slope_x_3D * x_fit + intercept_x_3D
 
-                plt.plot(x_fit, y_fit_x_ip / 2000, color='green', linestyle='--', label=f'Linear Fit X Marker {marker_inr}')
-                plt.plot(x_fit, y_fit_x_3D, color='orange', linestyle='--', label=f'Linear Fit X_3D Marker {marker_inr}')
+
             else:
                 vx = 0
                 vx_3D = 0
@@ -321,38 +343,85 @@ def plotter_raw_analys(df):
                         'vx': vx, 'vx_std': vx_std, 'vx_3D': vx_3D, 'vx_3D_std': vx_3D_std})
 
 
-        # Aggiungi etichette e legenda al grafico corrente
-        plt.xlabel('Numero Frame')
-        plt.ylabel('Coordinate')
-        plt.title(f'Coordinate X, X_3D e Z del Marker {marker_inr}')
-        plt.legend()
+        if PLOT_SINGLE_PATH:
 
-        # Mostra il grafico corrente
-        plt.show()
+        # Plot delle coordinate x e z del marker corrente come scatter plot
+            plt.scatter(marker_data['n_frame'], marker_data[f'x_ip_{marker_inr}'] / 2000,
+                        label=f'X Coordinate Marker {marker_inr}', color='blue')
+            plt.scatter(marker_data['n_frame'], marker_data[f'z_3D_{marker_inr}'],
+                        label=f'Z Coordinate Marker {marker_inr}', color='red')
+            plt.scatter(marker_data['n_frame'], marker_data[f'x_3D_{marker_inr}'],
+                        label=f'X_3D Coordinate Marker {marker_inr}', color='green')
+
+            plt.plot(x_fit, y_fit_x_ip / 2000, color='green', linestyle='--', label=f'Linear Fit X Marker {marker_inr}')
+            plt.plot(x_fit, y_fit_x_3D, color='orange', linestyle='--', label=f'Linear Fit X_3D Marker {marker_inr}')
+            # Aggiungi etichette e legenda al grafico corrente
+            plt.xlabel('Numero Frame')
+            plt.ylabel('Coordinate')
+            plt.title(f'Coordinate X, X_3D e Z del Marker {marker_inr}')
+            plt.legend()
+
+            # Mostra il grafico corrente
+            plt.show()
 
     return results
 
 
-imaga_analizer_raw()
+#imaga_analizer_raw()
 df = pd.read_excel(output_excel)
-
-
-
-marker_rif_delation = 1
+marker_rif_delation = 9
 df_filtered = delete_static_data_manually(df, f'x_ip_{marker_rif_delation}', 0.02)
-plotter_raw(df_filtered)
+# plotter_raw(df_filtered)
+win = 20
+multi_df = smart_cutter_df(df_filtered, win)
+
+rrr = []
+coeff = []
+
+# Calcola il passo tenendo conto della precisione
+passo = 0.002
+
+#Precisione desiderata (numero di cifre decimali significative)
+precisione = 3
+valori = np.arange(0.01, 0.16, passo)
+valori_arrotondati = np.around(valori, decimals=precisione)
+for acc_filter in valori_arrotondati:
+
+    coeff.append(acc_filter)
+
+    ALL_R_2 = []
+
+    if len(multi_df) == 10:
+        for i in range(len(multi_df)):
+            print("dataset ",i)
+            df_filtered = delete_static_data_manually(multi_df[i], f'x_ip_{marker_rif_delation}', acc_filter)
+            res = plotter_raw_analys(df_filtered)
+            #print(res)
+            #save_results_to_excel(res, output_excel_res)
+        #
+
+    else:
+        print("ERROR CUTTINGGG")
+
+
+    rrr.append(np.mean(ALL_R_2))
+
+
+# Crea il grafico
+plt.plot(coeff, rrr)
+
+# Aggiungi etichette agli assi
+plt.xlabel('Valori di x')
+plt.ylabel('Valori di y')
+
+# Aggiungi titolo al grafico
+plt.title('Grafico di x vs y')
+# Adatta l'asse y ai dati
+plt.gca().autoscale(axis='y')
+
+# Mostra il grafico
+plt.show()
 
 
 
-#
-# start_points = [467,750,1323,1476,1883,2013,2360,2480,2821,2945]
-# end_points = [674,952,1426,1574,1953,2058,2424,2536,2884,3002]
-# ten_dataframe_five_speed = divide_dataframe(df, start_points, end_points)
-#
-#
-# for i in range(len(ten_dataframe_five_speed)):
-#     print("dataset ",i)
-#     res = plotter_raw_analys(ten_dataframe_five_speed[i])
-#     print(res)
-#     #save_results_to_excel(res, output_excel_res)
-# #
+
