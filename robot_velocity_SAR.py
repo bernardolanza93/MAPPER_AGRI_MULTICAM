@@ -46,9 +46,9 @@ def graphic_and_speed(df):
         plt.plot(x, slope * x + intercept, color='red', label='Linear Regression')
 
         # Aggiungi titoli e legenda
-        plt.title(f'Velocità:{slope:.2f} m/s, R^2:{r_squared:.7f}')
+        plt.title(f'Velocità:{slope:.2f} m/s, R^2:{r_squared:.6f} , sigma = {std_err:.6f}')
         plt.xlabel('Timestamp')
-        plt.ylabel('Traslazione X')
+        plt.ylabel('Traslazione X [m]')
         plt.legend()
         plt.show()
 
@@ -67,8 +67,17 @@ timestamps = data['__time']
 # Converti il timestamp in secondi sottraendo il minimo timestamp e dividendo per 1 secondo
 timestamps_in_seconds = (data['__time'] - min_timestamp) / 1.0  # 1 secondo
 
+# Plot dei dati di posizione come scatter plot
+plt.scatter(timestamps_in_seconds, data['/tf/base/tool0_controller/translation/x'], label='Position Data',s = 10)
 
 
+# Aggiungi titoli e legenda
+plt.title(f'Robot trajectories')
+plt.xlabel('time [s]')
+plt.ylabel('Traslazione X [m]')
+plt.legend()
+plt.xlim([34.7,42])
+plt.show()
 
 # Calcola il valore massimo e minimo di traslazione lungo l'asse X
 x_max = data['/tf/base/tool0_controller/translation/x'].max()

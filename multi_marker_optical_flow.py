@@ -1,12 +1,19 @@
 import sys
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import csv
 from additional_functions import *
 from scipy.stats import linregress
+from scipy.optimize import curve_fit
+import numpy as np
+from scipy.stats import norm
+from itertools import groupby
+from statistics import mean
+
 
 
 # Salva il dataframe su un file Excel
@@ -22,7 +29,7 @@ PLOT_SINGLE_PATH = 0
 # Carica i parametri di calibrazione della camera
 mtx = np.load(os.path.join(folder_calibration, "camera_matrix.npy"))
 dist = np.load(os.path.join(folder_calibration, "dist_coeffs.npy"))
-print("mtx",dist)
+print("mtx",mtx)
 
 # Estrai i parametri dalla matrice di calibrazione
 fx = mtx[0, 0]  # Lunghezza focale lungo l'asse x
@@ -30,7 +37,7 @@ fy = mtx[1, 1]  # Lunghezza focale lungo l'asse y
 cx = mtx[0, 2]  # Coordinata x del centro di proiezione
 cy = mtx[1, 2]  # Coordinata y del centro di proiezione
 
-video_name = 'GX010113.MP4'
+video_name = 'GX010118.MP4'
 # Definisci il percorso del video
 video_path = '/home/mmt-ben/MAPPER_AGRI_MULTICAM/aquisition_raw/'+video_name
 
@@ -68,6 +75,7 @@ v2 = 0.5
 v3 = 0.75
 v4 = 0.94
 v5 = 0.97
+v_all = [v1,v2,v3,v4,v5]
 
 
 
@@ -81,7 +89,7 @@ if os.path.exists(output_excel_res):
 else:
 
     # Header del file Excel
-    header = ['marker', 'z_mean', 'z_std', 'vx', 'vx_std', 'vx_3D', 'vx_3D_std']
+    header = ['timestamp','7_z', '7_vx','8_z', '8_vx','9_z', '9_vx','10_z', '10_vx','11_z', '11_vx']
 
     # Crea un DataFrame vuoto con gli header
     df_res = pd.DataFrame(columns=header)
@@ -90,141 +98,669 @@ else:
     df_res.to_excel(output_excel_res, index=False)
 
     print(f"Creato il file '{output_excel}' con gli header vuoti.")
+# Funzione per il salvataggio dei risultati nel file constant
 
 
-#
-# class Undistorter:
-#     # crea una matrice di mapping a partire dai parametri della camera per correggere le distorsioni fisheye
-#     """
-#     Undistort the fisheye image
-#
-#     :param nothing:
-#
-#     :return: nothing
-#     """
-#
-#     def __init__(self):
-#         self.cachedM1 = None
-#         self.cachedM2 = None
-#         self.cachedM1180 = None
-#         self.cachedM2180 = None
-#
-#     def undistortOPT(self, img):
-#
-#         if self.cachedM1 is None or self.cachedM2 is None:
-#             print("calculating map1 and map 2")
-#             # calc map1,map2
-#             DIM = (640, 480)
-#
-#             K = np.array([[236.75101538649935, 0.0, 309.9021941455992], [0.0, 236.2446439123776, 241.05082505485547],
-#                           [0.0, 0.0, 1.0]])
-#             D = np.array(
-#                 [[-0.035061160585193776], [0.0019371574878152896], [-0.0109780009702086], [0.003567547827103574]])
-#             '''
-#
-#             K=np.array([[499.95795693114394, 0.0, 299.98932387422747], [0.0, 499.81738564423085, 233.07326875070703], [0.0, 0.0, 1.0]])
-#             D=np.array([[-0.12616907524146279], [0.4164021464039151], [-1.6015342220517828], [2.094848806959125]])
-#             '''
-#
-#             map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, DIM, cv2.CV_16SC2)
-#             print("DONE! completed map1 and 2, dim =")
-#
-#             if map1 is None or map2 is None:
-#                 print("ERROR no map calculated")
-#                 return None
-#
-#             # cache the homography matrix
-#             self.cachedM1 = map1
-#             self.cachedM2 = map2
-#             print("saved map1 and 2")
-#
-#             # print("DONE! completed map1 and 2, dim = ", (self.cachedM1).shape, (self.cachedM2).shape)
-#
-#         undistorted_img = cv2.remap(img, self.cachedM1, self.cachedM2, interpolation=cv2.INTER_LINEAR,
-#                                     borderMode=cv2.BORDER_CONSTANT)
-#         return undistorted_img
+def synchro_data_v_v_e_z(file_raw_optics):
+
+    data = pd.read_csv("data/1b.csv", delimiter=",")
+
+    min_timestamp = data['__time'].min()
+    # Estrai i dati filtrati
+    timestamps = data['__time']
+
+    # Converti il timestamp in secondi sottraendo il minimo timestamp e dividendo per 1 secondo
+    timestamps_in_seconds = (data['__time'] - min_timestamp) / 1.0  # 1 secondo
+
+    # Plot dei dati di posizione come scatter plot
+    plt.scatter(timestamps_in_seconds, data['/tf/base/tool0_controller/translation/x'], label='Position Data', s=10)
+
+    # Aggiungi titoli e legenda
+    plt.title(f'Robot trajectories')
+    plt.xlabel('time [s]')
+    plt.ylabel('Traslazione X [m]')
+    plt.legend()
+
+    plt.show()
 
 
+def media_mobile(lista, window_size):
+    """
+    Calcola la media mobile di una lista data una finestra di dimensione window_size.
+
+    :param lista: La lista di valori.
+    :param window_size: La dimensione della finestra per il calcolo della media mobile.
+    :return: La lista dei valori della media mobile.
+    """
+    lista = np.array(lista)
+    padding = window_size // 2  # Calcolo del padding necessario per mantenere la stessa lunghezza dell'input
+    lista_padded = np.pad(lista, (padding, padding), mode='edge')  # Padding con il primo/ultimo valore per mantenere la stessa lunghezza
+    moving_avg = np.convolve(lista_padded, np.ones(window_size) / window_size, mode='valid')
+    return moving_avg[:len(lista)]  # Rimuove gli elementi in eccesso per mantenere la stessa lunghezza dell'input
+
+
+def smoothing(x_fps, marker_n, window_size):
+    data = x_fps
+    """
+      Funzione che suddivide una lista in sottoliste basandosi sul cambio di marker ID e le riassembla mantenendo l'ordine originale.
+
+      Argomenti:
+        data: Lista di dati da suddividere e riassemblare.
+        marker_n: Lista di marker ID corrispondenti ai dati.
+
+      Restituisce:
+        Lista riassemblata con i dati in ordine originale.
+      """
+
+    sublists = []  # Lista per memorizzare le sottoliste
+    current_sublist = []  # Lista temporanea per la sottolista corrente
+    current_marker = None  # Marker ID corrente
+
+    for i, (datum, marker) in enumerate(zip(data, marker_n)):
+        # Controlla il cambio di marker
+        if current_marker != marker:
+
+            #print("Spezzato")
+            #modifica sublist
+            #print(current_sublist)
+            #print(current_sublist)
+            if len(current_sublist) > window_size:
+
+                print(len(current_sublist))
+                current_sublist = media_mobile(current_sublist, window_size)
+                print(len(current_sublist))
+
+
+            sublists.append(current_sublist)
+            current_sublist = []
+            current_marker = marker
+
+        # Aggiungi il dato alla sottolista corrente
+        current_sublist.append(datum)
+
+    # Gestisce l'ultima sottolista (se presente)
+    if current_sublist:
+        print("Spezzato")
+        sublists.append(current_sublist)
+
+    # Riassembla i dati in ordine originale
+    reassembled_data = []
+    for sublist in sublists:
+        reassembled_data.extend(sublist)
+
+    return reassembled_data
+
+
+def hist_adv(residui):
+    # Calcola l'errore sistematico
+    errore_sistematico = np.mean(residui)
+
+    # Calcola l'errore casuale
+    errore_casuale = np.std(residui)
+
+    # Plotta l'istogramma dei residui
+    plt.hist(residui, bins=30, color='skyblue', edgecolor='black', density=True, alpha=0.6)
+
+    # Calcola la deviazione standard della distribuzione gaussiana
+    sigma_standard = np.std(residui)
+
+    # Crea un array di valori x per la distribuzione gaussiana
+    x_gauss = np.linspace(np.min(residui), np.max(residui), 100)
+
+    # Calcola i valori y corrispondenti alla distribuzione gaussiana
+    y_gauss = norm.pdf(x_gauss, np.mean(residui), np.std(residui))
+
+    # Plotta la distribuzione gaussiana sopra l'istogramma dei residui
+    plt.plot(x_gauss, y_gauss, 'r--', label='Distribuzione Gaussiana')
+
+    # Plotta le linee verticali corrispondenti alla deviazione standard
+    plt.axvline(x=errore_sistematico + errore_casuale, color='k', linestyle='--', linewidth=1)
+    plt.axvline(x=errore_sistematico - errore_casuale, color='k', linestyle='--', linewidth=1)
+    # Aggiungi una linea verticale corrispondente al valore medio dei residui
+    plt.axvline(x=np.mean(residui), color='g', linestyle='-', linewidth=3)
+
+    # Aggiungi la deviazione standard nel titolo
+    plt.title(f'Istogramma dei Residui\nDeviazione Standard: {sigma_standard:.4f}')
+
+    plt.xlabel('Residui [m]')
+    plt.ylabel('Frequenza')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+def remove_outlier(x,y):
+    # Converti le serie Pandas in array NumPy
+    x = np.array(x)
+    y = np.array(y)
+
+    # Calcola il primo e il terzo quartile di x e y
+    Q1_x, Q3_x = np.percentile(x, [10 ,90])
+    Q1_y, Q3_y = np.percentile(y, [10, 90])
+
+    # Calcola l'interquartile range di x e y
+    IQR_x = Q3_x - Q1_x
+    IQR_y = Q3_y - Q1_y
+
+    # Definisci il range per considerare un valore outlier
+    range_outlier = 1.5
+
+    # Trova gli outlier in x
+    outlier_x = (x < Q1_x - range_outlier * IQR_x) | (x > Q3_x + range_outlier * IQR_x)
+
+    # Trova gli outlier in y
+    outlier_y = (y < Q1_y - range_outlier * IQR_y) | (y > Q3_y + range_outlier * IQR_y)
+
+    # Unisci gli outlier trovati sia in x che in y
+    outlier = outlier_x | outlier_y
+
+    # Rimuovi gli outlier da x e y
+    x_filtrato = x[~outlier]
+    y_filtrato = y[~outlier]
+
+    # Stampa il numero di outlier rimossi
+    numero_outlier_rimossi = np.sum(outlier)
+    print(f"Hai rimosso {numero_outlier_rimossi} outlier.")
+    return x_filtrato , y_filtrato
+
+
+
+
+
+def save_to_file_OF_results(filename, constant, constant_uncert, velocity):
+    with open(filename, 'a') as file:
+        file.write(f"{constant},{constant_uncert},{velocity}\n")
+
+# Funzione per fare regressione lineare con incertezza
+def weighted_linregress_with_error_on_y(x, y, y_err):
+    # Pesi basati sull'errore sull'asse y
+    w = 1 / y_err
+
+    # Calcola la media pesata dei valori
+    x_mean = np.average(x, weights=w)
+    y_mean = np.average(y, weights=w)
+
+    # Calcola le covarianze pesate
+    cov_xy = np.sum(w * (x - x_mean) * (y - y_mean))
+    cov_xx = np.sum(w * (x - x_mean) ** 2)
+
+    # Calcola il coefficiente di regressione pesato e l'intercetta
+    slope = cov_xy / cov_xx
+    intercept = y_mean - slope * x_mean
+
+    # Calcola l'R^2 considerando solo l'errore sulle y
+    residui = y - (slope * x + intercept)
+    somma_quadri_residui = np.sum(w * residui ** 2)
+    totale = np.sum(w * (y - y_mean) ** 2)
+    r_squared = 1 - (somma_quadri_residui / totale)
+
+    return slope, intercept, r_squared
+
+def modello(x, costante):
+    return costante / x
 
 def compute_dz(Vx, Vx_prime, fx, fy, cx, cy):
-    dz = (Vx * fx * np.sqrt(cx**2 + cy**2)) / Vx_prime
+    dz = ((Vx * fx) / Vx_prime )
+
     return dz
 
-def show_result_ex_file(file_path):
 
-    magnif = 10
-    # Carica i dati dal file Excel
+
+def windowing_vs_uncertanty(file_path):
+    SHOW_PLOT = 0
+
+    v_ext = []
+    unc_k = []
+    sigma_gauss = []
+    win_size = []
+
+    for window_size in range(1,10,1):
+
+
+        # Elimina il file constant se esiste
+        if os.path.exists("constant.txt"):
+            os.remove("constant.txt")
+
+        # Crea il file constant con gli header
+        with open("constant.txt", 'w') as file:
+            file.write("constant,constant_uncert,velocity\n")
+
+
+        data = pd.read_excel(file_path)
+        # Rendi positivi i valori di vx e vx_std
+
+        # Rendi positivi i valori di vx e vx_std
+        data['vx'] = abs(data['vx'])
+
+
+        # Rimuovi le righe con zeri o valori mancanti nella riga
+        data = data[(data != 0).all(1)]
+
+        # Dividi il DataFrame in base al valore della colonna vx_3D
+        gruppi = data.groupby('vx_3D')
+
+        # Crea un dizionario di sotto-dataframe, dove ogni chiave è un valore univoco di vx_3D
+        sotto_dataframe = {key: gruppi.get_group(key) for key in gruppi.groups}
+
+        for chiave, valore in sotto_dataframe.items():
+            print(chiave, valore)
+            data = sotto_dataframe[chiave]
+
+
+
+            # Definisci i colori per i diversi valori di vx_3D
+            color_map = {
+                v1: 'red',
+                v2: 'blue',
+                v3: 'green',
+                v4: 'orange',
+                v5: 'purple'
+            }
+            print(fx,fy,cx,cy)
+
+
+
+            x_fps = data['vx']
+
+
+
+
+
+            marker_n = data['marker']
+            x = [element * 60 for element in x_fps]
+
+
+            y = data['z_mean']
+
+            SMOOTHING = 1
+            window = 0
+
+
+            if SMOOTHING:
+                window = 7
+                x_or = x
+                x_s = smoothing(x,marker_n, window_size)
+                x_s_graph = [x_ii + 1000 for x_ii in x_s]
+                x = x_s
+
+            #x = media_mobile(x,150)
+
+
+            color_p = color_map[chiave]
+
+            PLOT_OF_RAW  = 1
+            if PLOT_OF_RAW and SMOOTHING:
+
+
+                x__1 = list(range(len(x)))
+                #plt.scatter(x__1, x, label='Dati raw', color=color_p, s=35,alpha=0.05,marker ="o",edgecolor ="black")
+                plt.plot(x__1, x_or)
+                plt.plot(x__1, x_s_graph)
+                marker_aug =  [element * 100 for element in marker_n]
+                plt.plot(x__1,marker_aug)
+                if SHOW_PLOT:
+                    plt.show()
+
+
+
+            # Vx_prime_values = np.linspace(min(x), max(x), 100)
+            Vx_prime_values = sorted(x)
+
+
+            # Adatta il modello ai dati
+            parametri, covarianza = curve_fit(modello, x, y)
+
+
+            # Estrai la costante stimata
+            costante_stimata = parametri[0]
+
+            # Calcola l'incertezza associata alla costante
+            incertezza_costante = np.sqrt(np.diag(covarianza))[0]
+
+            # Calcola l'R^2
+            residui = y - modello(x, costante_stimata)
+            somma_quadri_residui = np.sum(residui ** 2)
+            totale = np.sum((y - np.mean(y)) ** 2)
+            r_squared = 1 - (somma_quadri_residui / totale)
+
+            # Calcola i valori del modello per il plotting
+            x_modello = np.linspace(min(x), max(x), 100)
+            y_modello = modello(x_modello, costante_stimata)
+
+            # Salva i dati nel file
+            save_to_file_OF_results("constant.txt", costante_stimata, incertezza_costante, chiave)
+
+            plt.figure(figsize=(15, 10))
+
+            # Grafico dei punti grezzi e del modello
+            plt.scatter(x, y, label='Dati raw', color=color_p, s=35,alpha=0.05,marker ="o",edgecolor ="black")
+
+
+
+            #MODELLO GENERICO
+
+
+            plt.plot(x_modello, y_modello, label='Modello genereico Dz = k/OF', color='black',linestyle='-.',)
+
+            plt.xlabel('OF [px/s]')
+            plt.ylabel('Depth [m]')
+            plt.grid(True)
+            plt.ylim(0, 2.1)
+
+            # Plot aggiunto
+            Y_teorico = []
+            for i in range(len(Vx_prime_values)):
+
+
+                dzi = compute_dz(float(chiave), Vx_prime_values[i], fx, fy, cx, cy)
+                Y_teorico.append(dzi)
+
+            plt.plot(Vx_prime_values, Y_teorico, color="grey",label='Modello teorico Dz = (V_r * fx)/OF')
+
+
+            # Calcola l'errore sistematico
+            residui = (y - Y_teorico) / y
+            errore_sistematico = np.mean(residui)
+
+            # Calcola l'errore casuale
+            errore_casuale = np.std(residui)
+            # Calcola i residui
+
+            costante_teorica = fx * float(chiave)
+
+            plt.title(
+                f'depth vs Optical flow [z = k / vx] - media mobile filtro :{window}, \n K_th: {costante_teorica:.2f} , K_exp:{costante_stimata:.2f} +- {incertezza_costante:.2f} [px*m]  o [px * m/s] || R^2:{r_squared:.4f} \n Stat on relative residuals (asimptotic - no gaussian): \n epsilon_sistem_REL :  {errore_sistematico*100 :.3f}% , sigma_REL: {errore_casuale*100 :.3f} %')
+
+
+            # Posiziona la legenda in alto a destra
+            plt.legend(loc="upper right")
+
+
+
+
+            # Percorso del file di salvataggio
+            file_path_fig = 'results/speed_'+ str(chiave) +'_k_model.png'
+
+            # Verifica se il file esiste già
+            if os.path.exists(file_path_fig):
+                # Se il file esiste, eliminilo
+                os.remove(file_path_fig)
+                print("removed old plot")
+
+            # Salva la figura
+            plt.savefig(file_path_fig)
+
+
+            if SHOW_PLOT:
+                plt.show()
+
+            if SHOW_PLOT:
+
+                hist_adv(residui)
+
+            v_ext.append(color_p)
+            unc_k.append(incertezza_costante)
+            sigma_gauss.append(errore_casuale)
+            win_size.append(window_size)
+
+
+    plt.close('all')
+    # Creazione dei subplot
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 10))
+
+    # Grafico 1: Incertezza associata ai parametri del modello
+    for i in range(len(v_ext)):
+        ax1.scatter(win_size[i], unc_k[i], color=v_ext[i], marker="x", label='Model ' + str(i + 1))
+    ax1.set_xlabel('Window Size [samples]')
+    ax1.set_ylabel('k uncertanty [m*px]')
+
+
+    # Grafico 2: Sigma del modello fittato (Sigma Gauss)
+    for i in range(len(v_ext)):
+        ax2.scatter(win_size[i], sigma_gauss[i], color=v_ext[i], label='Model ' + str(i + 1))
+    ax2.set_xlabel('Window Size [samples]')
+    ax2.set_ylabel('relative sigma of residuals [std]')
+
+    # Imposta il titolo del subplot
+    fig.suptitle('Model Evaluation - moving avarege effect')
+
+    # Mostra il plot
+    plt.show()
+
+
+def show_result_ex_file(file_path):
+    SHOW_PLOT = 1
+
+
+    # Elimina il file constant se esiste
+    if os.path.exists("constant.txt"):
+        os.remove("constant.txt")
+
+    # Crea il file constant con gli header
+    with open("constant.txt", 'w') as file:
+        file.write("constant,constant_uncert,velocity\n")
+
 
     data = pd.read_excel(file_path)
     # Rendi positivi i valori di vx e vx_std
 
     # Rendi positivi i valori di vx e vx_std
     data['vx'] = abs(data['vx'])
-    data['vx_std'] = abs(data['vx_std'])
+
 
     # Rimuovi le righe con zeri o valori mancanti nella riga
     data = data[(data != 0).all(1)]
 
-    # Calcola gli intervalli di confidenza per z_mean e vx
-    data['z_confidence_interval'] = magnif * 1.96 * data['z_std'] / np.sqrt(len(data))
-    data['vx_confidence_interval'] = magnif * 1.96 * data['vx_std'] / np.sqrt(len(data))
+    # Dividi il DataFrame in base al valore della colonna vx_3D
+    gruppi = data.groupby('vx_3D')
 
-    # Definisci i colori per i diversi valori di vx_3D
-    color_map = {
-        0.25: 'red',
-        0.5: 'blue',
-        0.75: 'green',
-        0.94: 'orange',
-        0.96: 'purple'
-    }
+    # Crea un dizionario di sotto-dataframe, dove ogni chiave è un valore univoco di vx_3D
+    sotto_dataframe = {key: gruppi.get_group(key) for key in gruppi.groups}
 
-    Vx_prime_values = np.linspace(3, 50, 100)
+    for chiave, valore in sotto_dataframe.items():
+        print(chiave, valore)
+        data = sotto_dataframe[chiave]
 
 
 
+        # Definisci i colori per i diversi valori di vx_3D
+        color_map = {
+            v1: 'red',
+            v2: 'blue',
+            v3: 'green',
+            v4: 'orange',
+            v5: 'purple'
+        }
+        print(fx,fy,cx,cy)
+
+
+
+        x_fps = data['vx']
 
 
 
 
-    # Assegna colori in base ai valori di vx_3D
-    #colors = [color_map[vx_3D] for vx_3D in data['vx_3D']]
 
-    # Plotta z_mean in funzione di vx con colori basati su vx_3D
-    #plt.scatter(data['vx'], data['z_mean'], c=colors)
-    plt.xlabel('OF [px/frame]')
-    plt.ylabel('Depth [m]')
-    plt.title('depth vs Optical flow (error bar magnified 10x)')
+        marker_n = data['marker']
+        x = [element * 60 for element in x_fps]
+
+
+        y = data['z_mean']
+
+        SMOOTHING = 1
+        window = 0
+
+
+        if SMOOTHING:
+            window = 7
+            x_or = x
+            x_s = smoothing(x,marker_n, window)
+            x_s_graph = [x_ii + 1000 for x_ii in x_s]
+            x = x_s
+
+        #x = media_mobile(x,150)
+
+
+        color_p = color_map[chiave]
+
+        PLOT_OF_RAW  = 1
+        if PLOT_OF_RAW and SMOOTHING:
+
+
+            x__1 = list(range(len(x)))
+            #plt.scatter(x__1, x, label='Dati raw', color=color_p, s=35,alpha=0.05,marker ="o",edgecolor ="black")
+            plt.plot(x__1, x_or)
+            plt.plot(x__1, x_s_graph)
+            marker_aug =  [element * 100 for element in marker_n]
+            plt.plot(x__1,marker_aug)
+            if SHOW_PLOT:
+                plt.show()
+
+
+
+        # Vx_prime_values = np.linspace(min(x), max(x), 100)
+        Vx_prime_values = sorted(x)
+
+
+        # Adatta il modello ai dati
+        parametri, covarianza = curve_fit(modello, x, y)
+
+
+        # Estrai la costante stimata
+        costante_stimata = parametri[0]
+
+        # Calcola l'incertezza associata alla costante
+        incertezza_costante = np.sqrt(np.diag(covarianza))[0]
+
+        # Calcola l'R^2
+        residui = y - modello(x, costante_stimata)
+        somma_quadri_residui = np.sum(residui ** 2)
+        totale = np.sum((y - np.mean(y)) ** 2)
+        r_squared = 1 - (somma_quadri_residui / totale)
+
+        # Calcola i valori del modello per il plotting
+        x_modello = np.linspace(min(x), max(x), 100)
+        y_modello = modello(x_modello, costante_stimata)
+
+        # Salva i dati nel file
+        save_to_file_OF_results("constant.txt", costante_stimata, incertezza_costante, chiave)
+
+        plt.figure(figsize=(15, 10))
+
+        # Grafico dei punti grezzi e del modello
+        plt.scatter(x, y, label='Dati raw', color=color_p, s=35,alpha=0.05,marker ="o",edgecolor ="black")
+
+
+
+        #MODELLO GENERICO
+
+
+        plt.plot(x_modello, y_modello, label='Modello genereico Dz = k/OF', color='black',linestyle='-.',)
+
+        plt.xlabel('OF [px/s]')
+        plt.ylabel('Depth [m]')
+        plt.grid(True)
+        plt.ylim(0, 2.1)
+
+        # Plot aggiunto
+        Y_teorico = []
+        for i in range(len(Vx_prime_values)):
+
+
+            dzi = compute_dz(float(chiave), Vx_prime_values[i], fx, fy, cx, cy)
+            Y_teorico.append(dzi)
+
+        plt.plot(Vx_prime_values, Y_teorico, color="grey",label='Modello teorico Dz = (V_r * fx)/OF')
+
+
+        # Calcola l'errore sistematico
+        residui = (y - Y_teorico) / y
+        errore_sistematico = np.mean(residui)
+
+        # Calcola l'errore casuale
+        errore_casuale = np.std(residui)
+        # Calcola i residui
+
+        costante_teorica = fx * float(chiave)
+
+        plt.title(
+            f'depth vs Optical flow [z = k / vx] - media mobile filtro :{window}, \n K_th: {costante_teorica:.2f} , K_exp:{costante_stimata:.2f} +- {incertezza_costante:.2f} [px*m]  o [px * m/s] || R^2:{r_squared:.4f} \n Stat on relative residuals (asimptotic - no gaussian): \n epsilon_sistem_REL :  {errore_sistematico*100 :.3f}% , sigma_REL: {errore_casuale*100 :.3f} %')
+
+
+        # Posiziona la legenda in alto a destra
+        plt.legend(loc="upper right")
+
+
+
+
+        # Percorso del file di salvataggio
+        file_path_fig = 'results/speed_'+ str(chiave) +'_k_model.png'
+
+        # Verifica se il file esiste già
+        if os.path.exists(file_path_fig):
+            # Se il file esiste, eliminilo
+            os.remove(file_path_fig)
+            print("removed old plot")
+
+        # Salva la figura
+        plt.savefig(file_path_fig)
+
+
+        if SHOW_PLOT:
+            plt.show()
+
+        if SHOW_PLOT:
+
+            hist_adv(residui)
+
+
+
+
+
+
+def constant_analisis():
+    # Leggi i dati dal file
+    data = np.loadtxt("constant.txt", delimiter=',', skiprows=1)
+
+    # Estrai le colonne
+    constant_data = data[:, 0]
+    constant_uncert_data = data[:, 1]
+    velocity_data = data[:, 2]
+
+    # Fai la regressione lineare tenendo conto dell'incertezza sulla costante
+    slope, intercept, r_squared = weighted_linregress_with_error_on_y(velocity_data, constant_data, 1 / constant_uncert_data)
+    # Calcola l'incertezza della pendenza
+    residuals = constant_data - (slope * velocity_data + intercept)
+    uncert_slope = np.sqrt(np.sum(constant_uncert_data ** 2 * residuals ** 2) / np.sum((velocity_data - np.mean(velocity_data)) ** 2))
+    # Calcola l'R^2
+
+    sigma3 = [element * 3 for element in constant_uncert_data]
+
+    plt.figure(figsize=(12, 7))
+    # Grafico
+    plt.scatter(velocity_data, constant_data, label='Dati',s = 15)
+    plt.errorbar(velocity_data, constant_data, yerr=sigma3, fmt='none', label='Incertezza')
+    plt.plot(velocity_data, slope * velocity_data + intercept, color='red', label='k(v_ext) sperimentale')
+    plt.plot(velocity_data, velocity_data* fx, color='orange', label='K(v_ext) teorico')
+    plt.xlabel('V_ext[m/s]')
+    plt.ylabel('Constant [k]')
+    plt.title(
+        f' k_i = f(v_ext) : slope:{slope:.1f} sigma:{uncert_slope:.1f} k/[m/s]|| R^2:{r_squared:.4f} \n incertezza su parametri: {constant_uncert_data[0]:.2f} , {constant_uncert_data[1]:.2f},{constant_uncert_data[2]:.2f},{constant_uncert_data[3]:.2f} [px*m] - 99.7% int')
+    plt.legend()
     plt.grid(True)
-    plt.ylim(0, 2.1)
-
-    # Plot aggiunto
-    for Vx_robot, color_fun in color_map.items():
-        dz_vx = []
-        for vxi in Vx_prime_values:
-            dzi = compute_dz(Vx_robot, vxi * 60, fx/1000, fy/1000, cx, cy)
-            dz_vx.append(dzi)
-        plt.plot(Vx_prime_values,  dz_vx, color=color_fun, label = f'model {Vx_robot}m/s')
 
 
 
-    # Plotta z_mean in funzione di vx
-    # Plotta i punti e le barre di errore uno per uno, assegnando colori basati su vx_3D
-    for i, row in data.iterrows():
-        vx_3D = row['vx_3D']
-        color = color_map[vx_3D]
-        plt.errorbar(row['vx'], row['z_mean'], xerr=row['vx_confidence_interval'], yerr=row['z_confidence_interval'], fmt='o', color=color, ecolor=color, markersize=4, capsize=3)
+    # Percorso del file di salvataggio
+    file_path_fig = 'results/k_LR.png'
 
+    # Verifica se il file esiste già
+    if os.path.exists(file_path_fig):
+        # Se il file esiste, eliminilo
+        os.remove(file_path_fig)
+        print("removed old plot")
 
-
-
-    # Aggiungi legenda per i colori
-    handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=10) for color in
-               color_map.values()]
-    labels = color_map.keys()
-    plt.legend(handles, labels, title='v robot [m/s]')
-
-
-
+    # Salva la figura
+    plt.savefig(file_path_fig)
     plt.show()
 
 
@@ -238,36 +774,6 @@ def smart_cutter_df(df, threshold):
             start_idx = i
     sub_dataframes.append(df.iloc[start_idx:])
     return sub_dataframes
-
-def divide_dataframe(df, start_points, end_points):
-    """
-    Divide il dataframe in 5 parti diverse in base ai punti di inizio e fine forniti.
-
-    Argomenti:
-        df (pd.DataFrame): Il dataframe da dividere.
-        start_points (list): Una lista di 5 numeri interi rappresentanti i punti di inizio per ciascuna serie.
-        end_points (list): Una lista di 5 numeri interi rappresentanti i punti di fine per ciascuna serie.
-
-    Ritorna:
-        list: Una lista di 5 dataframe, ognuno contenente una serie tagliata.
-    """
-
-    # Assicurati che i punti di inizio e fine abbiano lunghezza corretta
-    if len(start_points) != 10 or len(end_points) != 10:
-        raise ValueError("I punti di inizio e fine devono essere forniti per ciascuna delle 5 serie.")
-
-    # Inizializza una lista vuota per contenere i dataframe tagliati
-    divided_dfs = []
-
-    # Cicla attraverso i punti di inizio e fine e taglia il dataframe
-    for start, end in zip(start_points, end_points):
-        # Taglia il dataframe usando i punti di inizio e fine
-        sliced_df = df[(df['n_frame'] >= start) & (df['n_frame'] <= end)]
-        # Aggiungi il dataframe tagliato alla lista
-        divided_dfs.append(sliced_df)
-
-
-    return divided_dfs
 
 def delete_static_data_manually(df, marker_riferimento, confidence_delation):
     # Calcola il valore massimo e minimo della posizione x del marker di riferimento
@@ -286,7 +792,6 @@ def delete_static_data_manually(df, marker_riferimento, confidence_delation):
     df_filtered = df[(df[marker_riferimento] >= x_threshold_min) & (df[marker_riferimento] <= x_threshold_max)]
 
     return df_filtered
-
 
 
 def imaga_analizer_raw():
@@ -319,12 +824,13 @@ def imaga_analizer_raw():
         row_data = {'n_frame': n_frames}
 
         #print("_")
-        ret, frame_or = cap.read()
+        ret, frame = cap.read()
+        timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
+        row_data = {'timestamp': timestamp}
         if not ret:
             break
 
 
-        frame = cv2.undistort(frame_or, mtx, dist)
 
 
         if PROC:
@@ -346,6 +852,7 @@ def imaga_analizer_raw():
         alpha = 2  # Fattore di contrasto
         beta = 5  # Fattore di luminosità
         gray_image = cv2.convertScaleAbs(gray_image, alpha=alpha, beta=beta)
+
 
         # Esempio di rilevamento dei bordi con Canny edge detector
 
@@ -386,11 +893,12 @@ def imaga_analizer_raw():
 
                     # Calcola la coordinata x approssimativa del centro del marker
                     center_x = np.mean(x_coords)
+                    z_key = f'{marker_id}_z'
+                    vx_key = f'{marker_id}_vx'
 
+                    row_data[z_key] = z
+                    row_data[vx_key] = center_x
 
-                    row_data[f'{z_m}{marker_id}'] =  z
-                    row_data[f'{x_im}{marker_id}'] = center_x
-                    row_data[f'{x_3D}{marker_id}'] = x
 
 
 
@@ -400,7 +908,7 @@ def imaga_analizer_raw():
             # Salva il frame corrente per l'uso nel prossimo ciclo
             prev_frame = frame.copy()
             # Visualizza il frame
-        cv2.imshow('Frame', resize_image(frame_or, 50))
+        cv2.imshow('Frame', resize_image(frame, 50))
         #cv2.imshow("gray",resize_image(gray_image,50))
         cv2.imshow("hhh", resize_image(gray_image, 50))
 
@@ -417,7 +925,6 @@ def imaga_analizer_raw():
 
     cap.release()
     cv2.destroyAllWindows()
-
 
 ###
 def plotter_raw(df):
@@ -441,20 +948,31 @@ def plotter_raw(df):
         # Mostra il grafico corrente
         plt.show()
 
+
 def save_results_to_excel(results, output_excel):
-    # Leggi il file Excel esistente
+    # Leggi il file Excel esistente, se presente
     if os.path.exists(output_excel):
         df = pd.read_excel(output_excel)
-
+    else:
+        df = pd.DataFrame()  # Crea un nuovo DataFrame se il file Excel non esiste
 
     # Itera sui risultati e aggiungi ogni elemento del dizionario come riga nel DataFrame
     for result in results:
-        df = df.append(result, ignore_index=True)
+        dict_to_add = {}
+        # Estrai il valore per ogni colonna dal dizionario e aggiungi come riga al DataFrame
+        for key, value_list in result.items():
+            # Verifica se la chiave (header) esiste già nel DataFrame
+            if key in df.columns:
+                # Se la colonna esiste già, estendi la Serie esistente con i nuovi valori
+
+                dict_to_add[key] = value_list
+        df = df.append(pd.DataFrame(dict_to_add))
+
+
 
     # Salva il DataFrame aggiornato nel file Excel
     df.to_excel(output_excel, index=False)
-
-def plotter_raw_analys(df):
+def plotter_raw_analys(df,v_rob):
     results = []  # Lista per memorizzare i risultati
 
     # Ciclo attraverso i marker da 1 a 5
@@ -464,84 +982,30 @@ def plotter_raw_analys(df):
         marker_data = df[df[f'x_ip_{marker_inr}'].notnull() & df[f'z_3D_{marker_inr}'].notnull()]
 
 
-        # Calcola il valore medio di z e l'incertezza
-        z_mean = np.mean(marker_data[f'z_3D_{marker_inr}'])
-        z_std = np.std(marker_data[f'z_3D_{marker_inr}'])
-        try:
-            if len(marker_data[f'z_3D_{marker_inr}']) > 5:
-                # Calcola la velocità di x e l'incertezza utilizzando la regressioane lineare
 
-                slope_x_ip, intercept_x_ip, _, _, std_err_x_ip = linregress(marker_data['n_frame'], marker_data[f'x_ip_{marker_inr}'])
-                vx = slope_x_ip
-                vx_std = std_err_x_ip
+        all_z_depth = marker_data[f'z_3D_{marker_inr}'].tolist()
 
-                # Calcola i valori predetti dalla regressione per x_ip
-                predicted_x_ip = slope_x_ip * marker_data['n_frame'] + intercept_x_ip
-
-                # Calcola SSE per x_ip
-                SSE_x_ip = np.sum((marker_data[f'x_ip_{marker_inr}'] - predicted_x_ip) ** 2)
-
-                # Calcola SST per x_ip
-                y_mean_x_ip = np.mean(marker_data[f'x_ip_{marker_inr}'])
-                SST_x_ip = np.sum((marker_data[f'x_ip_{marker_inr}'] - y_mean_x_ip) ** 2)
-
-                # Calcola R^2 per x_ip
-                R_squared_x_ip = 1 - (SSE_x_ip / SST_x_ip)
-                ALL_R_2.append(R_squared_x_ip)
+        posizione = marker_data[f'x_ip_{marker_inr}'].tolist()
 
 
-                # Calcola la velocità di x_3D e l'incertezza utilizzando la regressione lineare
-                slope_x_3D, intercept_x_3D, _, _, std_err_x_3D = linregress(marker_data['n_frame'], marker_data[f'x_3D_{marker_inr}'])
-                vx_3D = slope_x_3D * 60
-                vx_3D_std = std_err_x_3D
-
-                # Calcola le rette di regressione per x e x_3D e plotta
-                x_fit = np.linspace(marker_data['n_frame'].min(), marker_data['n_frame'].max(), 100)
-                y_fit_x_ip = slope_x_ip * x_fit + intercept_x_ip
-                y_fit_x_3D = slope_x_3D * x_fit + intercept_x_3D
+        # Calcola i delta tra i valori di posizione successivi
+        opt_flow = [posizione[i + 1] - posizione[i] for i in range(len(posizione) - 1)]
 
 
-            else:
-                vx = 0
-                vx_3D = 0
-                vx_std = 0
-                vx_3D_std = 0
+        # Estendi la lista dei delta in modo che abbia la stessa dimensione della lista di input di posizione
+        opt_flow.append(opt_flow[-1])  # estendi con l'ultimo valore
 
-        except Exception as e:
-            print("error regression:",e)
-            vx = 0
-            vx_3D = 0
-            vx_std = 0
-            vx_3D_std = 0
 
+        marker_list = [int(marker_inr)] * len(all_z_depth)
+        speed_rob_list = [v_rob] * len(all_z_depth)
         # Aggiungi i risultati alla lista
-        results.append({'marker': marker_inr, 'z_mean': z_mean, 'z_std': z_std,
-                        'vx': vx, 'vx_std': vx_std, 'vx_3D': vx_3D, 'vx_3D_std': vx_3D_std})
+        results.append({'marker': marker_list, 'z_mean': all_z_depth,'vx': opt_flow, 'vx_3D': speed_rob_list})
 
 
-        if PLOT_SINGLE_PATH:
 
-        # Plot delle coordinate x e z del marker corrente come scatter plot
-            plt.scatter(marker_data['n_frame'], marker_data[f'x_ip_{marker_inr}'] / 2000,
-                        label=f'X Coordinate Marker {marker_inr}', color='blue')
-            plt.scatter(marker_data['n_frame'], marker_data[f'z_3D_{marker_inr}'],
-                        label=f'Z Coordinate Marker {marker_inr}', color='red')
-            plt.scatter(marker_data['n_frame'], marker_data[f'x_3D_{marker_inr}'],
-                        label=f'X_3D Coordinate Marker {marker_inr}', color='green')
-
-            plt.plot(x_fit, y_fit_x_ip / 2000, color='green', linestyle='--', label=f'Linear Fit X Marker {marker_inr}')
-            plt.plot(x_fit, y_fit_x_3D, color='orange', linestyle='--', label=f'Linear Fit X_3D Marker {marker_inr}')
-            # Aggiungi etichette e legenda al grafico corrente
-            plt.xlabel('Numero Frame')
-            plt.ylabel('Coordinate')
-            plt.title(f'Coordinate X, X_3D e Z del Marker {marker_inr}')
-            plt.legend()
-
-            # Mostra il grafico corrente
-            plt.show()
 
     return results
-
+#
 # #
 # imaga_analizer_raw()
 # df = pd.read_excel(output_excel)
@@ -559,21 +1023,34 @@ def plotter_raw_analys(df):
 # if len(multi_df) == 10:
 #     ALL_R_2 = []
 #     for i in range(len(multi_df)):
-#         print("dataset ",i)
+#         v_i = i // 2
+#         speed_rob = v_all[v_i]
+#         print(f"dts = {i}, vct = {speed_rob}")
+#
 #         df_filtered = delete_static_data_manually(multi_df[i], f'x_ip_{marker_rif_delation}', acc_filter_final)
-#         res = plotter_raw_analys(df_filtered)
+#         res = plotter_raw_analys(df_filtered,speed_rob)
 #         #print(res)
 #         save_results_to_excel(res, output_excel_res)
-#         print("R^2 OF:", np.mean(ALL_R_2))
+#
 #     #
 #
 # else:
 #     print("ERROR CUTTINGGG")
-#
-file_path = 'dati_of/stich_grande.xlsx'
-show_result_ex_file(file_path)
-file_path_1 = 'dati_of/piccoli_prime_tre_vicine_fix_speed.xlsx'
+
+# file_path = 'dati_of/stich_grande.xlsx'
+# show_result_ex_file(file_path)
+
+
+synchro_data_v_v_e_z("results_raw.xlsx")
+
+
+sys.exit()
+file_path_1 = 'dati_of/all_points_big_fix_speed.xlsx'
 show_result_ex_file(file_path_1)
+windowing_vs_uncertanty(file_path_1)
+
+
+constant_analisis()
 
 
 
